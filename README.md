@@ -17,7 +17,7 @@ At this moment it's work in progress and untested.
 - [Features](#features)
 - [Supported cameras](#supported-cameras)
 - [Getting started](#getting-started)
-- [Build your own firmware](#build-firmware)
+- [Build your own firmware](#build-your-own-firmware)
 - [Acknowledgments](#acknowledgments)
 - [Disclaimer](#disclaimer)
 
