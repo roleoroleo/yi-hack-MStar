@@ -9,7 +9,7 @@ I have no time to support the project, so feel free to clone/fork this git and m
 ## RTSP Server
 I'm working on a functional RTSP implementation, inspired by the following topic:
 - @andy2301 - [Ideas for the RSTP rtsp and rtsp2301](https://github.com/xmflsct/yi-hack-1080p/issues/5#issuecomment-294326131)
-The RTSP server code is derived from live555 - http://www.live555.com/ and from the archive rtsp2303_srcbin_20170414-1630.zip posted in the link above.
+The RTSP server code derives from live555 - http://www.live555.com/ and from the archive rtsp2303_srcbin_20170414-1630.zip posted in the link above.
 At this moment it's work in progress and untested.
 
 ## Table of Contents
@@ -26,7 +26,7 @@ This firmware contains the following features.
 Apart from RTSP, all the features are copied from the TheCrypt0 project.
 
 - FEATURES
-  - RTSP server - allow a RTSP stream of the video (high and/or low resolution).
+  - RTSP server - allows a RTSP stream of the video (high and/or low resolution).
   - MQTT - Motion detection through mqtt protocol.
   - WebServer - user-friendly stats and configurations.
   - SSH server -  dropbear
@@ -47,7 +47,7 @@ So, USE AT YOUR OWN RISK.
 ## Getting Started
 1. Check that you have a correct Xiaomi Yi camera.
 
-2. Get an microSD card, preferably of capacity 16gb or less and format it by selecting File System as FAT32.
+2. Get a microSD card, 16gb or less, and format it by selecting File System as FAT32.
 
 3. Save both files (home_y203c and sys_y203c) on root path of microSD card.
 
@@ -66,7 +66,7 @@ So, USE AT YOUR OWN RISK.
 ## Build your own firmware
 If you want to build your own firmware, clone this git and compile using a linux machine.
 Quick explanation:
-- Download and install the SDK for MStar platform: the file name is "MStar MSC3XX SDK.zip" (Google is you friend).
+- Download and install the SDK for MStar platform: the file name is "MStar MSC3XX SDK.zip" (Google is your friend).
 - Prepare the system installing all the necessary packages.
 - Copy home and rootfs partition files to ./stock_firmware/yi_home_1080p
 - ./scripts/init_sysroot.all.sh
