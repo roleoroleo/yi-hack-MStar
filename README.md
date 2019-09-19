@@ -59,9 +59,7 @@ So, USE AT YOUR OWN RISK.
 
 7. Blue light should come ON indicating that your WiFi connection has been successful (if not disable using app).
 
-8. Go in the browser and access the web interface of the camera as a website.
-
-Find the IP address using your mobile app (Camera Settings --> Network Info --> IP Address).
+8. Go in the browser and access the web interface of the camera as a website. Find the IP address using your mobile app (Camera Settings --> Network Info --> IP Address).
 
 10. Done.
 
