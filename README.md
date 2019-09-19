@@ -1,4 +1,4 @@
-# Yi firmware for 6FUS 4.5.0 version (only)
+# Custom firmware for Yi home 1080p 6FUS 4.5.0 version (only)
 
 This firmware is completely based on the work done by TheCrypt0
 https://github.com/TheCrypt0/yi-hack-v4
