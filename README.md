@@ -10,7 +10,7 @@ I have no time to support the project, so feel free to clone/fork this git and m
 I'm working on a functional RTSP implementation, inspired by the following topic:
 - @andy2301 - [Ideas for the RSTP rtsp and rtsp2301](https://github.com/xmflsct/yi-hack-1080p/issues/5#issuecomment-294326131)
 The RTSP server code is derived from live555 - http://www.live555.com/ and from the archive rtsp2303_srcbin_20170414-1630.zip posted in the link above.
-At this moment it,s work in progress and untested.
+At this moment it's work in progress and untested.
 
 ## Table of Contents
 
