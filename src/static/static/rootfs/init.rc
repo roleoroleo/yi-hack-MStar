@@ -1,0 +1,239 @@
+# Copyright (C) 2012 The Android Open Source Project
+#
+# IMPORTANT: Do not create world writable files or directories.
+# This is a common source of Android security bugs.
+#
+
+# import /init.${ro.hardware}.rc
+
+on early-init
+    start ueventd
+
+    # create mountpoints
+#####    mkdir /mnt 0775 root system
+#####    mkdir /tmp 0775 root system
+
+on init
+
+    # sysclktz 0
+
+    # loglevel 3
+
+    # setup the global environment
+    export PATH /sbin:/bin:/usr/sbin:/usr/bin:/home/base/wifi:/ext/bin:/home/base/tools:/home/app/localbin
+    export LD_LIBRARY_PATH /lib:/home/lib:/home/ms:/home/app/locallib
+    export OMX_LIB_PATH /home/ms
+#    export ANDROID_ROOT /system
+#    export ANDROID_ASSETS /system/app
+#    export ANDROID_DATA /data
+#    export ANDROID_STORAGE /storage
+#    export EXTERNAL_STORAGE /mnt/sdcard
+
+    # Set Tslib Env.
+    # export T_ROOT /system
+    # export LD_LIBRARY_PATH /system/lib/ts
+    # export TSLIB_CONSOLEDEVICE none
+    # export TSLIB_FBDEVICE /dev/graphics/fb0
+    # export TSLIB_TSDEVICE /dev/input/event0
+    # export TSLIB_CALIBFILE /data/pointercal
+    # export TSLIB_CONFFILE /etc/tslib/ts.conf
+    # export TSLIB_PLUGINDIR /system/lib/ts
+    # export TSLIB_TSIDEVICE /dev/msb2522-ts
+
+#####    symlink /system/bin /bin
+#####    symlink /system/etc /etc
+#####    symlink /system/vendor /vendor
+
+#####    symlink /system/lib /lib
+    # Right now vendor lives on the same filesystem as system,
+    # but someday that may change.
+
+
+    # create mountpoints
+#####    mkdir /mnt 0775 root system
+#####    mkdir /mnt/sdcard 0000 system system
+#####    symlink /mnt/sdcard /sdcard
+#####    mkdir /mnt/usb 0775 root system
+#####    mkdir /mnt/usb2 0775 root system
+#####    mount tmpfs tmpfs /mnt/usb mode=0755,gid=1000
+#####    mkdir /ext
+
+on fs
+# mount mtd partitions
+    # Mount /system rw first to give the filesystem a chance to save a checkpoint
+    #mount ubifs ubi@UBI:SYSTEM /system nosuid nodev
+    #mount ubifs ubi@UBI:DATA /data nosuid nodev
+    #mount  squashfs mtd@SYSTEM /system
+    mount  jffs2    mtd@HOME   /home
+	#mount  jffs2    mtd@EXT   /ext
+    #mount ubifs ubi:CACHE /cache nosuid nodev
+    # mount ext4 /dev/block/mmcblk0p3 /system wait  noatime block_validity nodiscard data=ordered journal_checksum
+    # mount ext4 /dev/block/mmcblk0p2 /data wait nosuid nodev noatime block_validity nodiscard data=ordered journal_checksum
+
+on post-fs
+    # once everything is setup, no need to modify /
+	mount rootfs rootfs / rw remount
+    # mount shared so changes propagate into child namespaces
+	mount rootfs rootfs / shared rec
+	#mount tmpfs tmpfs /mnt/secure private rec
+	#mount tmpfs tmpfs /tmp
+	#mkdir /tmp/sd 0775 system system
+	symlink /home/app/data /data
+
+    #change permissions on vmallocinfo so we can grab it from bugreports
+	#chown root log /proc/vmallocinfo
+	#chmod 0440 /proc/vmallocinfo
+
+	#chown root log /proc/slabinfo
+	#chmod 0440 /proc/slabinfo
+
+    #change permissions on kmsg & sysrq-trigger so bugreports can grab kthread stacks
+	#chown root system /proc/kmsg
+	#chmod 0440 /proc/kmsg
+	#chown root system /proc/sysrq-trigger
+	#chmod 0220 /proc/sysrq-trigger
+	#chown system log /proc/last_kmsg
+	#chmod 0440 /proc/last_kmsg
+
+on post-fs-data
+
+    # We chown/chmod /data again so because mount is run as root + defaults
+#    chown system system /data
+#    chmod 0771 /data
+
+
+on boot
+
+    # Memory management.  Basic kernel parameters, and allow the high
+    # level system server to be able to adjust the kernel OOM driver
+    # parameters to match how it is managing things.
+
+#    write /proc/sys/vm/overcommit_memory 1
+#    write /proc/sys/vm/min_free_order_shift 4
+#    chown root system /sys/module/lowmemorykiller/parameters/adj
+#    chmod 0664 /sys/module/lowmemorykiller/parameters/adj
+#    chown root system /sys/module/lowmemorykiller/parameters/minfree
+#    chmod 0664 /sys/module/lowmemorykiller/parameters/minfree
+
+    # Tweak background writeout
+#    write /proc/sys/vm/dirty_expire_centisecs 200
+#    write /proc/sys/vm/dirty_background_ratio  5
+
+    # Permissions for System Server and daemons.
+#    chown radio system /sys/android_power/state
+#    chown radio system /sys/android_power/request_state
+#    chown radio system /sys/android_power/acquire_full_wake_lock
+#    chown radio system /sys/android_power/acquire_partial_wake_lock
+#    chown radio system /sys/android_power/release_wake_lock
+#    chown system system /sys/power/autosleep
+#    chown system system /sys/power/state
+#    chown system system /sys/power/wakeup_count
+#    chown radio system /sys/power/wake_lock
+#    chown radio system /sys/power/wake_unlock
+#    chmod 0660 /sys/power/state
+#    chmod 0660 /sys/power/wake_lock
+#    chmod 0660 /sys/power/wake_unlock
+
+#    chmod 0660 /sys/powerEvent/powerEventNum
+
+#    chmod 777 /dev/ttyS5
+#    chmod 777 /dev/snd/pcmC0D0c
+#    chmod 777 /dev/snd/pcmC0D0p
+#    chmod 777 /dev/snd/pcmC0D1c
+#    chmod 777 /dev/snd/pcmC0D1p
+#    chmod 777 /dev/snd/controlC0
+
+#    chown system system /sys/devices/system/cpu/cpufreq/interactive/timer_rate
+#    chmod 0660 /sys/devices/system/cpu/cpufreq/interactive/timer_rate
+#    chown system system /sys/devices/system/cpu/cpufreq/interactive/timer_slack
+#    chmod 0660 /sys/devices/system/cpu/cpufreq/interactive/timer_slack
+#    chown system system /sys/devices/system/cpu/cpufreq/interactive/min_sample_time
+#    chmod 0660 /sys/devices/system/cpu/cpufreq/interactive/min_sample_time
+#    chown system system /sys/devices/system/cpu/cpufreq/interactive/hispeed_freq
+#    chmod 0660 /sys/devices/system/cpu/cpufreq/interactive/hispeed_freq
+#    chown system system /sys/devices/system/cpu/cpufreq/interactive/target_loads
+#    chmod 0660 /sys/devices/system/cpu/cpufreq/interactive/target_loads
+#    chown system system /sys/devices/system/cpu/cpufreq/interactive/go_hispeed_load
+#    chmod 0660 /sys/devices/system/cpu/cpufreq/interactive/go_hispeed_load
+#    chown system system /sys/devices/system/cpu/cpufreq/interactive/above_hispeed_delay
+#    chmod 0660 /sys/devices/system/cpu/cpufreq/interactive/above_hispeed_delay
+#    chown system system /sys/devices/system/cpu/cpufreq/interactive/boost
+#    chmod 0660 /sys/devices/system/cpu/cpufreq/interactive/boost
+#    chown system system /sys/devices/system/cpu/cpufreq/interactive/boostpulse
+#    chown system system /sys/devices/system/cpu/cpufreq/interactive/input_boost
+#    chmod 0660 /sys/devices/system/cpu/cpufreq/interactive/input_boost
+#    chown system system /sys/devices/system/cpu/cpufreq/interactive/boostpulse_duration
+#    chmod 0660 /sys/devices/system/cpu/cpufreq/interactive/boostpulse_duration
+#    chown system system /sys/devices/system/cpu/cpufreq/interactive/io_is_busy
+#    chmod 0660 /sys/devices/system/cpu/cpufreq/interactive/io_is_busy
+
+    # Assume SMP uses shared cpufreq policy for all CPUs
+#    chown system system /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
+#    chmod 0660 /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
+
+#    chown system system /sys/module/sco/parameters/disable_esco
+#    chown system system /sys/kernel/ipv4/tcp_wmem_min
+#    chown system system /sys/kernel/ipv4/tcp_wmem_def
+#    chown system system /sys/kernel/ipv4/tcp_wmem_max
+#    chown system system /sys/kernel/ipv4/tcp_rmem_min
+#    chown system system /sys/kernel/ipv4/tcp_rmem_def
+#    chown system system /sys/kernel/ipv4/tcp_rmem_max
+
+    # Define TCP buffer sizes for various networks
+    #   ReadMin, ReadInitial, ReadMax, WriteMin, WriteInitial, WriteMax,
+#    setprop net.tcp.buffersize.default 4096,87380,110208,4096,16384,110208
+#    setprop net.tcp.buffersize.wifi    524288,1048576,2097152,262144,524288,1048576
+#    setprop net.tcp.buffersize.lte     524288,1048576,2097152,262144,524288,1048576
+#    setprop net.tcp.buffersize.umts    4094,87380,110208,4096,16384,110208
+#    setprop net.tcp.buffersize.hspa    4094,87380,262144,4096,16384,262144
+#    setprop net.tcp.buffersize.hsupa   4094,87380,262144,4096,16384,262144
+#    setprop net.tcp.buffersize.hsdpa   4094,87380,262144,4096,16384,262144
+#    setprop net.tcp.buffersize.hspap   4094,87380,1220608,4096,16384,1220608
+#    setprop net.tcp.buffersize.edge    4093,26280,35040,4096,16384,35040
+#    setprop net.tcp.buffersize.gprs    4092,8760,11680,4096,8760,11680
+#    setprop net.tcp.buffersize.evdo    4094,87380,262144,4096,16384,262144
+
+
+## Daemon processes to be run by init.
+##
+service ueventd /bin/ueventd
+    class core
+
+
+#service console /sbin/msh <= fallback
+#service console /bin/sh
+#    class core
+#    console
+#    disabled
+#    user root
+
+#on property:ro.debuggable=1
+#    start console
+
+service rcs /bin/sh /etc/init.d/rcS
+    class core
+    oneshot
+    disabled
+    user root
+#    console
+
+
+
+
+on property:ro.system_rcs=1
+    start rcs
+
+#service servicemanager /system/bin/servicemanager
+#    class core
+#    user system
+#    group system
+#    critical
+#    onrestart restart zygote
+#    onrestart restart media
+#    onrestart restart surfaceflinger
+#    onrestart restart drm
+
+#service vold /system/bin/vold
+#    class core
+#    socket vold stream 0660 root mount
+#    ioprio be 2

@@ -1,0 +1,15 @@
+#!/bin/bash
+
+ARCHIVE=live.2019.09.18.tar.gz
+SCRIPT_DIR=$(cd `dirname $0` && pwd)
+cd $SCRIPT_DIR
+
+rm -rf ./_install
+
+wget http://www.live555.com/liveMedia/public/$ARCHIVE
+tar zxvf $ARCHIVE
+
+patch -p0 < rRTSPServer.patch
+
+cd live || exit 1
+

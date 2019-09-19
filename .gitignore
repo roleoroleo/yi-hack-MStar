@@ -1,0 +1,18 @@
+
+/build/*
+!/build/.gitkeep
+
+/stock_firmware/*
+!/stock_firmware/README.md
+
+/sysroot/*
+!/sysroot/.gitkeep
+
+/out
+/bin
+
+# The following files are ignored because they need some cleanup
+REQUIRED_PACKAGES
+INIT_SUBMODULES.md
+
+*.DS_Store

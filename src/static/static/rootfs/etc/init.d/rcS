@@ -1,0 +1,62 @@
+#!/bin/sh
+export PS1='[\w]## '
+ifconfig lo up
+
+### param
+## TCP/IP configuration
+echo 163840 > /proc/sys/net/core/rmem_max
+echo 512000 > /proc/sys/net/core/wmem_max
+echo 163840 > /proc/sys/net/core/rmem_default
+echo 256000 > /proc/sys/net/core/wmem_default
+echo '924 1232 1848' > /proc/sys/net/ipv4/tcp_mem
+echo '4096 87380 325120' > /proc/sys/net/ipv4/tcp_rmem
+echo '4096 16384 325120' > /proc/sys/net/ipv4/tcp_wmem
+
+ulimit -c unlimited
+#echo /ext/core.%e.%t > /proc/sys/kernel/core_pattern
+
+echo 1 > /sys/class/mstar/msys/dmem_realloc
+#disable overcommit
+ulimit -s 256
+echo 2 > /proc/sys/vm/overcommit_memory
+echo 100 > /proc/sys/vm/overcommit_ratio
+
+echo D > /sys/class/mstar/mhvsp1/fbmg
+echo 9 > /sys/class/mstar/mhvsp1/fbmg
+
+for i in /etc/init.d/S??* ;do
+
+    # Ignore dangling symlinks (if any).
+    [ ! -f "$i" ] && continue
+
+    case "$i" in
+        *.sh)
+            # Source shell script for speed.
+            (
+                trap - INT QUIT TSTP
+                set start
+                . $i
+            )
+            ;;
+        *)
+            # No sh extension, so fork subprocess.
+            $i start
+            ;;
+    esac
+done
+
+cd /home
+if [ -f "/home/app/init.sh" ]
+then
+    cd /home/app
+    chmod 777 init.sh
+    (./init.sh &)
+    cd /home
+else
+    echo "/home/app/init.sh isn't exist"
+fi
+
+sleep 10
+/etc/init.d/yi-hack
+
+/bin/sh

@@ -1,0 +1,15 @@
+[submodule "src/busybox/busybox"]
+	path = src/busybox/busybox
+	url = https://github.com/mirror/busybox
+[submodule "src/dropbear/dropbear"]
+	path = src/dropbear/dropbear
+	url = https://github.com/mkj/dropbear
+[submodule "src/ftpd/pure-ftpd"]
+	path = src/ftpd/pure-ftpd
+	url = https://github.com/jedisct1/pure-ftpd
+[submodule "src/mosquitto/mosquitto"]
+	path = src/mosquitto/mosquitto
+	url = https://github.com/eclipse/mosquitto
+[submodule "src/mqtt/mqttv4"]
+	path = src/mqtt/mqttv4
+	url = https://github.com/TheCrypt0/mqttv4
