@@ -7,7 +7,7 @@ It's a clone made only for Yi Home 1080p with fw 4.5.0 based on MStar platform.
 I have no time to support the project, so feel free to clone/fork this git and modify it as you want.
 
 ## RTSP Server
-I'm working on a functional RTSP implementation, inspired by the following topic:
+I'm working on a fully functional RTSP implementation, inspired by the following topic:
 - @andy2301 - [Ideas for the RSTP rtsp and rtsp2301](https://github.com/xmflsct/yi-hack-1080p/issues/5#issuecomment-294326131)
 The RTSP server code derives from live555 - http://www.live555.com/ and from the archive rtsp2303_srcbin_20170414-1630.zip posted in the link above.
 At this moment it's work in progress and untested.
