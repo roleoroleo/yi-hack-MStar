@@ -13,3 +13,6 @@
 [submodule "src/mqtt/mqttv4"]
 	path = src/mqtt/mqttv4
 	url = https://github.com/TheCrypt0/mqttv4
+[submodule "src/onvif_srvd/onvif_srvd"]
+	path = src/onvif_srvd/onvif_srvd
+	url = https://github.com/KoynovStas/onvif_srvd

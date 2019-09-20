@@ -5,8 +5,7 @@ cd $SCRIPT_DIR
 
 rm -rf ./_install
 
-cd busybox 
+cd onvif_srvd || exit 1
 git reset --hard || exit 1
 
-cp ../.config ./ || exit 1
-
+cp ../Makefile.onvif_srvd Makefile
