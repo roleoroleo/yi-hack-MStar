@@ -7,10 +7,10 @@ cd $SCRIPT_DIR
 
 rm -rf ./_install
 
-cp config.mak mqttv4/config.mak
-
 cd mqttv4
 git reset --hard 
+
+cp ../config.mak config.mak
 
 mkdir -p ./lib
 

@@ -27,12 +27,13 @@ Apart from RTSP, all the features are copied from the TheCrypt0 project.
 
 - FEATURES
   - RTSP server - allows a RTSP stream of the video (high and/or low resolution).
+  - ONVIF server - standardized interfaces for IP cameras
   - MQTT - Motion detection through mqtt protocol.
   - WebServer - user-friendly stats and configurations.
   - SSH server -  dropbear
   - Telnet server -  busybox
   - FTP server
-  - Web server
+  - Web server - web configutation interface (port 8080)
   - The possibility to disable all the cloud features
 
 ## Supported cameras
