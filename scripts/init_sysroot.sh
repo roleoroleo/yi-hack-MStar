@@ -98,16 +98,16 @@ extract_stock_fw()
     local FIRMWARE_HOME=$FW_DIR/home_$CAMERA_ID.tgz
     local FIRMWARE_ROOTFS=$FW_DIR/sys_$CAMERA_ID.tgz
 
-    local FIRMWARE_HOME_JFFS=$FW_DIR/home_$CAMERA_ID.jffs
-    local FIRMWARE_ROOTFS_JFFS=$FW_DIR/sys_$CAMERA_ID.jffs
+    local FIRMWARE_HOME_JFFS2=$FW_DIR/home_$CAMERA_ID.jffs2
+    local FIRMWARE_ROOTFS_JFFS2=$FW_DIR/sys_$CAMERA_ID.jffs2
 
     local FIRMWARE_HOME_DESTDIR=$SYSROOT_DIR/home
     local FIRMWARE_ROOTFS_DESTDIR=$SYSROOT_DIR/rootfs
 
     echo "Extracting the stock firmware file systems or archives..."
 
-    if [[ ! -f "$FIRMWARE_HOME_JFFS" || ! -f "$FIRMWARE_ROOTFS_JFFS" ]]; then
-        echo "ERROR: $FIRMWARE_HOME_JFFS or $FIRMWARE_ROOTFS_JFFS not found. Trying with .tgz archives."
+    if [[ ! -f "$FIRMWARE_HOME_JFFS2" || ! -f "$FIRMWARE_ROOTFS_JFFS2" ]]; then
+        echo "ERROR: $FIRMWARE_HOME_JFFS2 or $FIRMWARE_ROOTFS_JFFS2 not found. Trying with .tgz archives."
 
         if [[ ! -f "$FIRMWARE_HOME" || ! -f "$FIRMWARE_ROOTFS" ]]; then
             echo "ERROR: $FIRMWARE_HOME or $FIRMWARE_ROOTFS not found. Exiting."
@@ -121,18 +121,18 @@ extract_stock_fw()
         echo "done!"
 
         echo $FIRMWARE_ROOTFS
-        printf "Extracting \"rootfs_$CAMERA_ID\" to \"$FIRMWARE_ROOTFS_DESTDIR\"... "
+        printf "Extracting \"sys_$CAMERA_ID\" to \"$FIRMWARE_ROOTFS_DESTDIR\"... "
         tar zxvf $FIRMWARE_ROOTFS -C $FIRMWARE_ROOTFS_DESTDIR
         echo "done!"
     else
-        echo $FIRMWARE_HOME_JFFS
+        echo $FIRMWARE_HOME_JFFS2
         printf "Extracting \"home_$CAMERA_ID\" to \"$FIRMWARE_HOME_DESTDIR\"... "
-        jffs2_copy $FIRMWARE_HOME_JFFS $FIRMWARE_HOME_DESTDIR
+        jffs2_copy $FIRMWARE_HOME_JFFS2 $FIRMWARE_HOME_DESTDIR
         echo "done!"
 
-        echo $FIRMWARE_ROOTFS_JFFS
-        printf "Extracting \"rootfs_$CAMERA_ID\" to \"$FIRMWARE_ROOTFS_DESTDIR\"... "
-        jffs2_copy $FIRMWARE_ROOTFS_JFFS $FIRMWARE_ROOTFS_DESTDIR
+        echo $FIRMWARE_ROOTFS_JFFS2
+        printf "Extracting \"sys_$CAMERA_ID\" to \"$FIRMWARE_ROOTFS_DESTDIR\"... "
+        jffs2_copy $FIRMWARE_ROOTFS_JFFS2 $FIRMWARE_ROOTFS_DESTDIR
         echo "done!"
     fi
 }

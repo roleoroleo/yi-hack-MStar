@@ -37,7 +37,7 @@ else
         N=0
         while [ "$IDX" -eq "0000" ] && [ $N -lt 50 ]; do
             IDX=`hexdump -n 16 /dev/fshare_frame_buf | awk 'NR==1{print $8}'`
-            N=$[$N+1]
+            N=$(($N+1))
             sleep 0.2
         done
         killall cloud

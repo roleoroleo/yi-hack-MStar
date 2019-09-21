@@ -9,6 +9,7 @@ I have no time to support the project, so feel free to clone/fork this git and m
 ## RTSP Server
 I'm working on a fully functional RTSP implementation, inspired by the following topic:
 - @andy2301 - [Ideas for the RSTP rtsp and rtsp2301](https://github.com/xmflsct/yi-hack-1080p/issues/5#issuecomment-294326131)
+
 The RTSP server code derives from live555 - http://www.live555.com/ and from the archive rtsp2303_srcbin_20170414-1630.zip posted in the link above.
 At this moment it's work in progress and untested.
 
@@ -27,14 +28,14 @@ Apart from RTSP, all the features are copied from the TheCrypt0 project.
 
 - FEATURES
   - RTSP server - allows a RTSP stream of the video (high and/or low resolution).
-  - ONVIF server - standardized interfaces for IP cameras
+  - ONVIF server - standardized interfaces for IP cameras.
   - MQTT - Motion detection through mqtt protocol.
   - WebServer - user-friendly stats and configurations.
-  - SSH server -  dropbear
+  - SSH server - dropbear
   - Telnet server -  busybox
   - FTP server
-  - Web server - web configutation interface (port 8080)
-  - The possibility to disable all the cloud features
+  - Web server - web configutation interface (port 8080).
+  - The possibility to disable all the cloud features.
 
 ## Supported cameras
 
