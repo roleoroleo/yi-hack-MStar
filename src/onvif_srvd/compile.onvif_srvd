@@ -14,6 +14,6 @@ export CROSSPREFIX=${CROSS}-
 export GCC=arm-linux-gnueabihf-g++
 
 make clean
-make || exit 1
+make release || exit 1
 mkdir -p $SCRIPT_DIR/_install/bin
 cp onvif_srvd $SCRIPT_DIR/_install/bin/
