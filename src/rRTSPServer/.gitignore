@@ -1,3 +1,4 @@
 # Ignore the install dir
 _install/
-
+live/
+live.2019.09.18.tar.gz
