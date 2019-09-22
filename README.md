@@ -24,7 +24,7 @@ At this moment it's work in progress and untested.
 
 ## Features
 This firmware contains the following features.
-Apart from RTSP, all the features are copied from the TheCrypt0 project.
+Apart from RTSP and ONVIF, all the features are copied from the TheCrypt0 project.
 
 - FEATURES
   - RTSP server - allows a RTSP stream of the video (high and/or low resolution).
