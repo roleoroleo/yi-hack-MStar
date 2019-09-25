@@ -272,7 +272,7 @@ diff -Naur live/liveMedia/ByteStreamFileSource.cpp live.r/liveMedia/ByteStreamFi
 +    long sequence_size;
 +
 +    while (!seq_found) {
-+        memcpy(&i, addr + 16, sizeof(i));
++        memcpy(&i, addr + 12, sizeof(i));
 +        buf_idx_w = addrh + i;
 +//        if (debug) fprintf(stderr, "buf_idx_w: %08x\n", (unsigned int) buf_idx_w);
 +

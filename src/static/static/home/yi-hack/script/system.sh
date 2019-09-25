@@ -83,14 +83,18 @@ fi
 if [[ $(get_config RTSP) == "yes" ]] ; then
     if [[ $(get_config RTSP_HIGH) == "yes" && $(get_config RTSP_LOW) == "yes" ]] ; then
         RRTSP_RES=2 rRTSPServer &
-        ONVIF_PROFILE_0="--name Profile_0 --width 1920 --height 1080 --url rtsp://%s/ch0_0.h264 --type H264"
-        ONVIF_PROFILE_1="--name Profile_1 --width 640 --height 360 --url rtsp://%s/ch0_1.h264 --type H264"
+        ONVIF_PROFILE_0="--name Profile_0 --width 1920 --height 1080 --url rtsp://%s/ch0_0.h264 \
+            --type H264 --snapurl http://%s:8080/cgi-bin/snapshot.sh?res=high"
+        ONVIF_PROFILE_1="--name Profile_1 --width 640 --height 360 --url rtsp://%s/ch0_1.h264 \
+            --type H264 --snapurl http://%s:8080/cgi-bin/snapshot.sh?res=low"
     elif [[ $(get_config RTSP_LOW) == "yes" ]] ; then
         RRTSP_RES=1 rRTSPServer &
-        ONVIF_PROFILE_1="--name Profile_1 --width 640 --height 360 --url rtsp://%s/ch0_1.h264 --type H264"
+        ONVIF_PROFILE_1="--name Profile_1 --width 640 --height 360 --url rtsp://%s/ch0_1.h264 \
+            --type H264 --snapurl http://%s:8080/cgi-bin/snapshot.sh?res=low"
     elif [[ $(get_config RTSP_HIGH) == "yes" ]] ; then
         RRTSP_RES=0 rRTSPServer &
-        ONVIF_PROFILE_0="--name Profile_0 --width 1920 --height 1080 --url rtsp://%s/ch0_0.h264 --type H264"
+        ONVIF_PROFILE_0="--name Profile_0 --width 1920 --height 1080 --url rtsp://%s/ch0_0.h264 \
+            --type H264 --snapurl http://%s:8080/cgi-bin/snapshot.sh?res=high"
     fi
 fi
 
@@ -99,6 +103,8 @@ if [[ $(get_config ONVIF) == "yes" ]] ; then
         --manufacturer "Yi" --ifs wlan0 --port 80 --scope onvif://www.onvif.org/Profile/S \
         $ONVIF_PROFILE_0 $ONVIF_PROFILE_1
 fi
+
+framefinder &
 
 if [ -f "/tmp/sd/yi-hack/startup.sh" ]; then
     /tmp/sd/yi-hack/startup.sh

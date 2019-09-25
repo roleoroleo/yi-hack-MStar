@@ -6,7 +6,9 @@ cd $SCRIPT_DIR
 
 rm -rf ./_install
 
-wget http://www.live555.com/liveMedia/public/$ARCHIVE
+if [ ! -f $ARCHIVE ]; then
+    wget http://www.live555.com/liveMedia/public/$ARCHIVE
+fi
 tar zxvf $ARCHIVE
 
 patch -p0 < rRTSPServer.patch
