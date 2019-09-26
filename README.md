@@ -11,7 +11,13 @@ I'm working on a fully functional RTSP implementation, inspired by the following
 - @andy2301 - [Ideas for the RSTP rtsp and rtsp2301](https://github.com/xmflsct/yi-hack-1080p/issues/5#issuecomment-294326131)
 
 The RTSP server code derives from live555 - http://www.live555.com/ and from the archive rtsp2303_srcbin_20170414-1630.zip posted in the link above.
-At this moment it's work in progress and untested.
+At this moment it works but sometimes the video crashes.
+
+Known issue.
+h264 frames are temporarily saved in a 1.8 MB circular buffer. This file contains both high resolution frames and low resolution frames, mixed in a single stream.
+When I have to extract the frames from this buffer, I can recognize i-frames without problems thanks to the SPS nalu but I can't correctly recognize p-frames.
+I have developed an algorithm that tries to solve this problem by reading the POC but it is not error free.
+I'm looking for someone who knows h264 better than me and can help me with this: the code is in the ByteStreamFileSource.cpp file.
 
 ## Table of Contents
 
@@ -24,11 +30,12 @@ At this moment it's work in progress and untested.
 
 ## Features
 This firmware contains the following features.
-Apart from RTSP and ONVIF, all the features are copied from the TheCrypt0 project.
+Apart from RTSP, snapshot and ONVIF, all the features are copied from the TheCrypt0 project.
 
 - FEATURES
   - RTSP server - allows a RTSP stream of the video (high and/or low resolution).
   - ONVIF server - standardized interfaces for IP cameras.
+  - Snapshot service - allows to get a jpg with a web request.
   - MQTT - Motion detection through mqtt protocol.
   - WebServer - user-friendly stats and configurations.
   - SSH server - dropbear
