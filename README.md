@@ -14,6 +14,7 @@ The RTSP server code derives from live555 - http://www.live555.com/ and from the
 At this moment it works but sometimes the video crashes.
 
 Known issue.
+
 h264 frames are temporarily saved in a 1.8 MB circular buffer. This file contains both high resolution frames and low resolution frames, mixed in a single stream.
 When I have to extract the frames from this buffer, I can recognize i-frames without problems thanks to the SPS nalu but I can't correctly recognize p-frames.
 I have developed an algorithm that tries to solve this problem by reading the POC but it is not error free.
@@ -32,16 +33,24 @@ I'm looking for someone who knows h264 better than me and can help me with this:
 This firmware contains the following features.
 Apart from RTSP, snapshot and ONVIF, all the features are copied from the TheCrypt0 project.
 
+## Features
+This firmware contains the following features.
+Apart from RTSP, snapshot and ONVIF, all the features are copied from the TheCrypt0 project.
+
 - FEATURES
   - RTSP server - allows a RTSP stream of the video (high and/or low resolution).
+    - rtsp://IP-CAM/ch0_0.h264        (high res)
+    - rtsp://IP-CAM/ch0_1.h264        (low res)
   - ONVIF server - standardized interfaces for IP cameras.
   - Snapshot service - allows to get a jpg with a web request.
+  Gets the latest idr frame from the buffer and converts it to jpg (latest idr frame = no real time).
+    - http://IP-CAM:8080/cgi-bin/snapshot.sh?res=low        (select resolution: low or high)
+    - http://IP-CAM:8080/cgi-bin/snapshot.sh        (default high)
   - MQTT - Motion detection through mqtt protocol.
-  - WebServer - user-friendly stats and configurations.
-  - SSH server - dropbear
-  - Telnet server -  busybox
-  - FTP server
   - Web server - web configutation interface (port 8080).
+  - SSH server - dropbear
+  - Telnet server - busybox
+  - FTP server
   - The possibility to disable all the cloud features.
 
 ## Supported cameras
