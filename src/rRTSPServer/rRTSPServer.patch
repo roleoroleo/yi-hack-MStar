@@ -1,6 +1,6 @@
 diff -Naur live/BasicUsageEnvironment/Makefile live.r/BasicUsageEnvironment/Makefile
 --- live/BasicUsageEnvironment/Makefile	1970-01-01 01:00:00.000000000 +0100
-+++ live.r/BasicUsageEnvironment/Makefile	2019-09-25 10:05:14.407950636 +0200
++++ live.r/BasicUsageEnvironment/Makefile	2019-09-28 11:25:44.326648774 +0200
 @@ -0,0 +1,64 @@
 +INCLUDES = -Iinclude -I../UsageEnvironment/include -I../groupsock/include
 +PREFIX = /usr/local
@@ -68,7 +68,7 @@ diff -Naur live/BasicUsageEnvironment/Makefile live.r/BasicUsageEnvironment/Make
 +##### Any additional, platform-specific rules come here:
 diff -Naur live/config.linux-cross live.r/config.linux-cross
 --- live/config.linux-cross	1970-01-01 01:00:00.000000000 +0100
-+++ live.r/config.linux-cross	2019-09-25 10:05:14.407950636 +0200
++++ live.r/config.linux-cross	2019-09-28 11:25:44.326648774 +0200
 @@ -0,0 +1,17 @@
 +COMPILE_OPTS =		$(INCLUDES) -I. -O2 -DSOCKLEN_T=socklen_t -D_LARGEFILE_SOURCE=1 -D_FILE_OFFSET_BITS=64
 +C =			c
@@ -89,7 +89,7 @@ diff -Naur live/config.linux-cross live.r/config.linux-cross
 +EXE =
 diff -Naur live/groupsock/Makefile live.r/groupsock/Makefile
 --- live/groupsock/Makefile	1970-01-01 01:00:00.000000000 +0100
-+++ live.r/groupsock/Makefile	2019-09-25 10:05:14.407950636 +0200
++++ live.r/groupsock/Makefile	2019-09-28 11:25:44.326648774 +0200
 @@ -0,0 +1,66 @@
 +INCLUDES = -Iinclude -I../UsageEnvironment/include
 +PREFIX = /usr/local
@@ -159,8 +159,8 @@ diff -Naur live/groupsock/Makefile live.r/groupsock/Makefile
 +##### Any additional, platform-specific rules come here:
 diff -Naur live/liveMedia/ByteStreamFileSource.cpp live.r/liveMedia/ByteStreamFileSource.cpp
 --- live/liveMedia/ByteStreamFileSource.cpp	2019-09-19 00:09:12.000000000 +0200
-+++ live.r/liveMedia/ByteStreamFileSource.cpp	2019-09-25 11:28:53.202373927 +0200
-@@ -18,16 +18,310 @@
++++ live.r/liveMedia/ByteStreamFileSource.cpp	2019-09-28 11:23:41.000000000 +0200
+@@ -18,16 +18,304 @@
  // A file source that is a plain byte stream (rather than frames)
  // Implementation
  
@@ -173,74 +173,58 @@ diff -Naur live/liveMedia/ByteStreamFileSource.cpp live.r/liveMedia/ByteStreamFi
  
  ////////// ByteStreamFileSource //////////
  
-+#define BUF_OFFSET 230
-+#define USLEEP 10000
-+
-+#define STATE_NONE 0                   /* Starting state*/
-+#define STATE_SPS_HIGH 1               /* Last SPS encountered is high res */
-+#define STATE_SPS_LOW 2                /* Last SPS encountered is low res */
-+
-+unsigned char IDR[]               = {0x65, 0xB8};
-+unsigned char NAL_START[]         = {0x00, 0x00, 0x00, 0x01};
-+unsigned char SEI_START[]         = {0x00, 0x00, 0x00, 0x01, 0x06, 0xF0};
-+unsigned char IDR_START[]         = {0x00, 0x00, 0x00, 0x01, 0x65, 0xB8};
-+unsigned char PFR_START[]         = {0x00, 0x00, 0x00, 0x01, 0x41};
-+unsigned char SPS_START[]         = {0x00, 0x00, 0x00, 0x01, 0x67};
-+unsigned char PPS_START[]         = {0x00, 0x00, 0x00, 0x01, 0x68};
-+unsigned char SPS_640X360[]       = {0x00, 0x00, 0x00, 0x01, 0x67, 0x4D, 0x40, 0x1E,
-+                                       0x95, 0xA0, 0x28, 0x0B, 0xFE, 0x59, 0xB0, 0x10};
-+unsigned char SPS_PPS_640X360[]   = {0x00, 0x00, 0x00, 0x01, 0x67, 0x4D, 0x40, 0x1E,
-+                                       0x95, 0xA0, 0x28, 0x0B, 0xFE, 0x59, 0xB0, 0x10,
-+                                       0x00, 0x00, 0x00, 0x01, 0x68, 0xEE, 0x3C, 0x80};
-+unsigned char SPS_1920X1080[]     = {0x00, 0x00, 0x00, 0x01, 0x67, 0x4D, 0x40, 0x28,
-+                                       0x95, 0xA0, 0x1E, 0x00, 0x89, 0xA6, 0xC0, 0x40};
-+unsigned char SPS_PPS_1920X1080[] = {0x00, 0x00, 0x00, 0x01, 0x67, 0x4D, 0x40, 0x28,
-+                                       0x95, 0xA0, 0x1E, 0x00, 0x89, 0xA6, 0xC0, 0x40,
-+                                       0x00, 0x00, 0x00, 0x01, 0x68, 0xEE, 0x3C, 0x80};
-+
-+unsigned char *addr;                      /* Pointer to shared memory region (header) */
-+unsigned char *addrh;                     /* Pointer to h264 data */
-+int size;                                 /* Size of shared memory region */
-+int sizeh;                                /* Size of h264 data */
-+int debug = 0;                            /* Set to 1 to debug this .cpp */
-+int iframe = 0;                           /* Set to 1 to stream only iframe */
-+unsigned long partial_read = 0;
-+unsigned char *buf_idx_1, *buf_idx_w;
-+
-+int state = STATE_NONE;                   /* State of the state machine */
-+int process_frame = 0;
++unsigned char ByteStreamFileSource::IDR[]               = {0x65, 0xB8};
++unsigned char ByteStreamFileSource::NAL_START[]         = {0x00, 0x00, 0x00, 0x01};
++unsigned char ByteStreamFileSource::SEI_START[]         = {0x00, 0x00, 0x00, 0x01, 0x06, 0xF0};
++unsigned char ByteStreamFileSource::IDR_START[]         = {0x00, 0x00, 0x00, 0x01, 0x65, 0xB8};
++unsigned char ByteStreamFileSource::PFR_START[]         = {0x00, 0x00, 0x00, 0x01, 0x41};
++unsigned char ByteStreamFileSource::SPS_START[]         = {0x00, 0x00, 0x00, 0x01, 0x67};
++unsigned char ByteStreamFileSource::PPS_START[]         = {0x00, 0x00, 0x00, 0x01, 0x68};
++unsigned char ByteStreamFileSource::SPS_640X360[]       = {0x00, 0x00, 0x00, 0x01, 0x67, 0x4D, 0x40, 0x1E,
++                                0x95, 0xA0, 0x28, 0x0B, 0xFE, 0x59, 0xB0, 0x10};
++unsigned char ByteStreamFileSource::SPS_PPS_640X360[]   = {0x00, 0x00, 0x00, 0x01, 0x67, 0x4D, 0x40, 0x1E,
++                                0x95, 0xA0, 0x28, 0x0B, 0xFE, 0x59, 0xB0, 0x10,
++                                0x00, 0x00, 0x00, 0x01, 0x68, 0xEE, 0x3C, 0x80};
++unsigned char ByteStreamFileSource::SPS_1920X1080[]     = {0x00, 0x00, 0x00, 0x01, 0x67, 0x4D, 0x40, 0x28,
++                                0x95, 0xA0, 0x1E, 0x00, 0x89, 0xA6, 0xC0, 0x40};
++unsigned char ByteStreamFileSource::SPS_PPS_1920X1080[] = {0x00, 0x00, 0x00, 0x01, 0x67, 0x4D, 0x40, 0x28,
++                                0x95, 0xA0, 0x1E, 0x00, 0x89, 0xA6, 0xC0, 0x40,
++                                0x00, 0x00, 0x00, 0x01, 0x68, 0xEE, 0x3C, 0x80};
 +
 +size_t ByteStreamFileSource::cb_read(int stream, void *ptr, size_t size,
-+    const void *buf, size_t buf_size)
++    size_t offset, size_t buf_size)
 +{
 +    size_t ret;
 +    off_t pos;
 +
 +    if (size <= 0) return 0;
 +    pos = lseek(stream, 0, SEEK_CUR);
-+    if (buf_size - pos >= size) {
++    if (offset + buf_size - pos >= size) {
 +        ret = read(stream, ptr, size);
 +    } else {
-+        ret = read(stream, ptr, buf_size - pos);
-+        ret += read(stream, ((unsigned char *) ptr) + (buf_size - pos), size - (buf_size - pos));
++        ret = read(stream, ptr, offset + buf_size - pos);
++        lseek(stream, offset, SEEK_SET);
++        ret += read(stream, ((unsigned char *) ptr) + (offset + buf_size - pos),
++            size - (offset + buf_size - pos));
 +    }
 +    return ret;
 +}
 +
 +size_t ByteStreamFileSource::cb_fread(void *ptr, size_t size,
-+    const void *buf, size_t buf_size, FILE *stream)
++    size_t offset, size_t buf_size, FILE *stream)
 +{
 +    size_t ret;
 +    long pos;
 +
 +    if (size <= 0) return 0;
 +    pos = ftell(stream);
-+    if (buf_size - pos >= size) {
++    if (offset + buf_size - pos >= size) {
 +        ret = fread(ptr, sizeof(unsigned char), size, stream);
 +    } else {
-+        ret = fread(ptr, sizeof(unsigned char), buf_size - pos, stream);
-+        ret += fread(((unsigned char *) ptr) + (buf_size - pos),
-+            sizeof(unsigned char), size - (buf_size - pos), stream);
++        ret = fread(ptr, sizeof(unsigned char), offset + buf_size - pos, stream);
++        fseek(stream, offset, SEEK_SET);
++        ret += fread(((unsigned char *) ptr) + (offset + buf_size - pos),
++            sizeof(unsigned char), size - (offset + buf_size - pos), stream);
 +    }
 +    return ret;
 +}
@@ -258,10 +242,29 @@ diff -Naur live/liveMedia/ByteStreamFileSource.cpp live.r/liveMedia/ByteStreamFi
 +        p = (unsigned char*) memmem(src, buf + buf_size - src, what, what_len);
 +        if (p == NULL) {
 +            // And from the start of the buffer size src_len
-+            p = (unsigned char*) memmem(buf, src + src_len - buf, what, what_len);
++            p = (unsigned char*) memmem(buf, src_len - (buf + buf_size - src), what, what_len);
 +        }
 +    }
 +    return p;
++}
++
++/* Compare a string in the circular buffer */
++int ByteStreamFileSource::cb_memcmp(unsigned char *ptr_cb,
++    unsigned char *ptr, int ptr_len, unsigned char *buf, int buf_size)
++{
++    int ret;
++
++    if (ptr_cb + ptr_len <= buf + buf_size) {
++        ret = memcmp(ptr_cb, ptr, ptr_len);
++    } else {
++        // From ptr_cb to the end of the buffer
++        ret = memcmp(ptr_cb, ptr, buf + buf_size - ptr_cb);
++        if (ret == 0) {
++            // And the other part from the start of the buffer
++            ret = memcmp(buf, ptr + (buf + buf_size - ptr_cb), ptr_len - (buf + buf_size - ptr_cb));
++        }
++    }
++    return ret;
 +}
 +
 +long ByteStreamFileSource::findSequence() {
@@ -273,6 +276,8 @@ diff -Naur live/liveMedia/ByteStreamFileSource.cpp live.r/liveMedia/ByteStreamFi
 +
 +    while (!seq_found) {
 +        memcpy(&i, addr + 12, sizeof(i));
++        if (addrh + i < buf_idx_w)
++            if (debug) fprintf(stderr, "Restarting buffer\n");
 +        buf_idx_w = addrh + i;
 +//        if (debug) fprintf(stderr, "buf_idx_w: %08x\n", (unsigned int) buf_idx_w);
 +
@@ -295,12 +300,78 @@ diff -Naur live/liveMedia/ByteStreamFileSource.cpp live.r/liveMedia/ByteStreamFi
 +//        if (debug) fprintf(stderr, "found buf_idx_2: %08x\n", (unsigned int) buf_idx_2);
 +
 +        sequence_size = buf_idx_2 - buf_idx_1;
-+        if (sequence_size < 0)
++        if (sequence_size < 0) {
 +            sequence_size = (addrh + sizeh) - buf_idx_1 + buf_idx_2 - addrh;
++            if (debug) fprintf(stderr, "Crossing packet\n");
++        }
 +
 +        switch (state) {
 +            case STATE_SPS_HIGH:
-+                if (memcmp(buf_idx_1, SPS_640X360, sizeof(SPS_640X360)) == 0) {
++                if (cb_memcmp(buf_idx_1, PPS_START, sizeof(PPS_START), addrh, sizeh) == 0) {
++                    if (debug) fprintf(stderr, "Found PPS HIGH\n");
++                    if (fResolution == RESOLUTION_HIGH) {
++                        process_frame = 1;
++                    } else {
++                        process_frame = 0;
++                    }
++                } else if (cb_memcmp(buf_idx_1, SEI_START, sizeof(SEI_START), addrh, sizeh) == 0) {
++                    if (fResolution == RESOLUTION_HIGH) {
++                        process_frame = 1;
++                    } else {
++                        process_frame = 0;
++                    }
++                } else if (cb_memcmp(buf_idx_1, IDR_START, sizeof(IDR_START), addrh, sizeh) == 0) {
++                    if (debug) fprintf(stderr, "Found IDR HIGH\n");
++                    state = STATE_NONE;
++                    if (fResolution == RESOLUTION_HIGH) {
++                        process_frame = 1;
++                    } else {
++                        process_frame = 0;
++                    }
++                } else {
++                    process_frame = 0;
++                }
++                buf_idx_sei = NULL;
++                break;
++            case STATE_SPS_LOW:
++                if (cb_memcmp(buf_idx_1, PPS_START, sizeof(PPS_START), addrh, sizeh) == 0) {
++                    if (debug) fprintf(stderr, "Found PPS LOW\n");
++                    if (fResolution == RESOLUTION_LOW) {
++                        process_frame = 1;
++                    } else {
++                        process_frame = 0;
++                    }
++                } else if (cb_memcmp(buf_idx_1, SEI_START, sizeof(SEI_START), addrh, sizeh) == 0) {
++                    if (fResolution == RESOLUTION_LOW) {
++                        process_frame = 1;
++                    } else {
++                        process_frame = 0;
++                    }
++                } else if (cb_memcmp(buf_idx_1, IDR_START, sizeof(IDR_START), addrh, sizeh) == 0) {
++                    if (debug) fprintf(stderr, "Found IDR LOW\n");
++                    state = STATE_NONE;
++                    if (fResolution == RESOLUTION_LOW) {
++                        process_frame = 1;
++                    } else {
++                        process_frame = 0;
++                    }
++                } else {
++                    process_frame = 0;
++                }
++                buf_idx_sei = NULL;
++                break;
++            case STATE_NONE:
++                if (cb_memcmp(buf_idx_1, SPS_1920X1080, sizeof(SPS_1920X1080), addrh, sizeh) == 0) {
++                    state = STATE_SPS_HIGH;
++                    if (debug) fprintf(stderr, "Found SPS HIGH\n");
++                    fLastHigh = 0;
++                    buf_idx_sei = NULL;
++                    if (fResolution == RESOLUTION_HIGH) {
++                        process_frame = 1;
++                    } else {
++                        process_frame = 0;
++                    }
++                } else if (cb_memcmp(buf_idx_1, SPS_640X360, sizeof(SPS_640X360), addrh, sizeh) == 0) {
 +                    state = STATE_SPS_LOW;
 +                    if (debug) fprintf(stderr, "Found SPS LOW\n");
 +                    fLastLow = 0;
@@ -309,104 +380,23 @@ diff -Naur live/liveMedia/ByteStreamFileSource.cpp live.r/liveMedia/ByteStreamFi
 +                    } else {
 +                        process_frame = 0;
 +                    }
-+                } else if (memcmp(buf_idx_1, SPS_1920X1080, sizeof(SPS_1920X1080)) == 0) {
-+                    if (debug) fprintf(stderr, "Found SPS HIGH\n");
-+                    fLastHigh = 0;
-+                    if (fResolution == RESOLUTION_HIGH) {
-+                        process_frame = 1;
-+                    } else {
-+                        process_frame = 0;
++                } else if (cb_memcmp(buf_idx_1, SEI_START, sizeof(SEI_START), addrh, sizeh) == 0) {
++                    if (buf_idx_sei == NULL) {
++                        buf_idx_sei = buf_idx_1;
 +                    }
-+                } else if (memcmp(buf_idx_1, PPS_START, sizeof(PPS_START)) == 0) {
-+                    if (debug) fprintf(stderr, "Found PPS HIGH\n");
-+                    if (fResolution == RESOLUTION_HIGH) {
-+                        process_frame = 1;
-+                    } else {
-+                        process_frame = 0;
-+                    }
-+                } else if (memcmp(buf_idx_1, IDR_START, sizeof(IDR_START)) == 0) {
-+                    if (debug) fprintf(stderr, "Found IDR HIGH\n");
-+                    if (fResolution == RESOLUTION_HIGH) {
-+                        process_frame = 1;
-+                    } else {
-+                        process_frame = 0;
-+                    }
-+                } else if (memcmp(buf_idx_1, PFR_START, sizeof(PFR_START)) == 0) {
-+                    if (debug) fprintf(stderr, "Found PFR\n");
-+//                    if (debug) fprintf(stderr, "%02x - %02x - %02x - %02x - %02x - %02x - %02x - %02x\n",
-+//                        *buf_idx_1, *(buf_idx_1 + 1), *(buf_idx_1 + 2), *(buf_idx_1 + 3), *(buf_idx_1 + 4), *(buf_idx_1 + 5), *(buf_idx_1 + 6), *(buf_idx_1 + 7));
-+//                    if (debug) fprintf(stderr, "%02x - %02x - %02x\n", buf_idx_1, buf_idx_1 + 8, *(buf_idx_1 + 7));
-+                    last = (((*(buf_idx_1 + 5)) & 0x0000000f) << 4) + (((*(buf_idx_1 + 6)) & 0x000000f0) >> 4);
-+//                    if (debug) fprintf(stderr, "%02x\n", last);
-+                    if (last == fLastHigh + 2) {
-+                        fLastHigh = last;
-+                        if (fResolution == RESOLUTION_HIGH) {
-+//                        if ((sequence_size >= sequence_limit) && (iframe == 0)) {
-+//                        if (*(buf_idx_1 + 7) < 0x5f) {
-+                            process_frame = 1;
-+                        } else if (fResolution == RESOLUTION_LOW) {
-+                            process_frame = 0;
-+                        }
-+                    } else if (last == fLastLow + 2) {
-+                        fLastLow = last;
-+                        if (fResolution == RESOLUTION_HIGH) {
-+//                        if ((sequence_size < sequence_limit) && (iframe == 0)) {
-+//                        if (*(buf_idx_1 + 7) >= 0x5f) {
-+                            process_frame = 0;
-+                        } else if (fResolution == RESOLUTION_LOW) {
-+                            process_frame = 1;
-+                        }
-+                    }
-+                } else if (memcmp(buf_idx_1, SEI_START, sizeof(SEI_START)) == 0) {
-+                    process_frame = 1;
-+                } else {
 +                    process_frame = 0;
-+                }
-+                break;
-+            case STATE_SPS_LOW:
-+                if (memcmp(buf_idx_1, SPS_1920X1080, sizeof(SPS_1920X1080)) == 0) {
-+                    state = STATE_SPS_HIGH;
-+                    if (debug) fprintf(stderr, "Found SPS HIGH\n");
-+                    fLastHigh = 0;
-+                    if (fResolution == RESOLUTION_HIGH) {
-+                        process_frame = 1;
-+                    } else {
-+                        process_frame = 0;
-+                    }
-+                } else if (memcmp(buf_idx_1, SPS_640X360, sizeof(SPS_640X360)) == 0) {
-+                    if (debug) fprintf(stderr, "Found SPS LOW\n");
-+                    fLastLow = 0;
-+                    if (fResolution == RESOLUTION_LOW) {
-+                        process_frame = 1;
-+                    } else {
-+                        process_frame = 0;
-+                    }
-+                } else if (memcmp(buf_idx_1, PPS_START, sizeof(PPS_START)) == 0) {
-+                    if (debug) fprintf(stderr, "Found PPS LOW\n");
-+                    if (fResolution == RESOLUTION_LOW) {
-+                        process_frame = 1;
-+                    } else {
-+                        process_frame = 0;
-+                    }
-+                } else if (memcmp(buf_idx_1, IDR_START, sizeof(IDR_START)) == 0) {
-+                    if (debug) fprintf(stderr, "Found IDR LOW\n");
-+                    if (fResolution == RESOLUTION_LOW) {
-+                        process_frame = 1;
-+                    } else {
-+                        process_frame = 0;
-+                    }
-+                } else if (memcmp(buf_idx_1, PFR_START, sizeof(PFR_START)) == 0) {
++                } else if (cb_memcmp(buf_idx_1, PFR_START, sizeof(PFR_START), addrh, sizeh) == 0) {
 +                    if (debug) fprintf(stderr, "Found PFR\n");
-+//                    if (debug) fprintf(stderr, "%02x - %02x - %02x - %02x - %02x - %02x - %02x - %02x\n",
-+//                        *buf_idx_1, *(buf_idx_1 + 1), *(buf_idx_1 + 2), *(buf_idx_1 + 3), *(buf_idx_1 + 4), *(buf_idx_1 + 5), *(buf_idx_1 + 6), *(buf_idx_1 + 7));
-+//                    if (debug) fprintf(stderr, "%02x - %02x - %02x\n", buf_idx_1, buf_idx_1 + 8, *(buf_idx_1 + 7));
 +                    last = (((*(buf_idx_1 + 5)) & 0x0000000f) << 4) + (((*(buf_idx_1 + 6)) & 0x000000f0) >> 4);
-+//                    if (debug) fprintf(stderr, "%02x\n", last);
 +                    if (last == fLastHigh + 2) {
 +                        fLastHigh = last;
 +                        if (fResolution == RESOLUTION_HIGH) {
-+//                        if ((sequence_size >= sequence_limit) && (iframe == 0)) {
-+//                        if (*(buf_idx_1 + 7) < 0x5f) {
++                            if (debug) fprintf(stderr, "Last high: %02x\n", last);
++                            // Recalculate sequence size to include previous SEI
++                            buf_idx_1 = buf_idx_sei;
++                            sequence_size = buf_idx_2 - buf_idx_1;
++                            if (sequence_size < 0)
++                                sequence_size = (addrh + sizeh) - buf_idx_1 + buf_idx_2 - addrh;
 +                            process_frame = 1;
 +                        } else if (fResolution == RESOLUTION_LOW) {
 +                            process_frame = 0;
@@ -414,30 +404,34 @@ diff -Naur live/liveMedia/ByteStreamFileSource.cpp live.r/liveMedia/ByteStreamFi
 +                    } else if (last == fLastLow + 2) {
 +                        fLastLow = last;
 +                        if (fResolution == RESOLUTION_HIGH) {
-+//                        if ((sequence_size < sequence_limit) && (iframe == 0)) {
-+//                        if (*(buf_idx_1 + 7) >= 0x5f) {
 +                            process_frame = 0;
 +                        } else if (fResolution == RESOLUTION_LOW) {
++                            if (debug) fprintf(stderr, "Last low: %02x\n", last);
++                            // Recalculate sequence size to include previous SEI
++                            buf_idx_1 = buf_idx_sei;
++                            sequence_size = buf_idx_2 - buf_idx_1;
++                            if (sequence_size < 0)
++                                sequence_size = (addrh + sizeh) - buf_idx_1 + buf_idx_2 - addrh;
 +                            process_frame = 1;
 +                        }
 +                    }
-+                } else if (memcmp(buf_idx_1, SEI_START, sizeof(SEI_START)) == 0) {
-+                    process_frame = 1;
++                    buf_idx_sei = NULL;
 +                } else {
 +                    process_frame = 0;
 +                }
 +                break;
 +            default:
-+                if (memcmp(buf_idx_1, SPS_1920X1080, sizeof(SPS_1920X1080)) == 0) {
++                if (cb_memcmp(buf_idx_1, SPS_1920X1080, sizeof(SPS_1920X1080), addrh, sizeh) == 0) {
 +                    if (debug) fprintf(stderr, "Found SPS HIGH\n");
 +                    state = STATE_SPS_HIGH;
 +                    fLastHigh = 0;
++                    buf_idx_sei = NULL;
 +                    if (fResolution == RESOLUTION_HIGH) {
 +                        process_frame = 1;
 +                    } else {
 +                        process_frame = 0;
 +                    }
-+//                } else if (memcmp(buf_idx_1, SPS_640X360, sizeof(SPS_640X360)) == 0) {
++//                } else if (cb_memcmp(buf_idx_1, SPS_640X360, sizeof(SPS_640X360), addrh, sizeh) == 0) {
 +//                    state = STATE_SPS_LOW;
 +//                    fLastLow = 0;
 +//                    if (fResolution == RESOLUTION_LOW) {
@@ -471,7 +465,7 @@ diff -Naur live/liveMedia/ByteStreamFileSource.cpp live.r/liveMedia/ByteStreamFi
    FILE* fid = OpenInputFile(env, fileName);
    if (fid == NULL) return NULL;
  
-@@ -37,7 +331,7 @@
+@@ -37,7 +325,7 @@
  
    return newSource;
  }
@@ -480,15 +474,39 @@ diff -Naur live/liveMedia/ByteStreamFileSource.cpp live.r/liveMedia/ByteStreamFi
  ByteStreamFileSource*
  ByteStreamFileSource::createNew(UsageEnvironment& env, FILE* fid,
  				unsigned preferredFrameSize,
-@@ -49,6 +343,7 @@
+@@ -49,23 +337,24 @@
  
    return newSource;
  }
 +*/
  
  void ByteStreamFileSource::seekToByteAbsolute(u_int64_t byteNumber, u_int64_t numBytesToStream) {
-   SeekFile64(fFid, (int64_t)byteNumber, SEEK_SET);
-@@ -80,11 +375,65 @@
+-  SeekFile64(fFid, (int64_t)byteNumber, SEEK_SET);
++//  SeekFile64(fFid, (int64_t)byteNumber, SEEK_SET);
+ 
+-  fNumBytesToStream = numBytesToStream;
+-  fLimitNumBytesToStream = fNumBytesToStream > 0;
++//  fNumBytesToStream = numBytesToStream;
++//  fLimitNumBytesToStream = fNumBytesToStream > 0;
+ }
+ 
+ void ByteStreamFileSource::seekToByteRelative(int64_t offset, u_int64_t numBytesToStream) {
+-  SeekFile64(fFid, offset, SEEK_CUR);
++//  SeekFile64(fFid, offset, SEEK_CUR);
+ 
+-  fNumBytesToStream = numBytesToStream;
+-  fLimitNumBytesToStream = fNumBytesToStream > 0;
++//  fNumBytesToStream = numBytesToStream;
++//  fLimitNumBytesToStream = fNumBytesToStream > 0;
+ }
+ 
+ void ByteStreamFileSource::seekToEnd() {
+-  SeekFile64(fFid, 0, SEEK_END);
++//  SeekFile64(fFid, 0, SEEK_END);
+ }
+ 
+ ByteStreamFileSource::ByteStreamFileSource(UsageEnvironment& env, FILE* fid,
+@@ -80,11 +369,74 @@
  
    // Test whether the file is seekable
    fFidIsSeekable = FileIsSeekable(fFid);
@@ -497,6 +515,8 @@ diff -Naur live/liveMedia/ByteStreamFileSource.cpp live.r/liveMedia/ByteStreamFi
 +  char *str = NULL;
 +  char printStr[200];
 +  int nm=0, len=0, numEnv=0;
++
++  debug = 0;
 +
 +  // debug setting
 +  str = getenv("RRTSP_DEBUG");
@@ -531,13 +551,20 @@ diff -Naur live/liveMedia/ByteStreamFileSource.cpp live.r/liveMedia/ByteStreamFi
 +
 +  // Define default vaules
 +  addrh = addr + BUF_OFFSET;
-+  sizeh = size - BUF_OFFSET;
++  sizeh = size - BUF_OFFSET - BUF_OFFSET_END;
 +
 +  buf_idx_1 = addrh;
 +  buf_idx_w = 0;
 +
 +  fLastHigh = 0;
 +  fLastLow = 0;
++
++  iframe = 0;                           /* Set to 1 to stream only iframe (debug only) */
++  state = STATE_START;                  /* Starting state of the state machine */
++
++  partial_read = 0;
++  process_frame = 0;
++
 +
 +//  findSequence();
  }
@@ -554,7 +581,7 @@ diff -Naur live/liveMedia/ByteStreamFileSource.cpp live.r/liveMedia/ByteStreamFi
  #ifndef READ_FROM_FILES_SYNCHRONOUSLY
    envir().taskScheduler().turnOffBackgroundReadHandling(fileno(fFid));
  #endif
-@@ -92,11 +441,19 @@
+@@ -92,11 +444,19 @@
    CloseInputFile(fFid);
  }
  
@@ -578,80 +605,83 @@ diff -Naur live/liveMedia/ByteStreamFileSource.cpp live.r/liveMedia/ByteStreamFi
  
  #ifdef READ_FROM_FILES_SYNCHRONOUSLY
    doReadFromFile();
-@@ -134,20 +491,56 @@
-   if (fPreferredFrameSize > 0 && fPreferredFrameSize < fMaxSize) {
+@@ -135,19 +495,62 @@
      fMaxSize = fPreferredFrameSize;
    }
--#ifdef READ_FROM_FILES_SYNCHRONOUSLY
+ #ifdef READ_FROM_FILES_SYNCHRONOUSLY
 -  fFrameSize = fread(fTo, 1, fMaxSize, fFid);
--#else
++  fFrameSize = cb_fread(fTo, fMaxSize, addrh, sizeh, fFid);
+ #else
 -  if (fFidIsSeekable) {
 -    fFrameSize = fread(fTo, 1, fMaxSize, fFid);
 -  } else {
 -    // For non-seekable files (e.g., pipes), call "read()" rather than "fread()", to ensure that the read doesn't block:
 -    fFrameSize = read(fileno(fFid), fTo, fMaxSize);
 -  }
--#endif
--  if (fFrameSize == 0) {
--    handleClosure();
--    return;
--  }
-+//#ifdef READ_FROM_FILES_SYNCHRONOUSLY
-+//  fFrameSize = cb_fread(fTo, fMaxSize, addrh, sizeh, fFid);
-+//#else
 +    if (partial_read == 0) {
 +        if (fFidIsSeekable) {
 +            partial_read = findSequence();
 +            if (partial_read <= fMaxSize) {
-+                fFrameSize = cb_fread(fTo, partial_read, addrh, sizeh, fFid);
++                fFrameSize = cb_fread(fTo, partial_read, BUF_OFFSET, sizeh, fFid);
 +                partial_read = 0;
 +            } else {
-+                fFrameSize = cb_fread(fTo, fMaxSize, addrh, sizeh, fFid);
++                fFrameSize = cb_fread(fTo, fMaxSize, BUF_OFFSET, sizeh, fFid);
 +                partial_read -= fMaxSize;
 +            }
 +        } else {
 +            // For non-seekable files (e.g., pipes), call "read()" rather than "fread()", to ensure that the read doesn't block:
 +            partial_read = findSequence();
 +            if (partial_read <= fMaxSize) {
-+                fFrameSize = cb_read(fileno(fFid), fTo, partial_read, addrh, sizeh);
++                fFrameSize = cb_read(fileno(fFid), fTo, partial_read, BUF_OFFSET, sizeh);
 +                partial_read = 0;
 +            } else {
-+                fFrameSize = cb_read(fileno(fFid), fTo, fMaxSize, addrh, sizeh);
++                fFrameSize = cb_read(fileno(fFid), fTo, fMaxSize, BUF_OFFSET, sizeh);
 +                partial_read -= fMaxSize;
 +            }
 +        }
 +    } else {
 +        if (fFidIsSeekable) {
 +            if (partial_read <= fMaxSize) {
-+                fFrameSize = cb_fread(fTo, partial_read, addrh, sizeh, fFid);
++                fFrameSize = cb_fread(fTo, partial_read, BUF_OFFSET, sizeh, fFid);
 +                partial_read = 0;
 +            } else {
-+                fFrameSize = cb_fread(fTo, fMaxSize, addrh, sizeh, fFid);
++                fFrameSize = cb_fread(fTo, fMaxSize, BUF_OFFSET, sizeh, fFid);
 +                partial_read -= fMaxSize;
 +            }
 +        } else {
 +            // For non-seekable files (e.g., pipes), call "read()" rather than "fread()", to ensure that the read doesn't block:
 +            if (partial_read <= fMaxSize) {
-+                fFrameSize = cb_read(fileno(fFid), fTo, partial_read, addrh, sizeh);
++                fFrameSize = cb_read(fileno(fFid), fTo, partial_read, BUF_OFFSET, sizeh);
 +                partial_read = 0;
 +            } else {
-+                fFrameSize = cb_read(fileno(fFid), fTo, fMaxSize, addrh, sizeh);
++                fFrameSize = cb_read(fileno(fFid), fTo, fMaxSize, BUF_OFFSET, sizeh);
 +                partial_read -= fMaxSize;
 +            }
 +        }
 +    }
-+//#endif
+ #endif
+-  if (fFrameSize == 0) {
+-    handleClosure();
+-    return;
+-  }
 +//  if (fFrameSize == 0) {
 +//    handleClosure();
 +//    return;
 +//  }
++
++/*
++// Save stream locally
++  FILE *fit = fopen("pippo.bin", "a");
++  fwrite(fTo, 1 , fFrameSize, fit);
++  fclose(fit);
++*/
 +
    fNumBytesToStream -= fFrameSize;
  
    // Set the 'presentation time':
 diff -Naur live/liveMedia/H264or5VideoStreamFramer.cpp live.r/liveMedia/H264or5VideoStreamFramer.cpp
 --- live/liveMedia/H264or5VideoStreamFramer.cpp	2019-09-19 00:09:12.000000000 +0200
-+++ live.r/liveMedia/H264or5VideoStreamFramer.cpp	2019-09-25 10:05:14.407950636 +0200
++++ live.r/liveMedia/H264or5VideoStreamFramer.cpp	2019-09-28 11:25:44.330648771 +0200
 @@ -84,7 +84,7 @@
      ? new H264or5VideoStreamParser(hNumber, this, inputSource, includeStartCodeInOutput)
      : NULL;
@@ -663,7 +693,7 @@ diff -Naur live/liveMedia/H264or5VideoStreamFramer.cpp live.r/liveMedia/H264or5V
  H264or5VideoStreamFramer::~H264or5VideoStreamFramer() {
 diff -Naur live/liveMedia/H264VideoFileServerMediaSubsession.cpp live.r/liveMedia/H264VideoFileServerMediaSubsession.cpp
 --- live/liveMedia/H264VideoFileServerMediaSubsession.cpp	2019-09-19 00:09:12.000000000 +0200
-+++ live.r/liveMedia/H264VideoFileServerMediaSubsession.cpp	2019-09-25 10:05:14.411950708 +0200
++++ live.r/liveMedia/H264VideoFileServerMediaSubsession.cpp	2019-09-28 11:25:44.330648771 +0200
 @@ -107,6 +107,7 @@
    ByteStreamFileSource* fileSource = ByteStreamFileSource::createNew(envir(), fFileName);
    if (fileSource == NULL) return NULL;
@@ -674,25 +704,27 @@ diff -Naur live/liveMedia/H264VideoFileServerMediaSubsession.cpp live.r/liveMedi
    return H264VideoStreamFramer::createNew(envir(), fileSource);
 diff -Naur live/liveMedia/include/ByteStreamFileSource.hh live.r/liveMedia/include/ByteStreamFileSource.hh
 --- live/liveMedia/include/ByteStreamFileSource.hh	2019-09-19 00:09:12.000000000 +0200
-+++ live.r/liveMedia/include/ByteStreamFileSource.hh	2019-09-25 10:05:14.411950708 +0200
-@@ -25,6 +25,16 @@
++++ live.r/liveMedia/include/ByteStreamFileSource.hh	2019-09-28 11:24:20.000000000 +0200
+@@ -25,6 +25,18 @@
  #include "FramedFileSource.hh"
  #endif
  
 +#define RESOLUTION_LOW 360
 +#define RESOLUTION_HIGH 1080
 +
-+struct pfr
-+{
-+    char *pfr1;
-+    unsigned int length;
-+    Boolean valid;
-+};
++#define BUF_OFFSET 230
++#define BUF_OFFSET_END 2
++#define USLEEP 10000
++
++#define STATE_START 0                  /* Starting state*/
++#define STATE_SPS_HIGH 1               /* Last SPS encountered is high res */
++#define STATE_SPS_LOW 2                /* Last SPS encountered is low res */
++#define STATE_NONE 3                   /* Generic state*/
 +
  class ByteStreamFileSource: public FramedFileSource {
  public:
    static ByteStreamFileSource* createNew(UsageEnvironment& env,
-@@ -34,10 +44,10 @@
+@@ -34,10 +46,10 @@
    // "preferredFrameSize" == 0 means 'no preference'
    // "playTimePerFrame" is in microseconds
  
@@ -705,7 +737,7 @@ diff -Naur live/liveMedia/include/ByteStreamFileSource.hh live.r/liveMedia/inclu
        // an alternative version of "createNew()" that's used if you already have
        // an open file.
  
-@@ -48,6 +58,7 @@
+@@ -48,6 +60,7 @@
      // if "numBytesToStream" is >0, then we limit the stream to that number of bytes, before treating it as EOF
    void seekToByteRelative(int64_t offset, u_int64_t numBytesToStream = 0);
    void seekToEnd(); // to force EOF handling on the next read
@@ -713,21 +745,25 @@ diff -Naur live/liveMedia/include/ByteStreamFileSource.hh live.r/liveMedia/inclu
  
  protected:
    ByteStreamFileSource(UsageEnvironment& env,
-@@ -65,6 +76,13 @@
+@@ -65,6 +78,17 @@
    // redefined virtual functions:
    virtual void doGetNextFrame();
    virtual void doStopGettingFrames();
-+  size_t cb_fread(void *ptr, size_t size,
-+    const void *buf, size_t buf_size, FILE *stream);
 +  size_t cb_read(int stream, void *ptr, size_t size,
-+    const void *buf, size_t buf_size);
++    size_t offset, size_t buf_size);
++  size_t cb_fread(void *ptr, size_t size,
++    size_t offset, size_t buf_size, FILE *stream);
 +  unsigned char *cb_memmem(unsigned char *src, int src_len,
 +    unsigned char *what, int what_len, unsigned char *buf, int buf_size);
++  int cb_memcmp(unsigned char *ptr_cb,
++    unsigned char *ptr, int ptr_len, unsigned char *buf, int buf_size);
++  unsigned char *cb_memcpy(unsigned char *dst,
++    unsigned char *src, int src_len, unsigned char *buf, int buf_size);
 +  long findSequence();
  
  protected:
    u_int64_t fFileSize;
-@@ -77,6 +95,10 @@
+@@ -77,6 +101,35 @@
    Boolean fHaveStartedReading;
    Boolean fLimitNumBytesToStream;
    u_int64_t fNumBytesToStream; // used iff "fLimitNumBytesToStream" is True
@@ -735,12 +771,37 @@ diff -Naur live/liveMedia/include/ByteStreamFileSource.hh live.r/liveMedia/inclu
 +  unsigned fResolution;
 +  unsigned int fLastHigh;
 +  unsigned int fLastLow;
++
++  unsigned char *addr;                      /* Pointer to shared memory region (header) */
++  unsigned char *addrh;                     /* Pointer to h264 data */
++  int size;                                 /* Size of shared memory region */
++  int sizeh;                                /* Size of h264 data */
++  int debug;                                /* Set to 1 to debug this .cpp */
++  int iframe;                               /* Set to 1 to stream only iframe */
++  unsigned long partial_read;
++  unsigned char *buf_idx_1, *buf_idx_w;
++  unsigned char *buf_idx_sei;
++
++  int state;                                /* State of the state machine */
++  int process_frame;
++
++  static unsigned char IDR[];
++  static unsigned char NAL_START[];
++  static unsigned char SEI_START[];
++  static unsigned char IDR_START[];
++  static unsigned char PFR_START[];
++  static unsigned char SPS_START[];
++  static unsigned char PPS_START[];
++  static unsigned char SPS_640X360[];
++  static unsigned char SPS_PPS_640X360[];
++  static unsigned char SPS_1920X1080[];
++  static unsigned char SPS_PPS_1920X1080[];
  };
  
  #endif
 diff -Naur live/liveMedia/Makefile live.r/liveMedia/Makefile
 --- live/liveMedia/Makefile	1970-01-01 01:00:00.000000000 +0100
-+++ live.r/liveMedia/Makefile	2019-09-25 10:05:14.411950708 +0200
++++ live.r/liveMedia/Makefile	2019-09-28 11:25:44.330648771 +0200
 @@ -0,0 +1,456 @@
 +INCLUDES = -Iinclude -I../UsageEnvironment/include -I../groupsock/include
 +PREFIX = /usr/local
@@ -1200,7 +1261,7 @@ diff -Naur live/liveMedia/Makefile live.r/liveMedia/Makefile
 +##### Any additional, platform-specific rules come here:
 diff -Naur live/Makefile live.r/Makefile
 --- live/Makefile	1970-01-01 01:00:00.000000000 +0100
-+++ live.r/Makefile	2019-09-25 10:05:14.411950708 +0200
++++ live.r/Makefile	2019-09-28 11:25:44.334648767 +0200
 @@ -0,0 +1,99 @@
 +##### Change the following for your environment:
 +COMPILE_OPTS =		$(INCLUDES) -I. -O2 -DSOCKLEN_T=socklen_t -D_LARGEFILE_SOURCE=1 -D_FILE_OFFSET_BITS=64
@@ -1303,7 +1364,7 @@ diff -Naur live/Makefile live.r/Makefile
 +	  $(PROXY_SERVER_DIR)/Makefile Makefile
 diff -Naur live/mediaServer/Makefile live.r/mediaServer/Makefile
 --- live/mediaServer/Makefile	1970-01-01 01:00:00.000000000 +0100
-+++ live.r/mediaServer/Makefile	2019-09-25 10:05:14.411950708 +0200
++++ live.r/mediaServer/Makefile	2019-09-28 11:25:44.334648767 +0200
 @@ -0,0 +1,65 @@
 +INCLUDES = -I../UsageEnvironment/include -I../groupsock/include -I../liveMedia/include -I../BasicUsageEnvironment/include
 +# Default library filename suffixes for each library that we link with.  The "config.*" file might redefine these later.
@@ -1372,7 +1433,7 @@ diff -Naur live/mediaServer/Makefile live.r/mediaServer/Makefile
 +##### Any additional, platform-specific rules come here:
 diff -Naur live/proxyServer/Makefile live.r/proxyServer/Makefile
 --- live/proxyServer/Makefile	1970-01-01 01:00:00.000000000 +0100
-+++ live.r/proxyServer/Makefile	2019-09-25 10:05:14.411950708 +0200
++++ live.r/proxyServer/Makefile	2019-09-28 11:25:44.334648767 +0200
 @@ -0,0 +1,62 @@
 +INCLUDES = -I../UsageEnvironment/include -I../groupsock/include -I../liveMedia/include -I../BasicUsageEnvironment/include
 +# Default library filename suffixes for each library that we link with.  The "config.*" file might redefine these later.
@@ -1438,7 +1499,7 @@ diff -Naur live/proxyServer/Makefile live.r/proxyServer/Makefile
 +##### Any additional, platform-specific rules come here:
 diff -Naur live/rRTSPServer.cpp live.r/rRTSPServer.cpp
 --- live/rRTSPServer.cpp	1970-01-01 01:00:00.000000000 +0100
-+++ live.r/rRTSPServer.cpp	2019-09-25 10:05:14.411950708 +0200
++++ live.r/rRTSPServer.cpp	2019-09-28 11:25:44.334648767 +0200
 @@ -0,0 +1,141 @@
 +/**********
 +This library is free software; you can redistribute it and/or modify it under
@@ -1583,7 +1644,7 @@ diff -Naur live/rRTSPServer.cpp live.r/rRTSPServer.cpp
 +}
 diff -Naur live/testProgs/Makefile live.r/testProgs/Makefile
 --- live/testProgs/Makefile	1970-01-01 01:00:00.000000000 +0100
-+++ live.r/testProgs/Makefile	2019-09-25 10:05:14.411950708 +0200
++++ live.r/testProgs/Makefile	2019-09-28 11:25:44.334648767 +0200
 @@ -0,0 +1,175 @@
 +INCLUDES = -I../UsageEnvironment/include -I../groupsock/include -I../liveMedia/include -I../BasicUsageEnvironment/include
 +# Default library filename suffixes for each library that we link with.  The "config.*" file might redefine these later.
@@ -1762,7 +1823,7 @@ diff -Naur live/testProgs/Makefile live.r/testProgs/Makefile
 +##### Any additional, platform-specific rules come here:
 diff -Naur live/UsageEnvironment/Makefile live.r/UsageEnvironment/Makefile
 --- live/UsageEnvironment/Makefile	1970-01-01 01:00:00.000000000 +0100
-+++ live.r/UsageEnvironment/Makefile	2019-09-25 10:05:14.411950708 +0200
++++ live.r/UsageEnvironment/Makefile	2019-09-28 11:25:44.334648767 +0200
 @@ -0,0 +1,58 @@
 +INCLUDES = -Iinclude -I../groupsock/include
 +PREFIX = /usr/local
