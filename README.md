@@ -33,10 +33,6 @@ I'm looking for someone who knows h264 better than me and can help me with this:
 This firmware contains the following features.
 Apart from RTSP, snapshot and ONVIF, all the features are copied from the TheCrypt0 project.
 
-## Features
-This firmware contains the following features.
-Apart from RTSP, snapshot and ONVIF, all the features are copied from the TheCrypt0 project.
-
 - FEATURES
   - RTSP server - allows a RTSP stream of the video (high and/or low resolution).
     - rtsp://IP-CAM/ch0_0.h264        (high res)
@@ -77,7 +73,7 @@ So, USE AT YOUR OWN RISK.
 
 7. Blue light should come ON indicating that your WiFi connection has been successful (if not disable using app).
 
-8. Go in the browser and access the web interface of the camera as a website. Find the IP address using your mobile app (Camera Settings --> Network Info --> IP Address).
+8. Go in the browser and access the web interface of the camera as a website (http://IP-CAM:8080). Find the IP address using your mobile app (Camera Settings --> Network Info --> IP Address). If the mobile app can't be paired, you may look for the IP on your router's portal (see connected devices).
 
 10. Done.
 
