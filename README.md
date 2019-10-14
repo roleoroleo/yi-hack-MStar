@@ -14,11 +14,9 @@ The RTSP server code derives from live555 - http://www.live555.com/ and from the
 At this moment it works but sometimes the video crashes.
 
 Known issue.
-
-h264 frames are temporarily saved in a 1.8 MB circular buffer. This file contains both high resolution frames and low resolution frames, mixed in a single stream.
-When I have to extract the frames from this buffer, I can recognize i-frames without problems thanks to the SPS nalu but I can't correctly recognize p-frames.
-I have developed an algorithm that tries to solve this problem by reading the POC but it is not error free.
-I'm looking for someone who knows h264 better than me and can help me with this: the code is in the ByteStreamFileSource.cpp file.
+I recently changed the way to read the video stream, now I go directly to the kernel driver memory.
+The quality has improved but the video still flickers.
+I need help!!!
 
 ## Table of Contents
 
@@ -34,7 +32,7 @@ This firmware contains the following features.
 Apart from RTSP, snapshot and ONVIF, all the features are copied from the TheCrypt0 project.
 
 - FEATURES
-  - RTSP server - allows a RTSP stream of the video (high and/or low resolution) but without audio.
+  - RTSP server - allows a RTSP stream of the video (high or low resolution) but without audio.
     - rtsp://IP-CAM/ch0_0.h264        (high res)
     - rtsp://IP-CAM/ch0_1.h264        (low res)
   - ONVIF server - standardized interfaces for IP cameras.
@@ -55,7 +53,7 @@ Currently this project supports only the following camera:
 
 - Yi 1080p Home 6FUS with firmware 4.5.0.0A_201902261502 or 4.5.0.0B_201909041616
 
-This firmware is based on 4.5.0.0B and completely overwrite the original firmware.
+This firmware is based on 4.5.0.0C and completely overwrite the original firmware.
 So, USE AT YOUR OWN RISK.
 
 ## Getting Started

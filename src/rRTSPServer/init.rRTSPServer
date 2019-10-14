@@ -1,6 +1,6 @@
 #!/bin/bash
 
-ARCHIVE=live.2019.09.18.tar.gz
+ARCHIVE=live.2019.10.11.tar.gz
 SCRIPT_DIR=$(cd `dirname $0` && pwd)
 cd $SCRIPT_DIR
 
@@ -15,3 +15,5 @@ patch -p0 < rRTSPServer.patch
 
 cd live || exit 1
 
+./genMakefiles linux-cross
+cp ../Makefile.rRTSPServer Makefile
