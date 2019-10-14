@@ -162,9 +162,6 @@ int main(int argc, char **argv)
     }
 
     while(!stream_started) {
-        fLen = fopen(filLenFile, "r");
-        fscanf(fLen, "%d", &len);
-        fclose(fLen);
         fTime = fopen(timeStampFile, "r");
         fscanf(fTime, "%u", &time);
         fclose(fTime);
@@ -173,6 +170,10 @@ int main(int argc, char **argv)
             usleep(200);
             continue;
         }
+
+        fLen = fopen(filLenFile, "r");
+        fscanf(fLen, "%d", &len);
+        fclose(fLen);
 
         memcpy(buffer, addr, len);
         if (memcmp(SPS, buffer, sizeof(SPS)) == 0) {
@@ -183,9 +184,6 @@ int main(int argc, char **argv)
     }
 
     while(1) {
-        fLen = fopen(filLenFile, "r");
-        fscanf(fLen, "%d", &len);
-        fclose(fLen);
         fTime = fopen(timeStampFile, "r");
         fscanf(fTime, "%u", &time);
         fclose(fTime);
@@ -196,6 +194,11 @@ int main(int argc, char **argv)
             continue;
         }
 
+        fLen = fopen(filLenFile, "r");
+        fscanf(fLen, "%d", &len);
+        fclose(fLen);
+
+        if (debug) fprintf(stderr, "sending len: %d\n", len);
         memcpy(buffer, addr, len);
         oldTime = time;
         fwrite(buffer, 1, len, stdout);
