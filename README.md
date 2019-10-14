@@ -14,9 +14,9 @@ The RTSP server code derives from live555 - http://www.live555.com/ and from the
 At this moment it works but sometimes the video crashes.
 
 Known issue.
+
 I recently changed the way to read the video stream, now I go directly to the kernel driver memory.
-The quality has improved but the video still flickers.
-I need help!!!
+The quality has improved. Test in progress!
 
 ## Table of Contents
 
