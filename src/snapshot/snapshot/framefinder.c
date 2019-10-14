@@ -35,6 +35,7 @@
 
 
 #define BUF_OFFSET 230
+#define BUF_OFFSET_END 2
 #define USLEEP 100000
 
 #define BUFFER_FILE "/dev/fshare_frame_buf"
@@ -95,6 +96,24 @@ unsigned char * cb_memmem(unsigned char *src,
     return p;
 }
 
+int cb_memcmp(unsigned char *ptr_cb,
+    unsigned char *ptr, int ptr_len, unsigned char *buf, int buf_size)
+{
+    int ret;
+
+    if (ptr_cb + ptr_len <= buf + buf_size) {
+        ret = memcmp(ptr_cb, ptr, ptr_len);
+    } else {
+        // From ptr_cb to the end of the buffer
+        ret = memcmp(ptr_cb, ptr, buf + buf_size - ptr_cb);
+        if (ret == 0) {
+            // And the other part from the start of the buffer
+            ret = memcmp(buf, ptr + (buf + buf_size - ptr_cb), ptr_len - (buf + buf_size - ptr_cb));
+        }
+    }
+    return ret;
+}
+
 void writeFile(char *name, char *data, int len) {
     FILE *fp;
 
@@ -127,7 +146,7 @@ int main(int argc, char **argv) {
     int i;
     long sequence_size;
 
-    // Opening an existing file
+    // Opening the file
     fFid = fopen(BUFFER_FILE, "r") ;
     if ( fFid == NULL ) {
         if (debug) fprintf(stderr, "could not open file %s\n", BUFFER_FILE) ;
@@ -153,7 +172,7 @@ int main(int argc, char **argv) {
 
     // Define default vaules
     addrh = addr + BUF_OFFSET;
-    sizeh = size - BUF_OFFSET;
+    sizeh = size - BUF_OFFSET - BUF_OFFSET_END;
 
     buf_idx_1 = addrh;
     buf_idx_w = 0;
@@ -186,13 +205,13 @@ int main(int argc, char **argv) {
 
         switch (state) {
             case STATE_SPS_HIGH:
-                if (memcmp(buf_idx_1, PPS_START, sizeof(PPS_START)) == 0) {
+                if (cb_memcmp(buf_idx_1, PPS_START, sizeof(PPS_START), addrh, sizeh) == 0) {
                     state = STATE_PPS_HIGH;
                     if (debug) fprintf(stderr, "state = STATE_PPS_HIGH\n");
                 }
                 break;
             case STATE_PPS_HIGH:
-                if (memcmp(buf_idx_1, IDR_START, sizeof(IDR_START)) == 0) {
+                if (cb_memcmp(buf_idx_1, IDR_START, sizeof(IDR_START), addrh, sizeh) == 0) {
                     state = STATE_IDR_HIGH;
                     if (debug) fprintf(stderr, "state = STATE_IDR_HIGH\n");
                 }
@@ -214,13 +233,13 @@ int main(int argc, char **argv) {
                 break;
 
             case STATE_SPS_LOW:
-                if (memcmp(buf_idx_1, PPS_START, sizeof(PPS_START)) == 0) {
+                if (cb_memcmp(buf_idx_1, PPS_START, sizeof(PPS_START), addrh, sizeh) == 0) {
                     state = STATE_PPS_LOW;
                     if (debug) fprintf(stderr, "state = STATE_PPS_LOW\n");
                 }
                 break;
             case STATE_PPS_LOW:
-                if (memcmp(buf_idx_1, IDR_START, sizeof(IDR_START)) == 0) {
+                if (cb_memcmp(buf_idx_1, IDR_START, sizeof(IDR_START), addrh, sizeh) == 0) {
                     state = STATE_IDR_LOW;
                     if (debug) fprintf(stderr, "state = STATE_IDR_LOW\n");
                 }
@@ -242,11 +261,11 @@ int main(int argc, char **argv) {
                 break;
 
             case STATE_NONE:
-                if (memcmp(buf_idx_1, SPS_1920X1080, sizeof(SPS_1920X1080)) == 0) {
+                if (cb_memcmp(buf_idx_1, SPS_1920X1080, sizeof(SPS_1920X1080), addrh, sizeh) == 0) {
                     state = STATE_SPS_HIGH;
                     if (debug) fprintf(stderr, "state = STATE_SPS_HIGH\n");
                     buf_idx_start = buf_idx_1;
-                } else if (memcmp(buf_idx_1, SPS_640X360, sizeof(SPS_640X360)) == 0) {
+                } else if (cb_memcmp(buf_idx_1, SPS_640X360, sizeof(SPS_640X360), addrh, sizeh) == 0) {
                     state = STATE_SPS_LOW;
                     if (debug) fprintf(stderr, "state = STATE_SPS_LOW\n");
                     buf_idx_start = buf_idx_1;
