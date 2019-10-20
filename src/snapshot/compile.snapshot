@@ -28,7 +28,7 @@ make || exit 1
 
 mkdir -p ../_install/bin || exit 1
 
-cp ./buffer2jpg ../_install/bin || exit 1
-cp ./framefinder ../_install/bin || exit 1
+cp ./imggrabber ../_install/bin || exit 1
+cp ./imggrabbercmd ../_install/bin || exit 1
 
 ${STRIP} ../_install/bin/* || exit 1

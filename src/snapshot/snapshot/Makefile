@@ -1,33 +1,34 @@
-OBJECTS_F = framefinder.o
-OBJECTS_B = buffer2jpg.o
-OBJECTS = $(OBJECTS_F) $(OBJECTS_B)
+OBJECTS_1 = imggrabber.o
+OBJECTS_2 = imggrabbercmd.o
+OBJECTS = $(OBJECTS_1) $(OBJECTS_2)
 FFMPEG = ffmpeg-4.0.4
 FFMPEG_DIR = ./$(FFMPEG)
 INC = -I$(FFMPEG_DIR)
-LIB = $(FFMPEG_DIR)/libavcodec/libavcodec.a $(FFMPEG_DIR)/libavutil/libavutil.a -lpthread -lm
+LIB_1 = -lpthread -lm
+LIB_2 = $(FFMPEG_DIR)/libavcodec/libavcodec.a $(FFMPEG_DIR)/libavutil/libavutil.a -lpthread -lm
 
-all: framefinder buffer2jpg
+all: imggrabber imggrabbercmd
 
-framefinder.o: framefinder.c $(HEADERS)
+imggrabber.o: imggrabber.c $(HEADERS)
 	$(CC) -c $< -fPIC -O2 -o $@
 
-buffer2jpg.o: buffer2jpg.c $(HEADERS)
+imggrabbercmd.o: imggrabbercmd.c $(HEADERS)
 	@$(build_ffmpeg)
 	$(CC) -c $< $(INC) -fPIC -O2 -o $@
 
-framefinder: $(OBJECTS_F)
-	$(CC) $(OBJECTS_F) -fPIC -O2 -o $@
+imggrabber: $(OBJECTS_1)
+	$(CC) $(OBJECTS_1) $(LIB_1) -fPIC -O2 -o $@
 	$(STRIP) $@
 
-buffer2jpg: $(OBJECTS_B)
-	$(CC) $(OBJECTS_B) $(LIB) -fPIC -O2 -o $@
+imggrabbercmd: $(OBJECTS_2)
+	$(CC) $(OBJECTS_2) $(LIB_2) -fPIC -O2 -o $@
 	$(STRIP) $@
 
 .PHONY: clean
 
 clean:
-	rm -f framefinder
-	rm -f buffer2jpg
+	rm -f imagegrabber
+	rm -f imagegrabbercmd
 	rm -f $(OBJECTS)
 
 define build_ffmpeg

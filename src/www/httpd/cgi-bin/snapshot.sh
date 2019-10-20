@@ -7,8 +7,7 @@ VAL="$(echo $QUERY_STRING | cut -d'=' -f2)"
 RES=""
 
 if [ $CONF == "res" ] ; then
-    RES="-r $VAL"
+    RES="$VAL"
 fi
 
-
-buffer2jpg -o stdout $RES
+imggrabbercmd $RES

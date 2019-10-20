@@ -15,19 +15,18 @@
  */
 
 /*
- * Read the last h264 i-frame from the buffer and convert it using libavcodec.
- * The position of the frame is written in /tmp/iframe.idx with the following
- * rule:
- * - high res offset (4 bytes)
- * - high res length (4 bytes)
- * - low res offset (4 bytes)
- * - low res length (4 bytes)
+ * Sends command via pipes and receive an i-frame.
+ * Then converts it to JPG using libavcodec and print to stdout.
  */
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/mman.h>
-#include <getopt.h>
+#include <stdint.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #ifdef HAVE_AV_CONFIG_H
 #undef HAVE_AV_CONFIG_H
@@ -35,15 +34,16 @@
 
 #include "libavcodec/avcodec.h"
 
-#define BUFFER_FILE "/dev/fshare_frame_buf"
-#define I_FILE "/tmp/iframe.idx"
+#define RESOLUTION_LOW 360
+#define RESOLUTION_HIGH 1080
+
 #define TMP_FILE "/tmp/snapshot.yuv"
+#define FIFO_FILE "/tmp/idr_fifo"
+
 #define FF_INPUT_BUFFER_PADDING_SIZE 32
 
-#define RESOLUTION_HIGH 0
-#define RESOLUTION_LOW 1
-
 int debug = 0;
+char bufimg[262144];
 
 int frame_decode(char *outfilename, unsigned char *p, int length)
 {
@@ -111,6 +111,8 @@ int frame_decode(char *outfilename, unsigned char *p, int length)
         if (debug) fprintf(stderr, "No input frame\n");
         return -2;
     }
+
+    if (debug) fprintf(stderr, "Opening output file %s\n", outfilename);
     fOut = fopen(outfilename,"w");
     if(!fOut) {
         if (debug) fprintf(stderr, "could not open %s\n", outfilename);
@@ -127,10 +129,13 @@ int frame_decode(char *outfilename, unsigned char *p, int length)
     fclose(fOut);
 
     // Clean memory
+    if (debug) fprintf(stderr, "Cleaning memory\n");
     free(inbuf);
     av_frame_free(&picture);
     avcodec_close(c);
     av_free(c);
+
+    return 0;
 }
 
 int frame_encode(char *outfilename, char *infilename, int resolution)
@@ -260,119 +265,81 @@ int frame_encode(char *outfilename, char *infilename, int resolution)
     return 0;
 }
 
-void usage(char *prog_name)
+int buffer2jpg(unsigned char *buffer, int length, int res)
 {
-    fprintf(stderr, "Usage: %s [options]\n", prog_name);
-    fprintf(stderr, "\t-o, --output=FILE       Set output file name (stdout to print on stdout)\n");
-    fprintf(stderr, "\t-r, --res=RES           Set resolution: \"low\" or \"high\" (default \"high\")\n");
-    fprintf(stderr, "\t-h, --help              Show this help\n");
+    // Use separate decode/encode function with a temp file to save memory
+    if(frame_decode(TMP_FILE, buffer, length) < 0) {
+        if (debug) fprintf(stderr, "Error decoding h264 frame\n");
+        exit(-11);
+    }
+    if(frame_encode("stdout", TMP_FILE, res) < 0) {
+        if (debug) fprintf(stderr, "Error encoding jpg image\n");
+        exit(-12);
+    }
+    remove(TMP_FILE);
+
+    return 0;
 }
 
 int main(int argc, char **argv)
 {
-    FILE *fIdx, *fBuf;
-    uint8_t utmp[16];
-    uint32_t offset, length;
-    unsigned char *addr;
-    int size;
-    int res = RESOLUTION_HIGH;
-    char output_file[1024] = "";
+    int p[2], fd, nread, len, i;
+    char bufchar[8];
+    char bufread[1024];
+    char *ptr;
+    char *idr_fifo = FIFO_FILE; 
 
-    int c;
+    if (argc < 2) {
+        bufchar[0] = 'h';
+    } else {
+        bufchar[0] = argv[1][0];
+    }
 
-    while (1) {
-        static struct option long_options[] = {
-            {"output",  required_argument, 0, 'o'},
-            {"res",     required_argument, 0, 'r'},
-            {"help",    no_argument,       0, 'h'},
-            {0,         0,                 0,  0 }
-        };
+    if (debug) fprintf(stderr, "Creating fifo\n");
+    mkfifo(idr_fifo, 0666);
 
-        int option_index = 0;
-        c = getopt_long(argc, argv, "o:r:h",
-            long_options, &option_index);
-        if (c == -1)
-            break;
+    if (debug) fprintf(stderr, "Opening fifo\n");
+    fd = open(idr_fifo, O_RDWR|O_NONBLOCK);
+    if (fd == -1) {
+        fprintf(stderr, "Error opening fifo\n");
+    }
+    write(fd, bufchar, 1);
+    usleep(200000);
 
-        switch (c) {
-            case 'o':
-                strcpy(output_file, optarg);
-                break;
-
-            case 'r':
-                if (strcasecmp("low", optarg) == 0)
-                    res = RESOLUTION_LOW;
-                else
-                    res = RESOLUTION_HIGH;
-                break;
-
-            case 'h':
-            default:
-                usage(argv[0]);
-                exit(-1);
-                break;
+    i = 0;
+    while ((nread = read(fd, bufread, sizeof(bufread))) == -1) {
+        usleep(100000);
+        if (i >= 100) {
+            fprintf(stderr, "Timeout expired\n");
+            exit(-1);
         }
+        i++;
     }
-
-    if (output_file[0] == '\0') {
-        usage(argv[0]);
-        exit(-1);
-    }
-
-    fIdx = fopen(I_FILE, "r");
-    if (fIdx == NULL) {
-        if (debug) fprintf(stderr, "Error opening file %s\n", I_FILE);
-        exit(-1);
-    }
-    if (fread(utmp, 1, sizeof(utmp), fIdx) != sizeof(utmp)) {
-        if (debug) fprintf(stderr, "Error reading file %s\n", I_FILE);
-        exit(-1);
-    }
-
-    if (res == RESOLUTION_HIGH) {
-        memcpy(&offset, utmp, sizeof(uint32_t));
-        memcpy(&length, utmp + 0x04, sizeof(uint32_t));
-    } else {
-        memcpy(&offset, utmp + 0x08, sizeof(uint32_t));
-        memcpy(&length, utmp + 0x0c, sizeof(uint32_t));
-    }
-
-    fBuf = fopen(BUFFER_FILE, "r") ;
-    if ( fBuf == NULL ) {
-        if (debug) fprintf(stderr, "could not open file %s\n", BUFFER_FILE);
-        exit(-1);
-    }
-
-    // Tell size
-    fseek(fBuf, 0L, SEEK_END);
-    size = ftell(fBuf);
-    fseek(fBuf, 0L, SEEK_SET);
-
-    // Map file to memory
-    addr = (unsigned char*) mmap(NULL, size, PROT_READ, MAP_SHARED, fileno(fBuf), 0);
-    if (addr == MAP_FAILED) {
-        if (debug) fprintf(stderr, "error mapping file %s\n", BUFFER_FILE);
-        exit(-1);
-    }
-    if (debug) fprintf(stderr, "mapping file %s, size %d, to %08x\n", BUFFER_FILE, size, addr);
-
-    // Closing the file
-    if (debug) fprintf(stderr, "closing the file %s\n", BUFFER_FILE) ;
-    fclose(fBuf) ;
-
-    // Use separate decode/encode function with a temp file to save memory
-    if(frame_decode(TMP_FILE, addr + offset, length) < 0)
+    ptr = bufimg;
+    if (nread > sizeof(bufimg)) {
+        fprintf(stderr, "Buffer overflow\n");
         exit(-2);
-    if(frame_encode(output_file, TMP_FILE, res) < 0)
-        exit(-3);
-    remove(TMP_FILE);
+    }
+    memcpy(ptr, bufread, nread);
+    ptr += nread;
 
-    // Unmap file from memory
-    if (munmap(addr, size) == -1) {
-        if (debug) fprintf(stderr, "error munmapping file");
-    } else {
-        if (debug) fprintf(stderr, "unmapping file %s, size %d, from %08x\n", BUFFER_FILE, size, addr);
+    while ((nread = read(fd, bufread, sizeof(bufread))) != -1) {
+        if ((ptr - bufimg) + nread > sizeof(bufimg)) {
+            fprintf(stderr, "Buffer overflow\n");
+            exit(-3);
+        }
+        memcpy(ptr, bufread, nread);
+        ptr += nread;
+    }
+    len = ptr - bufimg;
+
+    if (debug) fprintf(stderr, "Read %d bytes\n", len);
+    if ((bufchar[0] == 'l') && (len > 0)) {
+        buffer2jpg(bufimg, len, RESOLUTION_LOW);
+    } else if ((bufchar[0] == 'h') && (len > 0)) {
+        buffer2jpg(bufimg, len, RESOLUTION_HIGH);
     }
 
-    return 0;
+    if (debug) fprintf(stderr, "Done\n");
+    close(fd);
 }
