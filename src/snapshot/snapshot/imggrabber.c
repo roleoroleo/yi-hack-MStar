@@ -34,9 +34,7 @@
 #define RESOLUTION_LOW 360
 #define RESOLUTION_HIGH 1080
 
-#define TMP_FILE "/tmp/snapshot.yuv"
-
-#define FF_INPUT_BUFFER_PADDING_SIZE 32
+#define FIFO_FILE "/tmp/idr_fifo"
 
 int debug = 0;
 
@@ -162,7 +160,7 @@ void *checkBufferL(void *arg)
     FILE *fLen;
 
     while (1) {
-        wait = 1000;
+        wait = 10000;
         // Checks if the frame is i-frame (low res buffer)
         if (memcmp(SPS, addrL, sizeof(SPS)) == 0) {
             // Reads the len until buffer is full and copies to memory
@@ -175,18 +173,22 @@ void *checkBufferL(void *arg)
                 fscanf(fLen, "%d", &lenL);
                 fclose(fLen);
             }
+            if (debug) fprintf(stderr, "Found new len %d for low res\n", lenL);
             if (lenL <= sizeof(bufferL)) {
                 memcpy(bufferL, addrL, lenL);
                 // Checks if the buffer is "stable" using crc
                 crc = crc8x_fast(0, bufferL, (size_t) lenL);
+                usleep(100);
                 if (crc == crc8x_fast(0, addrL, (size_t) lenL)) {
                     wait = 100000;
+                    if (debug) fprintf(stderr, "Found new idr with len %d\n", lenL);
                 } else {
                     lenL = 0;
                     wait = 100;
                     if (debug) fprintf(stderr, "Wrong buffer for low res\n");
                 }
             } else {
+                lenL = 0;
                 if (debug) fprintf(stderr, "Buffer too short for low res\n");
             }
         }
@@ -201,7 +203,7 @@ void *checkBufferH(void *arg)
     FILE *fLen;
 
     while (1) {
-        wait = 1000;
+        wait = 10000;
         // Checks if the frame is i-frame (high res buffer)
         if (memcmp(SPS, addrH, sizeof(SPS)) == 0) {
             // Reads the len until buffer is full and copies to memory
@@ -214,18 +216,22 @@ void *checkBufferH(void *arg)
                 fscanf(fLen, "%d", &lenH);
                 fclose(fLen);
             }
+            if (debug) fprintf(stderr, "Found new len %d for high res\n", lenH);
             if (lenH <= sizeof(bufferH)) {
                 memcpy(bufferH, addrH, lenH);
                 // Checks if the buffer is "stable" using crc
                 crc = crc8x_fast(0, bufferH, (size_t) lenH);
+                usleep(100);
                 if (crc == crc8x_fast(0, addrH, (size_t) lenH)) {
                     wait = 100000;
+                    if (debug) fprintf(stderr, "Found new idr with len %d\n", lenH);
                 } else {
                     lenH = 0;
                     wait = 100;
                     if (debug) fprintf(stderr, "Wrong buffer for high res\n");
                 }
             } else {
+                lenH = 0;
                 if (debug) fprintf(stderr, "Buffer too short for high res\n");
             }
         }
@@ -246,8 +252,12 @@ int main(int argc, char **argv)
     char timeStampFileH[1024];
     unsigned int time, oldTimeL = 0, oldTimeH = 0;
 
+    unsigned int crc;
+
     char bufchar[8];
-    char *idr_fifo = "/tmp/idr_fifo";
+    char *idr_fifo = FIFO_FILE;
+    int fd, flags, err;
+    int nwrite;
 
     fPtr = fopen("/proc/mstar/OMX/VMFE1/ENCODER_INFO/OBUF_pBuffer", "r");
     fLen = fopen("/proc/mstar/OMX/VMFE1/ENCODER_INFO/OBUF_nAllocLen", "r");
@@ -299,11 +309,9 @@ int main(int argc, char **argv)
 
 
     mkfifo(idr_fifo, 0666);
-    int fd = open(idr_fifo, O_RDWR|O_NONBLOCK);
-    unsigned int crc;
+    fd = open(idr_fifo, O_RDWR|O_NONBLOCK);
     pthread_t tid[2];
 
-    int err;
     err = pthread_create(&(tid[0]), NULL, &checkBufferL, NULL);
     if (err != 0) {
         fprintf(stderr, "can't create thread :[%s]\n", strerror(err));
@@ -313,17 +321,40 @@ int main(int argc, char **argv)
         fprintf(stderr, "can't create thread :[%s]\n", strerror(err));
     }
 
+    flags = fcntl(fd, F_GETFL, 0);
+
     // Main loop
     while(1) {
         // Checks if a command was received
+        nwrite = 0;
+        // Set no blocking to read commands
+        fcntl(fd, F_SETFL, flags |= O_NONBLOCK);
         if (read(fd, bufchar, 1) == 1) {
+            // Set blocking to write frame
+            fcntl(fd, F_SETFL, flags &= ~O_NONBLOCK);
             if ((bufchar[0] == 'l') && (lenL > 0)) {
-                write(fd, bufferL, lenL);
+                if (debug) fprintf(stderr, "Sending low res frame to fifo\n");
+                while(nwrite < lenL) {
+                    if (lenL - nwrite > 4096) {
+                        nwrite += write(fd, bufferL + nwrite, 4096);
+                    } else {
+                        nwrite += write(fd, bufferL + nwrite, lenL - nwrite);
+                    }
+                }
+                if (debug) fprintf(stderr, "Sent %d bytes\n", nwrite);
             } else if ((bufchar[0] == 'h') && (lenH > 0)) {
-                write(fd, bufferH, lenH);
+                if (debug) fprintf(stderr, "Sending high res frame to fifo\n");
+                while(nwrite < lenH) {
+                    if (lenH - nwrite > 4096) {
+                        nwrite += write(fd, bufferH + nwrite, 4096);
+                    } else {
+                        nwrite += write(fd, bufferH + nwrite, lenH - nwrite);
+                    }
+                }
+                if (debug) fprintf(stderr, "Sent %d bytes\n", nwrite);
             }
         }
-
+//        if (debug) fprintf(stderr, "Wait for the next frame\n");
         usleep(100000);
     }
 

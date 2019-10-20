@@ -43,7 +43,7 @@
 #define FF_INPUT_BUFFER_PADDING_SIZE 32
 
 int debug = 0;
-char bufimg[262144];
+unsigned char bufimg[262144];
 
 int frame_decode(char *outfilename, unsigned char *p, int length)
 {
@@ -267,16 +267,24 @@ int frame_encode(char *outfilename, char *infilename, int resolution)
 
 int buffer2jpg(unsigned char *buffer, int length, int res)
 {
+
+    FILE *fgh;
+
+    fgh = fopen("/tmp/snapshot.264", "w");
+    fwrite(buffer, 1, length, fgh);
+    fclose(fgh);
+
     // Use separate decode/encode function with a temp file to save memory
     if(frame_decode(TMP_FILE, buffer, length) < 0) {
         if (debug) fprintf(stderr, "Error decoding h264 frame\n");
         exit(-11);
     }
+
     if(frame_encode("stdout", TMP_FILE, res) < 0) {
         if (debug) fprintf(stderr, "Error encoding jpg image\n");
         exit(-12);
     }
-    remove(TMP_FILE);
+//    remove(TMP_FILE);
 
     return 0;
 }
@@ -286,7 +294,7 @@ int main(int argc, char **argv)
     int p[2], fd, nread, len, i;
     char bufchar[8];
     char bufread[1024];
-    char *ptr;
+    unsigned char *ptr;
     char *idr_fifo = FIFO_FILE; 
 
     if (argc < 2) {
