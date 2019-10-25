@@ -18,7 +18,7 @@ imggrabber: $(OBJECTS_1)
 .PHONY: clean
 
 clean:
-	rm -f imagegrabber
+	rm -f imggrabber
 	rm -f $(OBJECTS)
 
 define build_jpeglib
