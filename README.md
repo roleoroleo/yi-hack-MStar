@@ -45,6 +45,7 @@ Apart from RTSP, snapshot and ONVIF, all the features are copied from the TheCry
   - SSH server - dropbear
   - Telnet server - busybox
   - FTP server
+  - Authentication for HTTP, RTSP and ONVIF server.
   - Watermark removed
   - The possibility to disable all the cloud features.
 
