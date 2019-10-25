@@ -7,7 +7,7 @@ VAL="$(echo $QUERY_STRING | cut -d'=' -f2)"
 RES=""
 
 if [ $CONF == "res" ] ; then
-    RES="-t $VAL"
+    RES="-r $VAL"
 fi
 
 imggrabber $RES
