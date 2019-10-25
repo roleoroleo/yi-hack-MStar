@@ -188,6 +188,70 @@
                             </span>
                         </td>
                     </tr>
+                </table>
+            </div>
+        </div>
+        <h4 class="no-margin">TCP ports</h4>
+        <hr class="tiny-margin"/>
+        <div class="row">
+            <div class="twelve columns configs-switch">
+                <table class="u-full-width padded-table config-table">
+                    <tbody>
+                    <tr class="row">
+                        <td>RTSP Port</td>
+                        <td>
+                            <input class="u-full-width" type="text" placeholder="" data-key="RTSP_PORT" id="RTSP_PORT"/>
+                            <span class="switch-description">
+                                TCP port used by RTSP Server (default 554).
+                            </span>
+                        </td>
+                    </tr>
+                    <tr class="row">
+                        <td>ONVIF Port</td>
+                        <td>
+                            <input class="u-full-width" type="text" placeholder="" data-key="ONVIF_PORT" id="ONVIF_PORT"/>
+                            <span class="switch-description">
+                                TCP port used by ONVIF Server (default 80).
+                            </span>
+                        </td>
+                    </tr>
+                    <tr class="row">
+                        <td>HTTPD Port</td>
+                        <td>
+                            <input class="u-full-width" type="text" placeholder="" data-key="HTTPD_PORT" id="HTTPD_PORT"/>
+                            <span class="switch-description">
+                                TCP port used by HTTPD Server (default 8080).
+                            </span>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <h4 class="no-margin">Authentication</h4>
+        <hr class="tiny-margin"/>
+        <div class="row">
+            <div class="twelve columns configs-switch">
+                <table class="u-full-width padded-table config-table">
+                    <tbody>
+                    <tr class="row">
+                        <td>Username</td>
+                        <td>
+                            <input class="u-full-width" type="text" placeholder="" data-key="USERNAME" id="USERNAME"/>
+                            <span class="switch-description">
+                                Username to access RTSP, ONVIF and HTTP (default empty).
+                            </span>
+                        </td>
+                    </tr>
+                    <tr class="row">
+                        <td>Password</td>
+                        <td>
+                            <input class="u-full-width" type="password" placeholder="" data-key="PASSWORD" id="PASSWORD"/>
+                            <span class="switch-description">
+                                Password to access RTSP, ONVIF and HTTP (default empty).
+                            </span>
+                        </td>
+                    </tr>
                     </tbody>
                 </table>
             </div>

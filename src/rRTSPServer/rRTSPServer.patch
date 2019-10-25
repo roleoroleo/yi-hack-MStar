@@ -1,6 +1,6 @@
 diff -Naur live/config.linux-cross liver/config.linux-cross
 --- live/config.linux-cross	1970-01-01 01:00:00.000000000 +0100
-+++ liver/config.linux-cross	2019-09-01 13:18:54.000000000 +0200
++++ liver/config.linux-cross	2019-10-25 11:11:12.000000000 +0200
 @@ -0,0 +1,17 @@
 +COMPILE_OPTS =		$(INCLUDES) -I. -O2 -DSOCKLEN_T=socklen_t -D_LARGEFILE_SOURCE=1 -D_FILE_OFFSET_BITS=64
 +C =			c
@@ -21,8 +21,8 @@ diff -Naur live/config.linux-cross liver/config.linux-cross
 +EXE =
 diff -Naur live/rRTSPServer.cpp liver/rRTSPServer.cpp
 --- live/rRTSPServer.cpp	1970-01-01 01:00:00.000000000 +0100
-+++ liver/rRTSPServer.cpp	2019-10-13 17:12:56.000000000 +0200
-@@ -0,0 +1,141 @@
++++ liver/rRTSPServer.cpp	2019-10-25 11:08:47.000000000 +0200
+@@ -0,0 +1,162 @@
 +/**********
 +This library is free software; you can redistribute it and/or modify it under
 +the terms of the GNU Lesser General Public License as published by the
@@ -64,8 +64,11 @@ diff -Naur live/rRTSPServer.cpp liver/rRTSPServer.cpp
 +int main(int argc, char** argv) {
 +
 +  char *str;
-+  int res = 2;
++  int res = 0;
++  int port = 554;
 +  int nm;
++  char user[65];
++  char pwd[65];
 +
 +  str = getenv("RRTSP_RES");
 +  if (str && sscanf (str, "%i", &nm) == 1 && nm >= 0) {
@@ -74,21 +77,39 @@ diff -Naur live/rRTSPServer.cpp liver/rRTSPServer.cpp
 +    }
 +  }
 +
++  str = getenv("RRTSP_PORT");
++  if (str && sscanf (str, "%i", &nm) == 1 && nm >= 0) {
++    port = nm;
++  }
++
++  memset(user, 0, sizeof(user));
++  str = getenv("RRTSP_USER");
++  if ((str != NULL) && (strlen(str) < sizeof(user))) {
++    strcpy(user, str);
++  }
++
++  memset(pwd, 0, sizeof(pwd));
++  str = getenv("RRTSP_PWD");
++  if ((str != NULL) && (strlen(str) < sizeof(pwd))) {
++    strcpy(pwd, str);
++  }
++
 +  // Begin by setting up our usage environment:
 +  TaskScheduler* scheduler = BasicTaskScheduler::createNew();
 +  env = BasicUsageEnvironment::createNew(*scheduler);
 +
 +  UserAuthenticationDatabase* authDB = NULL;
-+#ifdef ACCESS_CONTROL
-+  // To implement client access control to the RTSP server, do the following:
-+  authDB = new UserAuthenticationDatabase;
-+  authDB->addUserRecord("username1", "password1"); // replace these with real strings
-+  // Repeat the above with each <username>, <password> that you wish to allow
-+  // access to the server.
-+#endif
++
++  if ((user[0] != '\0') && (pwd[0] != '\0')) {
++    // To implement client access control to the RTSP server, do the following:
++    authDB = new UserAuthenticationDatabase;
++    authDB->addUserRecord(user, pwd);
++    // Repeat the above with each <username>, <password> that you wish to allow
++    // access to the server.
++  }
 +
 +  // Create the RTSP server:
-+  RTSPServer* rtspServer = RTSPServer::createNew(*env, 554, authDB);
++  RTSPServer* rtspServer = RTSPServer::createNew(*env, port, authDB);
 +  if (rtspServer == NULL) {
 +    *env << "Failed to create RTSP server: " << env->getResultMsg() << "\n";
 +    exit(1);

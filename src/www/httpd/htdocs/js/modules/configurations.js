@@ -25,8 +25,10 @@ APP.configurations = (function ($) {
                 loadingStatusElem.fadeOut(500);
                 
                 $.each(response, function (key, state) {
-                    if(key=="HOSTNAME")
+                    if(key=="HOSTNAME" || key=="HTTPD_PORT" || key=="RTSP_PORT" || key=="ONVIF_PORT" || key=="USERNAME")
                         $('input[type="text"][data-key="' + key +'"]').prop('value', state);
+                    else if(key=="PASSWORD")
+                        $('input[type="password"][data-key="' + key +'"]').prop('value', state);
                     else
                         $('input[type="checkbox"][data-key="' + key +'"]').prop('checked', state === 'yes');
                 });
@@ -57,6 +59,12 @@ APP.configurations = (function ($) {
             alert("Hostname not valid!");
             return;
         }
+
+        configs["HTTPD_PORT"] = $('input[type="text"][data-key="HTTPD_PORT"]').prop('value');
+        configs["RTSP_PORT"] = $('input[type="text"][data-key="RTSP_PORT"]').prop('value');
+        configs["ONVIF_PORT"] = $('input[type="text"][data-key="ONVIF_PORT"]').prop('value');
+        configs["USERNAME"] = $('input[type="text"][data-key="USERNAME"]').prop('value');
+        configs["PASSWORD"] = $('input[type="password"][data-key="PASSWORD"]').prop('value');
 
         $.ajax({
             type: "POST",
