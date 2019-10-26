@@ -119,10 +119,10 @@ fi
 
 if [[ $(get_config RTSP) == "yes" ]] ; then
     if [[ $(get_config RTSP_HIGH) == "yes" ]] ; then
-	h264grabber high | RRTSP_RES=0 RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD rRTSPServer &
+        h264grabber -r high | RRTSP_RES=0 RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD rRTSPServer &
         ONVIF_PROFILE_0="--name Profile_0 --width 1920 --height 1080 --url rtsp://$LOGIN_USERPWD%s$D_RTSP_PORT/ch0_0.h264 --snapurl http://$LOGIN_USERPWD%s$D_HTTPD_PORT/cgi-bin/snapshot.sh?res=high --type H264"
     else
-        h264grabber low | RRTSP_RES=1 RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD rRTSPServer &
+        h264grabber -r low | RRTSP_RES=1 RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD rRTSPServer &
         ONVIF_PROFILE_1="--name Profile_1 --width 640 --height 360 --url rtsp://$LOGIN_USERPWD%s$D_RTSP_PORT/ch0_1.h264 --snapurl http://$LOGIN_USERPWD%s$D_HTTPD_PORT/cgi-bin/snapshot.sh?res=low --type H264"
     fi
 fi
@@ -130,8 +130,6 @@ fi
 if [[ $(get_config ONVIF) == "yes" ]] ; then
     onvif_srvd --pid_file /var/run/onvif_srvd.pid --model "Yi Home 1080p" --manufacturer "Yi" --ifs wlan0 --port $ONVIF_PORT --scope onvif://www.onvif.org/Profile/S $ONVIF_PROFILE_0 $ONVIF_PROFILE_1 $ONVIF_USERPWD
 fi
-
-imggrabber &
 
 if [ -f "/tmp/sd/yi-hack/startup.sh" ]; then
     /tmp/sd/yi-hack/startup.sh

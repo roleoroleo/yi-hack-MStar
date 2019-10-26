@@ -1,3 +1,23 @@
+/*
+ * Copyright (c) 2019 roleo.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, version 3.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/*
+ * Reads the YUV buffer, extracts the last frame and converts it to jpg.
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -8,6 +28,7 @@
 #include <sys/mman.h>
 #include <dirent.h>
 #include <math.h>
+#include <getopt.h>
 
 #include <jpeglib.h>
 
@@ -225,10 +246,20 @@ unsigned int rmm_virt2phys(unsigned int inAddr) {
     return outAddr;
 }
 
+void print_usage(char *progname)
+{
+    fprintf(stderr, "\nUsage: %s [-r RES] [-d]\n\n", progname);
+    fprintf(stderr, "\t-r RES, --resolution RES\n");
+    fprintf(stderr, "\t\tset resolution: LOW or HIGH (default HIGH)\n");
+    fprintf(stderr, "\t-d, --debug\n");
+    fprintf(stderr, "\t\tenable debug\n");
+}
+
 int main(int argc, char **argv)
 {
+    int c;
     const char memDevice[] = "/dev/mem";
-    int resolution;
+    int resolution = RESOLUTION_HIGH;
     FILE *fPtr, *fLen;
     int fMem;
     unsigned int ivAddr, ipAddr;
@@ -237,22 +268,51 @@ int main(int argc, char **argv)
     unsigned char *buffer;
     int outlen;
 
-    if ((argc > 3) || (argc == 2)) {
-        fprintf(stderr, "Wrong parameters\n");
-        return -1;
-    } else if (argc == 3) {
-        if (strcasecmp("-r", argv[1]) == 0) {
-            if (strcasecmp("low", argv[2]) == 0) {
+    while (1) {
+        static struct option long_options[] =
+        {
+            {"resolution",  required_argument, 0, 'r'},
+            {"debug",  no_argument, 0, 'd'},
+            {"help",  no_argument, 0, 'h'},
+            {0, 0, 0, 0}
+        };
+        /* getopt_long stores the option index here. */
+        int option_index = 0;
+
+        c = getopt_long (argc, argv, "r:dh",
+                         long_options, &option_index);
+
+        /* Detect the end of the options. */
+        if (c == -1)
+            break;
+
+        switch (c) {
+        case 'r':
+            if (strcasecmp("low", optarg) == 0) {
                 resolution = RESOLUTION_LOW;
-            } else {
+            } else if (strcasecmp("high", optarg) == 0) {
                 resolution = RESOLUTION_HIGH;
             }
-        } else {
-            fprintf(stderr, "Wrong parameters\n");
+            break;
+
+        case 'd':
+            fprintf (stderr, "debug on\n");
+            debug = 1;
+            break;
+
+        case 'h':
+            print_usage(argv[0]);
+            return -1;
+            break;
+
+        case '?':
+            /* getopt_long already printed an error message. */
+            break;
+
+        default:
+            print_usage(argv[0]);
             return -1;
         }
-    } else {
-        resolution = RESOLUTION_HIGH;
     }
 
     if (debug) fprintf(stderr, "Resolution: %d\n", resolution);

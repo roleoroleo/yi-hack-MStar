@@ -10,14 +10,13 @@ DAEMON_NO_CLOSE_STDIO = 0
 
 
 GSOAP_DIR         = ./gsoap-2.8/gsoap
-GSOAP_NATIVE_DIR  = ./gsoap-2.8_native/gsoap
 GSOAP_CUSTOM_DIR  = ./gsoap-2.8/gsoap/custom
 GSOAP_PLUGIN_DIR  = $(GSOAP_DIR)/plugin
 GSOAP_IMPORT_DIR  = $(GSOAP_DIR)/import
 
 
-SOAPCPP2          = $(GSOAP_NATIVE_DIR)/src/soapcpp2
-WSDL2H            = $(GSOAP_NATIVE_DIR)/wsdl/wsdl2h
+SOAPCPP2          = $(GSOAP_DIR)/src/soapcpp2
+WSDL2H            = $(GSOAP_DIR)/wsdl/wsdl2h
 
 
 COMMON_DIR        = ./src
@@ -261,23 +260,14 @@ define build_gsoap
     fi
 
     # unzip
-    if [ ! -f gsoap-2.8_native/README.txt ]; then \
-         unzip ./SDK/gsoap.zip; \
-         mv gsoap-2.8 gsoap-2.8_native; \
-    fi
-
     if [ ! -f gsoap-2.8/README.txt ]; then \
          unzip ./SDK/gsoap.zip; \
     fi
 
-    # build native and target
+    # build
     if [ ! -f $(SOAPCPP2) ] || [ ! -f $(WSDL2H) ]; then \
-         cd gsoap-2.8_native; \
-         ./configure --disable-c-locale --disable-ssl && \
-         make -j1; \
-         cd ..;\
          cd gsoap-2.8; \
-         c_cv_func_malloc_0_nonnull=yes ./configure --host=$(CROSS) --disable-c-locale --disable-ssl && \
+         ./configure --disable-c-locale --disable-ssl && \
          make -j1; \
          cd ..;\
     fi

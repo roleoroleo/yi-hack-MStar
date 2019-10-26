@@ -27,6 +27,7 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <dirent.h>
+#include <getopt.h>
 
 #define RESOLUTION_LOW 360
 #define RESOLUTION_HIGH 1080
@@ -109,11 +110,20 @@ unsigned int rmm_virt2phys(unsigned int inAddr) {
     return outAddr;
 }
 
+void print_usage(char *progname)
+{
+    fprintf(stderr, "\nUsage: %s [-r RES] [-d]\n\n", progname);
+    fprintf(stderr, "\t-r RES, --resolution RES\n");
+    fprintf(stderr, "\t\tset resolution: LOW or HIGH (default HIGH)\n");
+    fprintf(stderr, "\t-d, --debug\n");
+    fprintf(stderr, "\t\tenable debug\n");
+}
+
 int main(int argc, char **argv)
 {
-    int debug = 0;
+    int c, debug = 0;
     const char memDevice[] = "/dev/mem";
-    int resolution;
+    int resolution = RESOLUTION_HIGH;
     FILE *fPtr, *fLen, *fTime;
     int fMem;
     unsigned int ivAddr, ipAddr;
@@ -121,21 +131,57 @@ int main(int argc, char **argv)
     unsigned char *addr;
     char filLenFile[1024];
     char timeStampFile[1024];
-    unsigned char buffer[131072];
+    unsigned char buffer[262144];
     int len;
     unsigned int time, oldTime = 0;
     int stream_started = 0;
 
-    if (argc > 2) {
-        return -1;
-    } else if (argc == 2) {
-        if (strcasecmp("low", argv[1]) == 0) {
-            resolution = RESOLUTION_LOW;
-        } else {
-            resolution = RESOLUTION_HIGH;
+
+    while (1) {
+        static struct option long_options[] =
+        {
+            {"resolution",  required_argument, 0, 'r'},
+            {"debug",  no_argument, 0, 'd'},
+            {"help",  no_argument, 0, 'h'},
+            {0, 0, 0, 0}
+        };
+        /* getopt_long stores the option index here. */
+        int option_index = 0;
+
+        c = getopt_long (argc, argv, "r:dh",
+                         long_options, &option_index);
+
+        /* Detect the end of the options. */
+        if (c == -1)
+            break;
+
+        switch (c) {
+        case 'r':
+            if (strcasecmp("low", optarg) == 0) {
+                resolution = RESOLUTION_LOW;
+            } else if (strcasecmp("high", optarg) == 0) {
+                resolution = RESOLUTION_HIGH;
+            }
+            break;
+
+        case 'd':
+            fprintf (stderr, "debug on\n");
+            debug = 1;
+            break;
+
+        case 'h':
+            print_usage(argv[0]);
+            return -1;
+            break;
+
+        case '?':
+            /* getopt_long already printed an error message. */
+            break;
+
+        default:
+            print_usage(argv[0]);
+            return -1;
         }
-    } else {
-        resolution = RESOLUTION_HIGH;
     }
 
     if (debug) fprintf(stderr, "Resolution: %d\n", resolution);
@@ -207,18 +253,20 @@ int main(int argc, char **argv)
         fTime = fopen(timeStampFile, "r");
         fscanf(fTime, "%u", &time);
         fclose(fTime);
-        if (debug) fprintf(stderr, "time: %u - len: %d\n", time, len);
+        if (debug) fprintf(stderr, "time: %u\n", time);
 
         if (time == oldTime) {
-            usleep(200);
+            usleep(8000); //200
             continue;
         }
+
+        usleep(100);
 
         fLen = fopen(filLenFile, "r");
         fscanf(fLen, "%d", &len);
         fclose(fLen);
+        if (debug) fprintf(stderr, "time: %u - len: %d\n", time, len);
 
-        if (debug) fprintf(stderr, "sending len: %d\n", len);
         memcpy(buffer, addr, len);
         oldTime = time;
         fwrite(buffer, 1, len, stdout);
