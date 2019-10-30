@@ -87,6 +87,7 @@ SYSROOT_DIR=$BASE_DIR/sysroot/$CAMERA_NAME
 STATIC_DIR=$BASE_DIR/static
 BUILD_DIR=$BASE_DIR/build
 OUT_DIR=$BASE_DIR/out/$CAMERA_NAME
+VER=$(cat VERSION)
 
 echo ""
 echo "------------------------------------------------------------------------"
@@ -195,7 +196,7 @@ mv $OUT_DIR/rootfs_$CAMERA_ID.jffs2 $OUT_DIR/sys_$CAMERA_ID
 
 # create tar.gz
 rm -f $OUT_DIR/$CAMERA_NAME.tgz
-tar zcvf $OUT_DIR/$CAMERA_NAME.tgz -C $OUT_DIR sys_$CAMERA_ID home_$CAMERA_ID
+tar zcvf $OUT_DIR/${CAMERA_NAME}_${VER}.tgz -C $OUT_DIR sys_$CAMERA_ID home_$CAMERA_ID
 
 # Cleanup
 printf "Cleaning up the tmp folder... "
