@@ -195,7 +195,7 @@ pack_image "rootfs" $CAMERA_ID $TMP_DIR $OUT_DIR
 mv $OUT_DIR/rootfs_$CAMERA_ID.jffs2 $OUT_DIR/sys_$CAMERA_ID
 
 # create tar.gz
-rm -f $OUT_DIR/$CAMERA_NAME.tgz
+rm -f $OUT_DIR/*.tgz
 tar zcvf $OUT_DIR/${CAMERA_NAME}_${VER}.tgz -C $OUT_DIR sys_$CAMERA_ID home_$CAMERA_ID
 
 # Cleanup
