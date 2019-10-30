@@ -5,6 +5,7 @@ SCRIPT_DIR=$(cd `dirname $0` && pwd)
 cd $SCRIPT_DIR
 
 rm -rf ./_install
+rm -rf ./live
 
 if [ ! -f $ARCHIVE ]; then
     wget http://www.live555.com/liveMedia/public/$ARCHIVE

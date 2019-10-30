@@ -2,6 +2,16 @@
 
 YI_HACK_PREFIX="/home/yi-hack"
 
+#urldecode() { : "${*//+/ }"; echo -e "${_//%/\\x}"; }
+
+urldecode(){
+  echo -e "$(sed 's/+/ /g;s/%\(..\)/\\x\1/g;')"
+}
+
+sedencode(){
+  echo -e "$(sed 's/\\/\\\\\\/g;s/\&/\\\&/g;s/\//\\\//g;')"
+}
+
 get_conf_type()
 {
     CONF="$(echo $QUERY_STRING | cut -d'=' -f1)"
@@ -35,6 +45,7 @@ for S in $PARAMS ; do
             KEY=$SP
         else
             VALUE=$SP
+            VALUE=$(echo "$SP" | urldecode)
         fi
     done
     
@@ -43,6 +54,7 @@ for S in $PARAMS ; do
             echo "$VALUE" > /etc/hostname
         fi
     else
+        VALUE=$(echo "$VALUE" | sedencode)
         sed -i "s/^\(${KEY}\s*=\s*\).*$/\1${VALUE}/" $CONF_FILE
     fi   
 done

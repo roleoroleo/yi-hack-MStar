@@ -53,9 +53,10 @@ Apart from RTSP, snapshot and ONVIF, all the features are copied from the TheCry
 
 Currently this project supports only the following camera:
 
-- Yi 1080p Home 6FUS with firmware 4.5.0.0A_201902261502, 4.5.0.0B_201909041616 or 4.5.0.0C_201910080934.
+- Yi 1080p Home 6FUS with firmware 4.5.0
+- Yi 1080p Dome 6FUS with firmware 4.6.0
 
-This firmware is based on 4.5.0.0C and completely overwrite the original firmware.
+This firmware completely overwrite the original firmware.
 So, USE AT YOUR OWN RISK.
 
 ## Getting Started
