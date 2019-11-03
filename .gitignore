@@ -3,7 +3,9 @@
 !/build/.gitkeep
 
 /stock_firmware/yi_home_1080p_6FUS_450/*
+!/stock_firmware/yi_home_1080p_6FUS_450/.gitkeep
 /stock_firmware/yi_dome_1080p_6FUS_460/*
+!/stock_firmware/yi_dome_1080p_6FUS_460/.gitkeep
 
 /sysroot/*
 !/sysroot/.gitkeep
