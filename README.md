@@ -2,7 +2,7 @@
 
 This firmware is completely based on the work done by TheCrypt0
 https://github.com/TheCrypt0/yi-hack-v4
-It's a clone made only for Yi Home 1080p with fw 4.5.0 based on MStar platform.
+It's a clone made for Yi cameras based on MStar platform.
 
 I have no time to support the project, so feel free to clone/fork this git and modify it as you want.
 
@@ -83,7 +83,7 @@ If you want to build your own firmware, clone this git and compile using a linux
 Quick explanation:
 - Download and install the SDK for MStar platform: the file name is "MStar MSC3XX SDK.zip" (Google is your friend).
 - Prepare the system installing all the necessary packages.
-- Copy home and rootfs partition files to ./stock_firmware/yi_home_1080p
+- Copy home and rootfs partition files to ./stock_firmware/...
 - ./scripts/init_sysroot.all.sh
 - ./scripts/compile.sh
 - ./scripts/pack_fw.all.sh
