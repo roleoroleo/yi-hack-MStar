@@ -1,2 +1,4 @@
 # Ignore the install dir
 _install/
+snapshot/SDK
+snapshot/jpeg-9c

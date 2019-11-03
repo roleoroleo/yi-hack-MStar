@@ -24,7 +24,9 @@
 declare -A CAMERAS
 
 CAMERAS["yi_home_1080p_6FUS_450"]="y203c"
+CAMERAS["yi_home_1080p_9FUS_450"]="y203c"
 CAMERAS["yi_dome_1080p_6FUS_460"]="h201c"
+CAMERAS["yi_dome_1080p_BFUS_460"]="h201c"
 
 ###############################################################################
 # Common functions
