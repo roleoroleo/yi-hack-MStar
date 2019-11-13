@@ -47,6 +47,12 @@ Apart from RTSP, snapshot and ONVIF, all the features are copied from the TheCry
   - FTP server
   - Authentication for HTTP, RTSP and ONVIF server.
   - Watermark removed
+  - The possibility to change some camera settings:
+    - video saving mode
+    - detection sensitivity
+    - status led
+    - ir led
+    - rotate
   - The possibility to disable all the cloud features.
 
 ## Supported cameras

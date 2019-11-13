@@ -117,6 +117,8 @@ void print_usage(char *progname)
     fprintf(stderr, "\t\tset resolution: LOW or HIGH (default HIGH)\n");
     fprintf(stderr, "\t-d, --debug\n");
     fprintf(stderr, "\t\tenable debug\n");
+    fprintf(stderr, "\t-h, --help\n");
+    fprintf(stderr, "\t\tprint this help\n");
 }
 
 int main(int argc, char **argv)
