@@ -16,14 +16,14 @@ APP.configurations = (function ($) {
     function fetchConfigs() {
         loadingStatusElem = $('#loading-status');
         loadingStatusElem.text("Loading...");
-       
+
         $.ajax({
             type: "GET",
             url: 'cgi-bin/get_configs.sh?conf=system',
             dataType: "json",
             success: function(response) {
                 loadingStatusElem.fadeOut(500);
-                
+
                 $.each(response, function (key, state) {
                     if(key=="HOSTNAME" || key=="HTTPD_PORT" || key=="RTSP_PORT" || key=="ONVIF_PORT" || key=="USERNAME")
                         $('input[type="text"][data-key="' + key +'"]').prop('value', state);
@@ -42,17 +42,17 @@ APP.configurations = (function ($) {
     function saveConfigs() {
         var saveStatusElem;
         let configs = {};
-        
+
         saveStatusElem = $('#save-status');
-        
+
         saveStatusElem.text("Saving...");
-        
+
         $('.configs-switch input[type="checkbox"]').each(function () {
             configs[$(this).attr('data-key')] = $(this).prop('checked') ? 'yes' : 'no';
         });
-        
+
         configs["HOSTNAME"] = $('input[type="text"][data-key="HOSTNAME"]').prop('value');
-        
+
         if(!validateHostname(configs["HOSTNAME"]))
         {
             saveStatusElem.text("Failed");
@@ -80,7 +80,7 @@ APP.configurations = (function ($) {
             }
         });
     }
-    
+
     function validateHostname(hostname) {
         return /^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$/.test(hostname);
     }

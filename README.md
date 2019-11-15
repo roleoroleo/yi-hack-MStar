@@ -7,16 +7,11 @@ It's a clone made for Yi cameras based on MStar platform.
 I have no time to support the project, so feel free to clone/fork this git and modify it as you want.
 
 ## RTSP Server
-I'm working on a fully functional RTSP implementation, inspired by the following topic:
+I wrote a daemon that reads the video stream directly from the kernel driver memory and sends it to an application based on live555.
+I was inspired by the following topic:
 - @andy2301 - [Ideas for the RSTP rtsp and rtsp2301](https://github.com/xmflsct/yi-hack-1080p/issues/5#issuecomment-294326131)
 
 The RTSP server code derives from live555 - http://www.live555.com/ and from the archive rtsp2303_srcbin_20170414-1630.zip posted in the link above.
-At this moment it works but sometimes the video crashes.
-
-Known issue.
-
-I recently changed the way to read the video stream, now I go directly to the kernel driver memory.
-The quality has improved. Test in progress!
 
 ## Table of Contents
 
@@ -24,6 +19,7 @@ The quality has improved. Test in progress!
 - [Supported cameras](#supported-cameras)
 - [Getting started](#getting-started)
 - [Build your own firmware](#build-your-own-firmware)
+- [Unbricking](#unbricking)
 - [Acknowledgments](#acknowledgments)
 - [Disclaimer](#disclaimer)
 
@@ -53,6 +49,7 @@ Apart from RTSP, snapshot and ONVIF, all the features are copied from the TheCry
     - status led
     - ir led
     - rotate
+  - Display of motion detect events and videos through a web page.
   - The possibility to disable all the cloud features.
 
 ## Supported cameras
@@ -70,7 +67,7 @@ So, USE AT YOUR OWN RISK.
 
 2. Get a microSD card, 16gb or less, and format it by selecting File System as FAT32.
 
-3. Save both files (home_y203c and sys_y203c) on root path of microSD card.
+3. Save both files (for example home_y203c and sys_y203c) on root path of microSD card.
 
 4. Remove power to the camera, insert the microSD card, turn the power back ON.
 
@@ -89,10 +86,15 @@ If you want to build your own firmware, clone this git and compile using a linux
 Quick explanation:
 - Download and install the SDK for MStar platform: the file name is "MStar MSC3XX SDK.zip" (Google is your friend).
 - Prepare the system installing all the necessary packages.
-- Copy home and rootfs partition files to ./stock_firmware/...
+- Copy original home and rootfs partition files to ./stock_firmware/... (don't ask me where to find them)
 - ./scripts/init_sysroot.all.sh
 - ./scripts/compile.sh
 - ./scripts/pack_fw.all.sh
+
+## Unbricking
+If your camera doesn't start repeat the hack as described above.
+You can use the same procedure even if you have a backup copy of the original partitions.
+If the bootloader works correctly the camera will restart.
 
 ## Acknowledgments
 Special thanks to the following people.
