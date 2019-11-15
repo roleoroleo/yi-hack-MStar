@@ -29,7 +29,7 @@ APP.eventsfile = (function ($) {
             success: function(data) {
                 document.getElementById("title-container").innerHTML = data.date + " - Select event";
                 html = "<table class=\"u-full-width padded-table\"><tbody>";
-                html += "<tr><td><b>Time</b></td>";
+                html += "<tr><td><b>Time (UTC)</b></td>";
                 html += "<td><b>File name</b></td></tr>";
                 if (data.records.length == 0) {
                     html += "<tr><td>No events in this folder</td><td></td></tr>";
