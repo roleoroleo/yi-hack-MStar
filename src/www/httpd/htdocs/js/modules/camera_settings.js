@@ -16,14 +16,14 @@ APP.camera_settings = (function ($) {
     function fetchConfigs() {
         loadingStatusElem = $('#loading-status');
         loadingStatusElem.text("Loading...");
-       
+
         $.ajax({
             type: "GET",
             url: 'cgi-bin/get_configs.sh?conf=camera',
             dataType: "json",
             success: function(response) {
                 loadingStatusElem.fadeOut(500);
-                
+
                 $.each(response, function (key, state) {
                     if(key=="SENSITIVITY")
                         $('input[type="text"][data-key="' + key +'"]').prop('value', state);
@@ -40,17 +40,17 @@ APP.camera_settings = (function ($) {
     function saveConfigs() {
         var saveStatusElem;
         let configs = {};
-        
+
         saveStatusElem = $('#save-status');
-        
+
         saveStatusElem.text("Saving...");
-        
+
         $('.configs-switch input[type="checkbox"]').each(function () {
             configs[$(this).attr('data-key')] = $(this).prop('checked') ? 'yes' : 'no';
         });
-        
+
         configs["SENSITIVITY"] = $('input[type="text"][data-key="SENSITIVITY"]').prop('value');
-        
+
         if(!validateSensitivity(configs["SENSITIVITY"]))
         {
             saveStatusElem.text("Failed");
@@ -81,7 +81,7 @@ APP.camera_settings = (function ($) {
             dataType: "json",
         });
     }
-    
+
     function validateSensitivity(sensitivity) {
         if (sensitivity=='low' || sensitivity=='medium' || sensitivity=='high')
             return true;

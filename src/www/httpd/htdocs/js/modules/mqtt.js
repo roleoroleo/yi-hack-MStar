@@ -16,7 +16,7 @@ APP.mqtt = (function ($) {
     function fetchConfigs() {
         loadingStatusElem = $('#loading-status');
         loadingStatusElem.text("Loading...");
-       
+
         $.ajax({
             type: "GET",
             url: 'cgi-bin/get_configs.sh?conf=mqtt',
@@ -58,10 +58,10 @@ APP.mqtt = (function ($) {
 
         let configs = {};
         let configsSystem = {};
-        
+
         saveStatusElem = $('#save-status');
         saveStatusElem.text("Saving...");
-        
+
         $('.configs-switch input[type="text"]').each(function () {
             configs[$(this).attr('data-key')] = $(this).prop('value');
         });
