@@ -17,11 +17,18 @@ if [ -f $ARCHIVE_FILE ]; then
 	rm $ARCHIVE_FILE
 fi
 
+if [ ! -f $YI_PREFIX/cloudAPI_real ]; then
+	mv $YI_PREFIX/cloudAPI $YI_PREFIX/cloudAPI_real
+	cp $YI_HACK_PREFIX/yi-hack/script/cloudAPI $YI_PREFIX/
+fi
+
 mkdir -p $YI_HACK_PREFIX/yi-hack/etc/dropbear
 
 # Comment out all the cloud stuff from base/init.sh
 sed -i 's/\t\.\/watch_process \&/\t#\.\/watch_process \&/g' /home/app/init.sh
 sed -i 's/\t\.\/oss \&/\t#\.\/oss \&/g' /home/app/init.sh
+sed -i 's/\t\.\/oss_fast \&/\t#\.\/oss_fast \&/g' /home/app/init.sh
+sed -i 's/\t\.\/oss_lapse \&/\t#\.\/oss_lapse \&/g' /home/app/init.sh
 sed -i 's/\t\.\/p2p_tnp \&/\t#\.\/p2p_tnp \&/g' /home/app/init.sh
 sed -i 's/\t\.\/cloud \&/\t#\.\/cloud \&/g' /home/app/init.sh
 sed -i 's/\t\.\/mp4record \&/\t#\.\/mp4record \&/g' /home/app/init.sh

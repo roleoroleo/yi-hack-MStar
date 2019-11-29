@@ -1,0 +1,38 @@
+diff -Naur mqttv4/include/mqtt.h mqttv4.new/include/mqtt.h
+--- mqttv4/include/mqtt.h	2019-11-29 10:34:25.000000000 +0100
++++ mqttv4.new/include/mqtt.h	2019-11-26 14:17:27.000000000 +0100
+@@ -36,6 +36,7 @@
+ 
+ void mqtt_init_conf(mqtt_conf_t *conf);
+ void mqtt_set_conf(mqtt_conf_t *conf);
++void mqtt_check_connection();
+ int mqtt_send_message(mqtt_msg_t *msg);
+ 
+ int mqtt_connect();
+diff -Naur mqttv4/src/mqtt.c mqttv4.new/src/mqtt.c
+--- mqttv4/src/mqtt.c	2019-11-29 10:34:25.000000000 +0100
++++ mqttv4.new/src/mqtt.c	2019-11-26 14:17:05.000000000 +0100
+@@ -70,6 +70,12 @@
+     mqtt_conf=conf;
+ }
+ 
++void mqtt_check_connection()
++{
++    if (!is_connected)
++        mqtt_connect();
++}
++
+ int mqtt_connect()
+ {
+     int ret;
+diff -Naur mqttv4/src/mqttv4.c mqttv4.new/src/mqttv4.c
+--- mqttv4/src/mqttv4.c	2019-11-29 10:34:25.000000000 +0100
++++ mqttv4.new/src/mqttv4.c	2019-11-26 14:17:17.000000000 +0100
+@@ -81,6 +81,7 @@
+ 
+     while(1)
+     {
++        mqtt_check_connection();
+         mqtt_loop();
+         usleep(500*1000);
+     }

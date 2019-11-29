@@ -160,6 +160,10 @@ rsync -a $BUILD_DIR/rootfs/* $TMP_DIR/rootfs || exit 1
 rsync -a $BUILD_DIR/home/* $TMP_DIR/home || exit 1
 printf "done!\n"
 
+# Removing back.bin file
+printf "Removing back.bin file... "
+rm -f $TMP_DIR/rootfs/etc/back.bin
+
 # insert the version file
 printf "Copying the version file... "
 cp $BASE_DIR/VERSION $TMP_DIR/home/yi-hack/version

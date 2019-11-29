@@ -21,6 +21,10 @@ clean:
 	rm -f imggrabber
 	rm -f $(OBJECTS)
 
+distclean: clean
+	rm -rf SDK
+	rm -rf jpeg-9c
+
 define build_jpeglib
 
     # get archive

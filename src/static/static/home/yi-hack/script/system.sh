@@ -46,6 +46,12 @@ if [[ $(get_config DISABLE_CLOUD) == "no" ]] ; then
         ./cloud &
         ./p2p_tnp &
         ./oss &
+        if [ -f ./oss_fast ]; then
+            ./oss_fast &
+        fi
+        if [ -f ./oss_lapse ]; then
+            ./oss_lapse &
+        fi
         ./watch_process &
     )
 else

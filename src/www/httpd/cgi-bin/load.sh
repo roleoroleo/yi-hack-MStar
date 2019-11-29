@@ -66,10 +66,8 @@ RES=$?
 
 # Verify result of 7za command and copy files to destination
 if [ $RES -eq 0 ]; then
-    if [ \( -f "system.conf" \) -a \( -f "mqttv4.conf" \) -a \( -f "camera.conf" \) ]; then
-        mv -f system.conf /home/yi-hack/etc/
-        mv -f mqttv4.conf /home/yi-hack/etc/
-        mv -f camera.conf /home/yi-hack/etc/
+    if [ \( -f "system.conf" \) -a \( -f "camera.conf" \) ]; then
+        mv -f *.conf /home/yi-hack/etc/
         RES=0
     else
         RES=1
@@ -88,6 +86,10 @@ if [ $RES -eq 0 ]; then
     printf "Upload completed successfully, restart your camera\r\n"
 else
     printf "Upload failed\r\n"
+fi
+
+if [ ! -f "$YI_HACK_PREFIX/$CONF_FILE" ]; then
+    exit
 fi
 
 # Set camera settings

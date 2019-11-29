@@ -16,3 +16,6 @@
 [submodule "src/onvif_srvd/onvif_srvd"]
 	path = src/onvif_srvd/onvif_srvd
 	url = https://github.com/KoynovStas/onvif_srvd
+[submodule "src/proxychains-ng/proxychains-ng"]
+	path = src/proxychains-ng/proxychains-ng
+	url = https://github.com/rofl0r/proxychains-ng

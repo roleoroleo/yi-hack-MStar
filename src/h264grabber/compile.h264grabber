@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# Add the following content to your bash profile
-
 export CROSSPATH=/opt/yi/arm-linux-gnueabihf-4.8.3-201404/bin
 export PATH=${PATH}:${CROSSPATH}
 
