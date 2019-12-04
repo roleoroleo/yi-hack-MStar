@@ -75,7 +75,7 @@ So, USE AT YOUR OWN RISK.
 
 2. Get a microSD card, 16gb or less, and format it by selecting File System as FAT32.
 
-3. Get the correct firmware files for your camera from the releases section.
+3. Get the correct firmware files for your camera from the releases section (https://github.com/roleoroleo/yi-hack-6FUS_4.5.0/releases).
 
 4. Save both files (for example home_y203c and sys_y203c) on root path of microSD card.
 
