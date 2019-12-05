@@ -59,6 +59,7 @@ Currently this project supports only the following cameras:
 
 | Camera | Firmware | File prefix | Remarks |
 | --- | --- | --- | --- |
+| **Yi 1080p Home 4FUS** | 4.5.0* | y203c | - |
 | **Yi 1080p Home 6FUS** | 4.5.0* | y203c | - |
 | **Yi 1080p Home 9FUS** | 4.5.0* | y203c | - |
 | **Yi 1080p Home BFUS** | 4.5.0* | y203c | - |
