@@ -98,6 +98,7 @@ Quick explanation:
 - Download and install the SDK for MStar platform: the file name is "MStar MSC3XX SDK.zip" (Google is your friend).
 - Prepare the system installing all the necessary packages.
 - Copy original home and rootfs partition files to ./stock_firmware/... (don't ask me where to find them)
+- git submodule update --init
 - ./scripts/init_sysroot.all.sh
 - ./scripts/compile.sh
 - ./scripts/pack_fw.all.sh
