@@ -17,4 +17,4 @@ patch -p0 < rRTSPServer.patch
 cd live || exit 1
 
 ./genMakefiles linux-cross
-cp ../Makefile.rRTSPServer Makefile
+cp -f ../Makefile.rRTSPServer Makefile
