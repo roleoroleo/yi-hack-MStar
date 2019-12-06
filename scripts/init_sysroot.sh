@@ -72,6 +72,7 @@ jffs2_umount()
 
 jffs2_copy()
 {
+    check_jefferson
     local JFFS2_FILE=$1
     local DEST_DIR=$2
 
@@ -82,9 +83,16 @@ jffs2_copy()
         exit 1
     fi
 
-    jffs2_mount $JFFS2_FILE $TMP_DIR
-    rsync -a $TMP_DIR/* $DEST_DIR
-    jffs2_umount $TMP_DIR
+    if [ "x$JEFFERSON" == "x1" ]
+    then
+      echo "jefferson mode. Extracting content to \"$TMP_DIR\"."
+      jefferson $JFFS2_FILE -d $TMP_DIR/tmp || exit 1
+      rsync -a $TMP_DIR/tmp/fs_1/* $DEST_DIR || exit 1
+    else
+      jffs2_mount $JFFS2_FILE $TMP_DIR
+      rsync -a $TMP_DIR/* $DEST_DIR
+      jffs2_umount $TMP_DIR
+    fi
 
     rm -rf "$TMP_DIR"
 }
@@ -135,6 +143,14 @@ extract_stock_fw()
         jffs2_copy $FIRMWARE_ROOTFS_JFFS2 $FIRMWARE_ROOTFS_DESTDIR
         echo "done!"
     fi
+}
+
+check_jefferson(){
+  if [ -x "$(command -v jefferson)" ]; then
+    JEFFERSON=1
+  else
+    JEFFERSON=0
+  fi
 }
 
 ###############################################################################
