@@ -59,6 +59,7 @@ Currently this project supports only the following cameras:
 
 | Camera | Firmware | File prefix | Remarks |
 | --- | --- | --- | --- |
+| **Yi 1080p Home 4FUS** | 4.5.0* | y203c | - |
 | **Yi 1080p Home 6FUS** | 4.5.0* | y203c | - |
 | **Yi 1080p Home 9FUS** | 4.5.0* | y203c | - |
 | **Yi 1080p Home BFUS** | 4.5.0* | y203c | - |
@@ -75,9 +76,9 @@ So, USE AT YOUR OWN RISK.
 
 2. Get a microSD card, 16gb or less, and format it by selecting File System as FAT32.
 
-3. Save both files (for example home_y203c and sys_y203c) on root path of microSD card.
+3. Get the correct firmware files for your camera from the releases section (https://github.com/roleoroleo/yi-hack-6FUS_4.5.0/releases).
 
-4. Get the correct firmware files for your camera from the releases section.
+4. Save both files (for example home_y203c and sys_y203c) on root path of microSD card.
 
 5. Remove power to the camera, insert the microSD card, turn the power back ON.
 
@@ -111,6 +112,10 @@ Special thanks to the following people.
 - @TheCrypt0 - [https://github.com/TheCrypt0/yi-hack-v4](https://github.com/TheCrypt0/yi-hack-v4)
 - @andy2301 - [Ideas for the RTSP](https://github.com/xmflsct/yi-hack-1080p/issues/5#issuecomment-298093437)
 - All the people who worked on the previous projects "yi-hack".
+
+## Donation
+If you like this project, you can buy me a beer :) 
+[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=JBYXDMR24FW7U&currency_code=EUR&source=url)
 
 ---
 ### DISCLAIMER
