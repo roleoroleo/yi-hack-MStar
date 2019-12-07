@@ -8,7 +8,7 @@ rm -rf ./_install
 rm -rf ./live
 
 if [ ! -f $ARCHIVE ]; then
-    wget http://www.live555.com/liveMedia/public/$ARCHIVE
+    wget https://download.videolan.org/pub/contrib/live555/$ARCHIVE
 fi
 tar zxvf $ARCHIVE
 
@@ -17,4 +17,4 @@ patch -p0 < rRTSPServer.patch
 cd live || exit 1
 
 ./genMakefiles linux-cross
-cp ../Makefile.rRTSPServer Makefile
+cp -f ../Makefile.rRTSPServer Makefile
