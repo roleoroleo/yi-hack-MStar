@@ -21,6 +21,7 @@ The RTSP server code derives from live555 - http://www.live555.com/ and from the
 - [Build your own firmware](#build-your-own-firmware)
 - [Unbricking](#unbricking)
 - [Acknowledgments](#acknowledgments)
+- [Donation](#donation)
 - [Disclaimer](#disclaimer)
 
 ## Features
@@ -51,6 +52,7 @@ Apart from RTSP, snapshot and ONVIF, all the features are copied from the TheCry
     - ir led
     - rotate
   - Display of motion detect events and videos through a web page.
+  - PTZ support
   - The possibility to disable all the cloud features.
 
 ## Supported cameras

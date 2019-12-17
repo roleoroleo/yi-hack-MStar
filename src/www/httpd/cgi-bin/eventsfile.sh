@@ -9,7 +9,7 @@ esac
 CONF="$(echo $QUERY_STRING | cut -d'=' -f1)"
 VAL="$(echo $QUERY_STRING | cut -d'=' -f2)"
 
-if [ $CONF == "dirname" ]; then
+if [ "$CONF" == "dirname" ]; then
      DIR=$VAL
 fi
 
@@ -23,7 +23,7 @@ for f in `ls -r /tmp/sd/record/$DIR | grep mp4`; do
         printf "{\n"
         printf "\"%s\":\"%s\",\n" "time" "Time: ${DIR:11:2}:${f:0:2}"
         printf "\"%s\":\"%s\"\n" "filename" "$f"
-        if [ $IDX == $COUNT ]; then
+        if [ "$IDX" == "$COUNT" ]; then
             printf "}\n"
         else
             printf "},\n"

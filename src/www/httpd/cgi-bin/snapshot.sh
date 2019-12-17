@@ -7,16 +7,15 @@ for I in 1 2
 do
     CONF="$(echo $QUERY_STRING | cut -d'&' -f$I | cut -d'=' -f1)"
     VAL="$(echo $QUERY_STRING | cut -d'&' -f$I | cut -d'=' -f2)"
-    RES=""
 
-    if [ $CONF == "res" ] ; then
+    if [ "$CONF" == "res" ] ; then
         RES="-r $VAL"
-    elif [ $CONF == "base64" ] ; then
+    elif [ "$CONF" == "base64" ] ; then
         BASE64=$VAL
     fi
 done
 
-if [ $BASE64 == "no" ] ; then
+if [ "$BASE64" == "no" ] ; then
     printf "Content-type: image/jpeg\r\n\r\n"
     imggrabber $RES
 else

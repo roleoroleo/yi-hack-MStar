@@ -25,7 +25,7 @@ get_conf_type()
 CONF_TYPE="$(get_conf_type)"
 CONF_FILE=""
 
-if [ $CONF_TYPE == "mqtt" ] ; then
+if [ "$CONF_TYPE" == "mqtt" ] ; then
     CONF_FILE="$YI_HACK_PREFIX/etc/mqttv4.conf"
 else
     CONF_FILE="$YI_HACK_PREFIX/etc/$CONF_TYPE.conf"
@@ -39,7 +39,7 @@ for S in $PARAMS ; do
     PARAM=$(echo "$S" | tr "=" " ")
     KEY=""
     VALUE=""
-    
+
     for SP in $PARAM ; do
         if [ -z $KEY ]; then
             KEY=$SP
@@ -48,8 +48,8 @@ for S in $PARAMS ; do
             VALUE=$(echo "$SP" | urldecode)
         fi
     done
-    
-    if [ $KEY == "HOSTNAME" ] ; then
+
+    if [ "$KEY" == "HOSTNAME" ] ; then
         if [ ! -z $VALUE ] ; then
             echo "$VALUE" > /etc/hostname
         fi

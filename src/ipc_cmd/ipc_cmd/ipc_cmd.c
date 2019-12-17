@@ -66,6 +66,8 @@ void print_usage(char *progname)
     fprintf(stderr, "\t\tset ir led: ON or OFF\n");
     fprintf(stderr, "\t-r ROTATE, --rotate ROTATE\n");
     fprintf(stderr, "\t\tset rotate: ON or OFF\n");
+    fprintf(stderr, "\t-m MOVE, --move MOVE\n");
+    fprintf(stderr, "\t\tsend PTZ command: RIGHT, LEFT, DOWN, UP or STOP\n");
     fprintf(stderr, "\t-d,     --debug\n");
     fprintf(stderr, "\t\tenable debug\n");
     fprintf(stderr, "\t-h,     --help\n");
@@ -80,6 +82,7 @@ int main(int argc, char ** argv)
     int save = NONE;
     int ir = NONE;
     int rotate = NONE;
+    int move = NONE;
     int debug = 0;
 
     while (1) {
@@ -90,6 +93,7 @@ int main(int argc, char ** argv)
             {"save",  required_argument, 0, 'v'},
             {"ir",  required_argument, 0, 'i'},
             {"rotate",  required_argument, 0, 'r'},
+            {"move",  required_argument, 0, 'm'},
             {"debug",  no_argument, 0, 'd'},
             {"help",  no_argument, 0, 'h'},
             {0, 0, 0, 0}
@@ -97,7 +101,7 @@ int main(int argc, char ** argv)
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        c = getopt_long (argc, argv, "s:l:v:i:r:dh",
+        c = getopt_long (argc, argv, "s:l:v:i:r:m:dh",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -144,6 +148,20 @@ int main(int argc, char ** argv)
                 rotate = ROTATE_OFF;
             } else if (strcasecmp("on", optarg) == 0) {
                 rotate = ROTATE_ON;
+            }
+            break;
+
+        case 'm':
+            if (strcasecmp("right", optarg) == 0) {
+                move = MOVE_RIGHT;
+            } else if (strcasecmp("left", optarg) == 0) {
+                move = MOVE_LEFT;
+            } else if (strcasecmp("down", optarg) == 0) {
+                move = MOVE_DOWN;
+            } else if (strcasecmp("up", optarg) == 0) {
+                move = MOVE_UP;
+            } else if (strcasecmp("stop", optarg) == 0) {
+                move = MOVE_STOP;
             }
             break;
 
@@ -207,6 +225,18 @@ int main(int argc, char ** argv)
         mq_send(ipc_mq, IPC_ROTATE_OFF, sizeof(IPC_ROTATE_OFF), 0);
     } else if (rotate == ROTATE_ON) {
         mq_send(ipc_mq, IPC_ROTATE_ON, sizeof(IPC_ROTATE_ON), 0);
+    }
+
+    if (move == MOVE_RIGHT) {
+        mq_send(ipc_mq, IPC_MOVE_RIGHT, sizeof(IPC_MOVE_RIGHT), 0);
+    } else if (move == MOVE_LEFT) {
+        mq_send(ipc_mq, IPC_MOVE_LEFT, sizeof(IPC_MOVE_LEFT), 0);
+    } else if (move == MOVE_DOWN) {
+        mq_send(ipc_mq, IPC_MOVE_DOWN, sizeof(IPC_MOVE_DOWN), 0);
+    } else if (move == MOVE_UP) {
+        mq_send(ipc_mq, IPC_MOVE_UP, sizeof(IPC_MOVE_UP), 0);
+    } else if (move == MOVE_STOP) {
+        mq_send(ipc_mq, IPC_MOVE_STOP, sizeof(IPC_MOVE_STOP), 0);
     }
 
     ipc_stop();
