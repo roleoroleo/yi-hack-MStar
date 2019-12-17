@@ -99,7 +99,7 @@ If you want to build your own firmware, clone this git and compile using a linux
 Quick explanation:
 - Download and install the SDK for MStar platform: the file name is "MStar MSC3XX SDK.zip" (Google is your friend).
 - Prepare the system installing all the necessary packages.
-- Or you can use the following container https://hub.docker.com/r/borodiliz/yi-hack (thanks to@ borodiliz).
+- Or you can use the following docker image https://hub.docker.com/r/borodiliz/yi-hack (thanks to@ borodiliz).
 - Copy original home and rootfs partition files to ./stock_firmware/... (don't ask me where to find them).
 - git submodule update --init
 - ./scripts/init_sysroot.all.sh
