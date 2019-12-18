@@ -169,6 +169,11 @@ printf "Copying the version file... "
 cp $BASE_DIR/VERSION $TMP_DIR/home/yi-hack/version
 printf "done!\n\n"
 
+# insert the model suffix file
+printf "Creating the model suffix file... "
+echo $CAMERA_ID > $TMP_DIR/home/yi-hack/model_suffix
+printf "done!\n\n"
+
 # fix the files ownership
 printf "Fixing the files ownership... "
 chown -R root:root $TMP_DIR/*

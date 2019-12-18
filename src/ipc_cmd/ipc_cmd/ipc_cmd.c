@@ -240,4 +240,6 @@ int main(int argc, char ** argv)
     }
 
     ipc_stop();
+
+    return 0;
 }
