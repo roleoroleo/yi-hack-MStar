@@ -74,7 +74,8 @@ SOAP_SRC = $(GSOAP_DIR)/stdsoap2.cpp        \
 
 # We can't use wildcard func, this files will be generated
 SOAP_SERVICE_SRC = $(GENERATED_DIR)/soapDeviceBindingService.cpp \
-                   $(GENERATED_DIR)/soapMediaBindingService.cpp
+                   $(GENERATED_DIR)/soapMediaBindingService.cpp  \
+                   $(GENERATED_DIR)/soapPTZBindingService.cpp
 
 
 
@@ -87,6 +88,7 @@ SOURCES  = $(COMMON_DIR)/$(DAEMON_NAME).c         \
            $(COMMON_DIR)/ServiceContext.cpp       \
            $(COMMON_DIR)/ServiceDevice.cpp        \
            $(COMMON_DIR)/ServiceMedia.cpp         \
+           $(COMMON_DIR)/ServicePTZ.cpp           \
            $(GENERATED_DIR)/soapC.cpp             \
            $(SOAP_SRC)                            \
            $(SOAP_SERVICE_SRC)                    \
