@@ -5,6 +5,7 @@ APP.ptz = (function ($) {
     function init() {
         registerEventHandler();
         initPage();
+        updatePage();
     }
 
     function registerEventHandler() {
@@ -50,6 +51,28 @@ APP.ptz = (function ($) {
             })
             setTimeout(p, interval);
         })();
+    }
+
+    function updatePage() {
+        $.ajax({
+            type: "GET",
+            url: 'cgi-bin/status.json',
+            dataType: "json",
+            success: function(data) {
+                for (let key in data) {
+                    if (key == "model_suffix" && data[key] == "h201c") {
+                        $('#ptz_title').hide();
+                        $('#ptz_main').show();
+                    } else {
+                        $('#ptz_title').show();
+                        $('#ptz_main').hide();
+                    }
+                }
+            },
+            error: function(response) {
+                console.log('error', response);
+            }
+        });
     }
 
     return {
