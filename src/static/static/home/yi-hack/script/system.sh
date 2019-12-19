@@ -4,6 +4,8 @@ CONF_FILE="etc/system.conf"
 
 YI_HACK_PREFIX="/home/yi-hack"
 
+MODEL_SUFFIX=$(cat /home/yi-hack/model_suffix)
+
 get_config()
 {
     key=$1
@@ -134,7 +136,11 @@ if [[ $(get_config RTSP) == "yes" ]] ; then
 fi
 
 if [[ $(get_config ONVIF) == "yes" ]] ; then
-    onvif_srvd --pid_file /var/run/onvif_srvd.pid --model "Yi Home 1080p" --manufacturer "Yi" --ifs wlan0 --port $ONVIF_PORT --scope onvif://www.onvif.org/Profile/S $ONVIF_PROFILE_0 $ONVIF_PROFILE_1 $ONVIF_USERPWD
+    if [[ $MODEL_SUFFIX == "h201c" ]] ; then
+        onvif_srvd --pid_file /var/run/onvif_srvd.pid --model "Yi Hack" --manufacturer "Yi" --ifs wlan0 --port $ONVIF_PORT --scope onvif://www.onvif.org/Profile/S $ONVIF_PROFILE_0 $ONVIF_PROFILE_1 $ONVIF_USERPWD --ptz --move_left "/home/yi-hack/bin/ipc_cmd -m left" --move_right "/home/yi-hack/bin/ipc_cmd -m right" --move_up "/home/yi-hack/bin/ipc_cmd -m up" --move_down "/home/yi-hack/bin/ipc_cmd -m down" --move_stop "/home/yi-hack/bin/ipc_cmd -m stop"
+    else
+        onvif_srvd --pid_file /var/run/onvif_srvd.pid --model "Yi Hack" --manufacturer "Yi" --ifs wlan0 --port $ONVIF_PORT --scope onvif://www.onvif.org/Profile/S $ONVIF_PROFILE_0 $ONVIF_PROFILE_1 $ONVIF_USERPWD
+    fi
 fi
 
 if [ -f "/tmp/sd/yi-hack/startup.sh" ]; then
