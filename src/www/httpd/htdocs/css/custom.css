@@ -150,8 +150,12 @@ nav ul li.icon { display: none; }
     cursor: pointer;
 }
 
+table.ptz-table {
+    width: 35%;
+}
+
 table.ptz-table tr td {
-    padding: 1px 1px 1px;
+    padding: 1px 1px 1px 1px;
     border: 0px;
     text-align: center;
 }

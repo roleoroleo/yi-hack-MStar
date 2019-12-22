@@ -47,7 +47,6 @@ APP.ptz = (function ($) {
             jQuery.get('/cgi-bin/snapshot.sh?res=low&base64=yes', function(data) {
                 image = document.getElementById('imgSnap');
                 image.src = 'data:image/png;base64,' + data;
-                image.style = 'width:100%;';
             })
             setTimeout(p, interval);
         })();
@@ -60,12 +59,14 @@ APP.ptz = (function ($) {
             dataType: "json",
             success: function(data) {
                 for (let key in data) {
-                    if (key == "model_suffix" && data[key] == "h201c") {
-                        $('#ptz_title').hide();
-                        $('#ptz_main').show();
-                    } else {
-                        $('#ptz_title').show();
-                        $('#ptz_main').hide();
+                    if (key == "model_suffix") {
+                        if (data[key] == "h201c") {
+                            $('#ptz_title').hide();
+                            $('#ptz_main').show();
+                        } else {
+                            $('#ptz_title').show();
+                            $('#ptz_main').hide();
+                        }
                     }
                 }
             },
