@@ -24,6 +24,8 @@ echo 100 > /proc/sys/vm/overcommit_ratio
 echo D > /sys/class/mstar/mhvsp1/fbmg
 echo 9 > /sys/class/mstar/mhvsp1/fbmg
 
+[ -f /etc/TZ ] && export TZ=`cat /etc/TZ`
+
 for i in /etc/init.d/S??* ;do
 
     # Ignore dangling symlinks (if any).
