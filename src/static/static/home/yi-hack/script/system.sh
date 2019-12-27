@@ -108,14 +108,14 @@ fi
 
 sleep 5
 
-if [[ x$USERNAME != "x" ]] ; then
-    LOGIN_USERPWD=$USERNAME
-
-    if [[ x$PASSWORD != "x" ]] ; then
-        LOGIN_USERPWD=$LOGIN_USERPWD:$PASSWORD
-    fi
-    LOGIN_USERPWD=$LOGIN_USERPWD@
-fi
+#if [[ x$USERNAME != "x" ]] ; then
+#    LOGIN_USERPWD=$USERNAME
+#
+#    if [[ x$PASSWORD != "x" ]] ; then
+#        LOGIN_USERPWD=$LOGIN_USERPWD:$PASSWORD
+#    fi
+#    LOGIN_USERPWD=$LOGIN_USERPWD@
+#fi
 
 if [[ $RTSP_PORT != "554" ]] ; then
     D_RTSP_PORT=:$RTSP_PORT
@@ -128,10 +128,10 @@ fi
 if [[ $(get_config RTSP) == "yes" ]] ; then
     if [[ $(get_config RTSP_HIGH) == "yes" ]] ; then
         h264grabber -r high | RRTSP_RES=0 RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD rRTSPServer &
-        ONVIF_PROFILE_0="--name Profile_0 --width 1920 --height 1080 --url rtsp://$LOGIN_USERPWD%s$D_RTSP_PORT/ch0_0.h264 --snapurl http://$LOGIN_USERPWD%s$D_HTTPD_PORT/cgi-bin/snapshot.sh?res=high --type H264"
+        ONVIF_PROFILE_0="--name Profile_0 --width 1920 --height 1080 --url rtsp://%s$D_RTSP_PORT/ch0_0.h264 --snapurl http://%s$D_HTTPD_PORT/cgi-bin/snapshot.sh?res=high --type H264"
     else
         h264grabber -r low | RRTSP_RES=1 RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD rRTSPServer &
-        ONVIF_PROFILE_1="--name Profile_1 --width 640 --height 360 --url rtsp://$LOGIN_USERPWD%s$D_RTSP_PORT/ch0_1.h264 --snapurl http://$LOGIN_USERPWD%s$D_HTTPD_PORT/cgi-bin/snapshot.sh?res=low --type H264"
+        ONVIF_PROFILE_1="--name Profile_1 --width 640 --height 360 --url rtsp://%s$D_RTSP_PORT/ch0_1.h264 --snapurl http://%s$D_HTTPD_PORT/cgi-bin/snapshot.sh?res=low --type H264"
     fi
 fi
 
