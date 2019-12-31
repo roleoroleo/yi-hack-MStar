@@ -15,7 +15,7 @@ APP.eventsdir = (function ($) {
             url: 'cgi-bin/eventsdir.sh',
             dataType: "json",
             success: function(data) {
-                html += "<tr><td><b>Date & time (UTC)</b></td>";
+                html += "<tr><td><b>Date & time</b></td>";
                 html += "<td><b>Directory name</b></td></tr>";
                 if (data.records.length == 0) {
                     html += "<tr><td>No events</td><td></td></tr>";
