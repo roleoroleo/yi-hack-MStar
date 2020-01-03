@@ -76,6 +76,7 @@ This firmware completely overwrite the original firmware.
 So, USE AT YOUR OWN RISK.
 
 **Do not try to use an fw on an unlisted model**
+
 **Do not try to force the fw loading renaming the files**
 
 ## Getting Started
