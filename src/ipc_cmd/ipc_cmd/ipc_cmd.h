@@ -22,6 +22,8 @@
 #include <string.h>
 #include <errno.h>
 #include <time.h>
+#include <errno.h>
+#include <limits.h>
 #include <mqueue.h>
 
 #define IPC_QUEUE_NAME          "/ipc_dispatch"
@@ -72,3 +74,7 @@
 #define MOVE_DOWN  2
 #define MOVE_UP    3
 #define MOVE_STOP  4
+
+#define IPC_GOTO_PRESET "\x01\x00\x00\x00\x08\x00\x00\x00\x02\x40\x01\x00\x04\x00\x00\x00\xff\x00\x00\x00"
+
+#define GOTO_PRESET 0

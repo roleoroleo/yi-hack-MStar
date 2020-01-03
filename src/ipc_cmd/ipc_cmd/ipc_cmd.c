@@ -68,6 +68,8 @@ void print_usage(char *progname)
     fprintf(stderr, "\t\tset rotate: ON or OFF\n");
     fprintf(stderr, "\t-m MOVE, --move MOVE\n");
     fprintf(stderr, "\t\tsend PTZ command: RIGHT, LEFT, DOWN, UP or STOP\n");
+    fprintf(stderr, "\t-p NUM, --preset NUM\n");
+    fprintf(stderr, "\t\tsend PTZ go to preset command: NUM = [0..7]\n");
     fprintf(stderr, "\t-d,     --debug\n");
     fprintf(stderr, "\t\tenable debug\n");
     fprintf(stderr, "\t-h,     --help\n");
@@ -76,6 +78,8 @@ void print_usage(char *progname)
 
 int main(int argc, char ** argv)
 {
+    int errno;
+    char *endptr;
     int c, ret;
     int sensitivity = NONE;
     int led = NONE;
@@ -83,7 +87,9 @@ int main(int argc, char ** argv)
     int ir = NONE;
     int rotate = NONE;
     int move = NONE;
+    int preset = NONE;
     int debug = 0;
+    unsigned char preset_msg[20];
 
     while (1) {
         static struct option long_options[] =
@@ -94,6 +100,7 @@ int main(int argc, char ** argv)
             {"ir",  required_argument, 0, 'i'},
             {"rotate",  required_argument, 0, 'r'},
             {"move",  required_argument, 0, 'm'},
+            {"preset",  required_argument, 0, 'p'},
             {"debug",  no_argument, 0, 'd'},
             {"help",  no_argument, 0, 'h'},
             {0, 0, 0, 0}
@@ -101,7 +108,7 @@ int main(int argc, char ** argv)
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        c = getopt_long (argc, argv, "s:l:v:i:r:m:dh",
+        c = getopt_long (argc, argv, "s:l:v:i:r:m:p:dh",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -162,6 +169,21 @@ int main(int argc, char ** argv)
                 move = MOVE_UP;
             } else if (strcasecmp("stop", optarg) == 0) {
                 move = MOVE_STOP;
+            }
+            break;
+
+        case 'p':
+            errno = 0;    /* To distinguish success/failure after call */
+            preset = strtol(optarg, &endptr, 10);
+
+            /* Check for various possible errors */
+            if ((errno == ERANGE && (preset == LONG_MAX || preset == LONG_MIN)) || (errno != 0 && preset == 0)) {
+                print_usage(argv[0]);
+                exit(EXIT_FAILURE);
+            }
+            if (endptr == optarg) {
+                print_usage(argv[0]);
+                exit(EXIT_FAILURE);
             }
             break;
 
@@ -237,6 +259,12 @@ int main(int argc, char ** argv)
         mq_send(ipc_mq, IPC_MOVE_UP, sizeof(IPC_MOVE_UP), 0);
     } else if (move == MOVE_STOP) {
         mq_send(ipc_mq, IPC_MOVE_STOP, sizeof(IPC_MOVE_STOP), 0);
+    }
+
+    if (preset != NONE) {
+        memcpy(preset_msg, IPC_GOTO_PRESET, sizeof(IPC_GOTO_PRESET));
+        preset_msg[16] = preset & 0xff;
+        mq_send(ipc_mq, preset_msg, sizeof(IPC_GOTO_PRESET), 0);
     }
 
     ipc_stop();

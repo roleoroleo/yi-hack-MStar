@@ -163,6 +163,7 @@ printf "done!\n"
 # Removing back.bin file
 printf "Removing back.bin file... "
 rm -f $TMP_DIR/rootfs/etc/back.bin
+printf "done!\n\n"
 
 # insert the version file
 printf "Copying the version file... "

@@ -21,6 +21,9 @@ APP.ptz = (function ($) {
         $(document).on("click", '#img-ad', function (e) {
             move('#img-ad', 'down');
         });
+        $(document).on("click", '#button-goto', function (e) {
+            gotoPreset('#button-goto', '#select-goto');
+        });
     }
 
     function move(button, dir) {
@@ -37,7 +40,22 @@ APP.ptz = (function ($) {
                 $(button).attr("disabled", false);
             }
         });
+    }
 
+    function gotoPreset(button, select) {
+        $(button).attr("disabled", true);
+        $.ajax({
+            type: "GET",
+            url: 'cgi-bin/preset.sh?num='+$(select + " option:selected").text(),
+            dataType: "json",
+            error: function(response) {
+                console.log('error', response);
+                $(button).attr("disabled", false);
+            },
+            success: function(data) {
+                $(button).attr("disabled", false);
+            }
+        });
     }
 
     function initPage() {
@@ -61,10 +79,12 @@ APP.ptz = (function ($) {
                 for (let key in data) {
                     if (key == "model_suffix") {
                         if (data[key] == "h201c") {
-                            $('#ptz_title').hide();
+                            $('#ptz_description').show();
+                            $('#ptz_available').hide();
                             $('#ptz_main').show();
                         } else {
-                            $('#ptz_title').show();
+                            $('#ptz_description').hide();
+                            $('#ptz_available').show();
                             $('#ptz_main').hide();
                         }
                     }
