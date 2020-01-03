@@ -34,7 +34,7 @@ Apart from RTSP, snapshot and ONVIF, all the features are copied from the TheCry
   - RTSP server - allows a RTSP stream of the video (high or low resolution) but without audio.
     - rtsp://IP-CAM/ch0_0.h264        (high res)
     - rtsp://IP-CAM/ch0_1.h264        (low res)
-  - ONVIF server - standardized interfaces for IP cameras.
+  - ONVIF server (with support for h264 stream, snapshot, ptz and presets - standardized interfaces for IP cameras.
   - Snapshot service - allows to get a jpg with a web request.
   Gets the latest idr frame from the buffer and converts it to jpg (latest idr frame = no real time).
     - http://IP-CAM:8080/cgi-bin/snapshot.sh?res=low        (select resolution: low or high)
@@ -54,7 +54,7 @@ Apart from RTSP, snapshot and ONVIF, all the features are copied from the TheCry
     - ir led
     - rotate
   - Display of motion detect events and videos through a web page.
-  - PTZ support
+  - PTZ support through a web page.
   - The possibility to disable all the cloud features.
 
 ## Supported cameras
@@ -69,11 +69,14 @@ Currently this project supports only the following cameras:
 | **Yi 1080p Home BFUS** | 4.5.0* | y203c | - |
 | **Yi 1080p Dome 6FUS** | 4.6.0* | h201c | Thanks to @skylarhays |
 | **Yi 1080p Dome BFUS** | 4.6.0* | h201c | Thanks to @skylarhays |
-| **Yi 1080p Home 9FUS** | 4.2.0* | y25 | Work in progress |
+| **Yi 1080p Home 9FUS** | 4.2.0* | y25 | - |
 | **Yi 1080p Home 6FCN** | unknown | y203c | - |
 
 This firmware completely overwrite the original firmware.
 So, USE AT YOUR OWN RISK.
+
+**Do not try to use an fw on an unlisted model**
+**Do not try to force the fw loading renaming the files**
 
 ## Getting Started
 1. Check that you have a correct Xiaomi Yi camera.
