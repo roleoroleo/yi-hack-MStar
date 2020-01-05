@@ -13,6 +13,8 @@ GSOAP_DIR         = ./gsoap-2.8/gsoap
 GSOAP_CUSTOM_DIR  = ./gsoap-2.8/gsoap/custom
 GSOAP_PLUGIN_DIR  = $(GSOAP_DIR)/plugin
 GSOAP_IMPORT_DIR  = $(GSOAP_DIR)/import
+OPENSSL_DIR       = ./openssl
+
 
 
 SOAPCPP2          = $(GSOAP_DIR)/src/soapcpp2
@@ -48,7 +50,8 @@ GCC              ?=  g++
 # example:
 # make WSSE_ON=1 all
 ifdef WSSE_ON
-CFLAGS       += -DWITH_OPENSSL -lssl -lcrypto -lz
+CFLAGS       += -DWITH_OPENSSL -I$(OPENSSL_DIR)/include
+LDFLAGS      += openssl/libssl.a openssl/libcrypto.a -ldl
 
 
 WSSE_SOURCES  = $(GSOAP_PLUGIN_DIR)/wsseapi.c \
@@ -215,6 +218,7 @@ endif
 # ---- gSOAP ----
 
 $(GENERATED_DIR)/onvif.h:
+	@$(build_openssl)
 	@$(build_gsoap)
 	@mkdir -p $(GENERATED_DIR)
 	$(WSDL2H) -d -t ./wsdl/typemap.dat  -o $@  $(WSDL_FILES)
@@ -246,7 +250,7 @@ endef
 
 define build_bin
     @$(BUILD_ECHO)
-    $(GCC)  $1 -o $@  $(CFLAGS)
+    $(GCC)  $1 -o $@  $(CFLAGS) $(LDFLAGS)
     @echo "\n---- Compiled $@ ver $(DAEMON_MAJOR_VERSION).$(DAEMON_MINOR_VERSION).$(DAEMON_PATCH_VERSION) ----\n"
 endef
 
@@ -275,6 +279,31 @@ define build_gsoap
     fi
 endef
 
+
+
+define build_openssl
+
+    # get archive
+    if [ ! -f SDK/openssl.tar.gz ]; then \
+        mkdir -p SDK; \
+        wget -O ./SDK/openssl.tar.gz.tmp "https://www.openssl.org/source/openssl-1.0.2u.tar.gz" && \
+        mv ./SDK/openssl.tar.gz.tmp ./SDK/openssl.tar.gz; \
+    fi
+
+    # untar
+    if [ ! -f openssl-1.0.2u/README ]; then \
+        tar zxvf ./SDK/openssl.tar.gz; \
+        ln -s openssl-1.0.2u openssl; \
+    fi
+
+    # build
+    if [ ! -f openssl/libcrypto.so.1.0.0 ] || [ ! -f openssl/libssl.so.1.0.0 ]; then \
+        cd openssl; \
+        CC=arm-linux-gnueabihf-gcc ./Configure linux-generic32 && \
+        CC=arm-linux-gnueabihf-gcc make; \
+        cd ..;\
+    fi
+endef
 
 
 

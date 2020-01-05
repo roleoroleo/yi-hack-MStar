@@ -32,7 +32,13 @@
 #define RESOLUTION_LOW 360
 #define RESOLUTION_HIGH 1080
 
+//#define SKIP_SEI_F0 1
+
 unsigned char SPS[] = { 0x00, 0x00, 0x00, 0x01, 0x67 };
+
+#ifdef SKIP_SEI_F0
+unsigned char SEI_F0[] = { 0x00, 0x00, 0x00, 0x01, 0x06, 0xF0 };
+#endif
 
 // Returns the 1st process id corresponding to pname
 int pidof(const char *pname)
@@ -271,7 +277,19 @@ int main(int argc, char **argv)
 
         memcpy(buffer, addr, len);
         oldTime = time;
+
+#ifdef SKIP_SEI_F0
+        if (memcmp(SEI_F0, buffer, sizeof(SEI_F0)) == 0) {
+            fwrite(buffer + 52, 1, len - 52, stdout);
+        } else if (memcmp(SPS, buffer, sizeof(SPS)) == 0) {
+            fwrite(buffer, 1, 24, stdout);
+            fwrite(buffer + 76, 1, len - 76, stdout);
+        } else {
+            fwrite(buffer, 1, len, stdout);
+        }
+#else
         fwrite(buffer, 1, len, stdout);
+#endif
     }
 
     munmap(addr, size);
