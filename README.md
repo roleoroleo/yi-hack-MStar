@@ -14,6 +14,7 @@ I was inspired by the following topic:
 - @andy2301 - [Ideas for the RSTP rtsp and rtsp2301](https://github.com/xmflsct/yi-hack-1080p/issues/5#issuecomment-294326131)
 
 The RTSP server code derives from live555 - http://www.live555.com/ and from the archive rtsp2303_srcbin_20170414-1630.zip posted in the link above.
+There is a problem with ffmpeg, see https://github.com/roleoroleo/yi-hack-MStar/issues/36 for details.
 
 ## Table of Contents
 
@@ -69,6 +70,7 @@ Currently this project supports only the following cameras:
 | **Yi 1080p Home BFUS** | 4.5.0* | y203c | - |
 | **Yi 1080p Dome 6FUS** | 4.6.0* | h201c | Thanks to @skylarhays |
 | **Yi 1080p Dome BFUS** | 4.6.0* | h201c | Thanks to @skylarhays |
+| **Yi 1080p Home 4FUS** | 4.2.0* | y25 | - |
 | **Yi 1080p Home 9FUS** | 4.2.0* | y25 | - |
 | **Yi 1080p Home 6FCN** | unknown | y203c | - |
 
