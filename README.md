@@ -4,7 +4,7 @@ This firmware is completely based on the work done by TheCrypt0
 https://github.com/TheCrypt0/yi-hack-v4
 It's a clone made for Yi cameras based on MStar platform.
 
-**But you can't choose between TheCrypt0 and MStar: if your cam is based on Hi3518e Chipset then you have to use TheCrypto, if your cam is based on MStar Infinity Chipset then you have to use MStar.**
+**But you can't choose between TheCrypt0 and MStar: if your cam is based on Hi3518e Chipset then you have to use TheCrypt0, if your cam is based on MStar Infinity Chipset then you have to use MStar.**
 
 I have no time to support the project, so feel free to clone/fork this git and modify it as you want.
 
@@ -14,6 +14,7 @@ I was inspired by the following topic:
 - @andy2301 - [Ideas for the RSTP rtsp and rtsp2301](https://github.com/xmflsct/yi-hack-1080p/issues/5#issuecomment-294326131)
 
 The RTSP server code derives from live555 - http://www.live555.com/ and from the archive rtsp2303_srcbin_20170414-1630.zip posted in the link above.
+
 There is a problem with ffmpeg, see https://github.com/roleoroleo/yi-hack-MStar/issues/36 for details.
 
 ## Table of Contents
