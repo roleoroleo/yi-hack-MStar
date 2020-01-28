@@ -55,7 +55,9 @@ void ipc_stop()
 
 void print_usage(char *progname)
 {
-    fprintf(stderr, "\nUsage: %s [-s SENS] [-l LED] [-v WHEN] [-d]\n\n", progname);
+    fprintf(stderr, "\nUsage: %s [t ON/OFF] [-s SENS] [-l LED] [-v WHEN] [-i IR] [-r ROTATE] [-m MOVE] [-p NUM] [-d]\n\n", progname);
+    fprintf(stderr, "\t-t ON/OFF, --switch ON/OFF\n");
+    fprintf(stderr, "\t\tswitch ON or OFF the cam\n");
     fprintf(stderr, "\t-s SENS, --sensitivity SENS\n");
     fprintf(stderr, "\t\tset sensitivity: LOW, MEDIUM or HIGH\n");
     fprintf(stderr, "\t-l LED, --led LED\n");
@@ -81,6 +83,7 @@ int main(int argc, char ** argv)
     int errno;
     char *endptr;
     int c, ret;
+    int switch_on = NONE;
     int sensitivity = NONE;
     int led = NONE;
     int save = NONE;
@@ -94,6 +97,7 @@ int main(int argc, char ** argv)
     while (1) {
         static struct option long_options[] =
         {
+            {"switch",  required_argument, 0, 't'},
             {"sensitivity",  required_argument, 0, 's'},
             {"led",  required_argument, 0, 'l'},
             {"save",  required_argument, 0, 'v'},
@@ -108,7 +112,7 @@ int main(int argc, char ** argv)
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        c = getopt_long (argc, argv, "s:l:v:i:r:m:p:dh",
+        c = getopt_long (argc, argv, "t:s:l:v:i:r:m:p:dh",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -116,6 +120,14 @@ int main(int argc, char ** argv)
             break;
 
         switch (c) {
+        case 't':
+            if (strcasecmp("on", optarg) == 0) {
+                switch_on = SWITCH_ON;
+            } else if (strcasecmp("off", optarg) == 0) {
+                switch_on = SWITCH_OFF;
+            }
+            break;
+
         case 's':
             if (strcasecmp("low", optarg) == 0) {
                 sensitivity = SENSITIVITY_LOW;
@@ -215,6 +227,12 @@ int main(int argc, char ** argv)
     ret=ipc_start();
     if(ret != 0) {
         exit(EXIT_FAILURE);
+    }
+
+    if (switch_on == SWITCH_ON) {
+        mq_send(ipc_mq, IPC_SWITCH_ON, sizeof(IPC_SWITCH_ON), 0);
+    } else if (switch_on == SWITCH_OFF) {
+        mq_send(ipc_mq, IPC_SWITCH_OFF, sizeof(IPC_SWITCH_OFF), 0);
     }
 
     if (sensitivity == SENSITIVITY_LOW) {

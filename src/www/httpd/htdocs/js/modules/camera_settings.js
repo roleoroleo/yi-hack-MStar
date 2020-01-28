@@ -73,7 +73,8 @@ APP.camera_settings = (function ($) {
         });
         $.ajax({
             type: "GET",
-            url: 'cgi-bin/camera_settings.sh?save_video_on_motion=' + configs["SAVE_VIDEO_ON_MOTION"] +
+            url: 'cgi-bin/camera_settings.sh?switch_on=' + configs["SWITCH_ON"] +
+                '&save_video_on_motion=' + configs["SAVE_VIDEO_ON_MOTION"] +
                 '&sensitivity=' + configs["SENSITIVITY"] +
                 '&led=' + configs["LED"] +
                 '&ir=' + configs["IR"] +

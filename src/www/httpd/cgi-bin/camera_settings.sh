@@ -2,12 +2,18 @@
 
 YI_HACK_PREFIX="/home/yi-hack"
 
-for I in 1 2 3 4 5
+for I in 1 2 3 4 5 6
 do
     CONF="$(echo $QUERY_STRING | cut -d'&' -f$I | cut -d'=' -f1)"
     VAL="$(echo $QUERY_STRING | cut -d'&' -f$I | cut -d'=' -f2)"
 
-    if [ "$CONF" == "save_video_on_motion" ] ; then
+    if [ "$CONF" == "switch_on" ] ; then
+        if [ "$VAL" == "no" ] ; then
+            ipc_cmd -t off
+        else
+            ipc_cmd -t on
+        fi
+    elif [ "$CONF" == "save_video_on_motion" ] ; then
         if [ "$VAL" == "no" ] ; then
             ipc_cmd -v always
         else

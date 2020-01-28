@@ -32,13 +32,9 @@
 #define RESOLUTION_LOW 360
 #define RESOLUTION_HIGH 1080
 
-//#define SKIP_SEI_F0 1
-
 unsigned char SPS[] = { 0x00, 0x00, 0x00, 0x01, 0x67 };
 
-#ifdef SKIP_SEI_F0
 unsigned char SEI_F0[] = { 0x00, 0x00, 0x00, 0x01, 0x06, 0xF0 };
-#endif
 
 // Returns the 1st process id corresponding to pname
 int pidof(const char *pname)
@@ -121,6 +117,8 @@ void print_usage(char *progname)
     fprintf(stderr, "\nUsage: %s [-r RES] [-d]\n\n", progname);
     fprintf(stderr, "\t-r RES, --resolution RES\n");
     fprintf(stderr, "\t\tset resolution: LOW or HIGH (default HIGH)\n");
+    fprintf(stderr, "\t-s, --ssf0\n");
+    fprintf(stderr, "\t\tskip SEI F0\n");
     fprintf(stderr, "\t-d, --debug\n");
     fprintf(stderr, "\t\tenable debug\n");
     fprintf(stderr, "\t-h, --help\n");
@@ -129,7 +127,7 @@ void print_usage(char *progname)
 
 int main(int argc, char **argv)
 {
-    int c, debug = 0;
+    int c, debug = 0, ssf0 = 0;
     const char memDevice[] = "/dev/mem";
     int resolution = RESOLUTION_HIGH;
     FILE *fPtr, *fLen, *fTime;
@@ -149,6 +147,7 @@ int main(int argc, char **argv)
         static struct option long_options[] =
         {
             {"resolution",  required_argument, 0, 'r'},
+            {"ssf0",  required_argument, 0, 's'},
             {"debug",  no_argument, 0, 'd'},
             {"help",  no_argument, 0, 'h'},
             {0, 0, 0, 0}
@@ -156,7 +155,7 @@ int main(int argc, char **argv)
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        c = getopt_long (argc, argv, "r:dh",
+        c = getopt_long (argc, argv, "r:sdh",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -170,6 +169,11 @@ int main(int argc, char **argv)
             } else if (strcasecmp("high", optarg) == 0) {
                 resolution = RESOLUTION_HIGH;
             }
+            break;
+
+        case 's':
+            fprintf (stderr, "skip SEI F0\n");
+            ssf0 = 1;
             break;
 
         case 'd':
@@ -235,61 +239,81 @@ int main(int argc, char **argv)
         sprintf(timeStampFile, "/proc/mstar/OMX/VMFE0/ENCODER_INFO/OBUF_nTimeStamp");
     }
 
-    while(!stream_started) {
+    while (1) {
+
         fTime = fopen(timeStampFile, "r");
         fscanf(fTime, "%u", &time);
         fclose(fTime);
-
-        if (time == oldTime) {
-            usleep(200);
-            continue;
-        }
-
-        fLen = fopen(filLenFile, "r");
-        fscanf(fLen, "%d", &len);
-        fclose(fLen);
-
-        memcpy(buffer, addr, len);
-        if (memcmp(SPS, buffer, sizeof(SPS)) == 0) {
-            oldTime = time;
-            fwrite(buffer, 1, len, stdout);
-            stream_started = 1;
-        }
-    }
-
-    while(1) {
-        fTime = fopen(timeStampFile, "r");
-        fscanf(fTime, "%u", &time);
-        fclose(fTime);
-        if (debug) fprintf(stderr, "time: %u\n", time);
-
-        if (time == oldTime) {
-            usleep(8000); //200
-            continue;
-        }
-
-        usleep(100);
-
-        fLen = fopen(filLenFile, "r");
-        fscanf(fLen, "%d", &len);
-        fclose(fLen);
-        if (debug) fprintf(stderr, "time: %u - len: %d\n", time, len);
-
-        memcpy(buffer, addr, len);
         oldTime = time;
 
-#ifdef SKIP_SEI_F0
-        if (memcmp(SEI_F0, buffer, sizeof(SEI_F0)) == 0) {
-            fwrite(buffer + 52, 1, len - 52, stdout);
-        } else if (memcmp(SPS, buffer, sizeof(SPS)) == 0) {
-            fwrite(buffer, 1, 24, stdout);
-            fwrite(buffer + 76, 1, len - 76, stdout);
-        } else {
-            fwrite(buffer, 1, len, stdout);
+        stream_started = 0;
+
+        while(!stream_started) {
+            fTime = fopen(timeStampFile, "r");
+            fscanf(fTime, "%u", &time);
+            fclose(fTime);
+
+            if (time == oldTime) {
+                usleep(200);
+                continue;
+            }
+
+            fLen = fopen(filLenFile, "r");
+            fscanf(fLen, "%d", &len);
+            fclose(fLen);
+
+            memcpy(buffer, addr, len);
+            if (memcmp(SPS, buffer, sizeof(SPS)) == 0) {
+                if (ssf0) {
+                    oldTime = time;
+                    fwrite(buffer, 1, 24, stdout);
+                    fwrite(buffer + 76, 1, len - 76, stdout);
+                } else {
+                    oldTime = time;
+                    fwrite(buffer, 1, len, stdout);
+                }
+                stream_started = 1;
+            }
         }
-#else
-        fwrite(buffer, 1, len, stdout);
-#endif
+
+        while(1) {
+            fTime = fopen(timeStampFile, "r");
+            fscanf(fTime, "%u", &time);
+            fclose(fTime);
+            if (debug) fprintf(stderr, "time: %u\n", time);
+
+            if (time == oldTime) {
+                usleep(8000); //200
+                continue;
+            } else if (time - oldTime > 100000 ) {
+                // If time - oldTime > 100000 (100 ms) assume sync lost
+                if (debug) fprintf(stderr, "sync lost: %u - %u\n", time, oldTime);
+                break;
+            }
+
+            usleep(100);
+
+            fLen = fopen(filLenFile, "r");
+            fscanf(fLen, "%d", &len);
+            fclose(fLen);
+            if (debug) fprintf(stderr, "time: %u - len: %d\n", time, len);
+
+            memcpy(buffer, addr, len);
+            oldTime = time;
+
+            if (ssf0) {
+                if (memcmp(SEI_F0, buffer, sizeof(SEI_F0)) == 0) {
+                    fwrite(buffer + 52, 1, len - 52, stdout);
+                } else if (memcmp(SPS, buffer, sizeof(SPS)) == 0) {
+                    fwrite(buffer, 1, 24, stdout);
+                    fwrite(buffer + 76, 1, len - 76, stdout);
+                } else {
+                    fwrite(buffer, 1, len, stdout);
+                }
+            } else {
+                fwrite(buffer, 1, len, stdout);
+            }
+        }
     }
 
     munmap(addr, size);

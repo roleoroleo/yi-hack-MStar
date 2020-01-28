@@ -48,13 +48,14 @@ Apart from RTSP, snapshot and ONVIF, all the features are copied from the TheCry
   - Authentication for HTTP, RTSP and ONVIF server.
   - Proxychains-ng - Disabled by default. Useful if the camera is region locked.
   - Watermark removed.
-  - The possibility to change some camera settings:
+  - The possibility to change some camera settings (copied from official app):
+    - camera on/off
     - video saving mode
     - detection sensitivity
     - status led
     - ir led
     - rotate
-  - Display of motion detect events and videos through a web page.
+  - Management of motion detect events and videos through a web page.
   - PTZ support through a web page.
   - The possibility to disable all the cloud features.
 
