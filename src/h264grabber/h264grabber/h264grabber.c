@@ -254,9 +254,11 @@ int main(int argc, char **argv)
             fclose(fTime);
 
             if (time == oldTime) {
-                usleep(200);
+                usleep(8000); //200
                 continue;
             }
+
+            usleep(1000);
 
             fLen = fopen(filLenFile, "r");
             fscanf(fLen, "%d", &len);
@@ -291,7 +293,7 @@ int main(int argc, char **argv)
                 break;
             }
 
-            usleep(100);
+            usleep(1000);
 
             fLen = fopen(filLenFile, "r");
             fscanf(fLen, "%d", &len);
