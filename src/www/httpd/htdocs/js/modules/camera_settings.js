@@ -80,6 +80,12 @@ APP.camera_settings = (function ($) {
                 '&ir=' + configs["IR"] +
                 '&rotate=' + configs["ROTATE"],
             dataType: "json",
+            success: function(response) {
+
+            },
+            error: function(response) {
+                console.log('error', response);
+            }
         });
     }
 

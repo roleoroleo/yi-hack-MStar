@@ -94,6 +94,12 @@ if [ ! -f "$YI_HACK_PREFIX/$CONF_FILE" ]; then
 fi
 
 # Set camera settings
+if [[ $(get_config SWITCH_ON) == "no" ]] ; then
+    ipc_cmd -t off
+else
+    ipc_cmd -t on
+fi
+
 if [[ $(get_config SAVE_VIDEO_ON_MOTION) == "no" ]] ; then
     ipc_cmd -v always
 else

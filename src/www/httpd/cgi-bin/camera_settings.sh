@@ -2,10 +2,17 @@
 
 YI_HACK_PREFIX="/home/yi-hack"
 
+CONF_LAST="CONF_LAST"
+
 for I in 1 2 3 4 5 6
 do
     CONF="$(echo $QUERY_STRING | cut -d'&' -f$I | cut -d'=' -f1)"
     VAL="$(echo $QUERY_STRING | cut -d'&' -f$I | cut -d'=' -f2)"
+
+    if [ $CONF == $CONF_LAST ]; then
+        continue
+    fi
+    CONF_LAST=$CONF
 
     if [ "$CONF" == "switch_on" ] ; then
         if [ "$VAL" == "no" ] ; then
@@ -41,3 +48,8 @@ do
         fi
     fi
 done
+
+printf "Content-type: application/json\r\n\r\n"
+
+printf "{\n"
+printf "}"
