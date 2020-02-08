@@ -1,14 +1,47 @@
 <div class="row">
-    <div class="twelf columns">
-        <h3 class="no-margin" id="header">Events</h3>
+    <div class="twelve columns">
+        <div class="row">
+            <div class="twelve columns">
+                <h3 class="no-margin inline-block" id="header">Events</h3>
+                <h6 id="loading-status" class="float-right loading-text"></h6>
+            </div>
+        </div>
         <hr class="tiny-margin"/>
 
         <div class="row">
-            <p>Here you can see all the motion events detected.</p>
+            <p>Here you can configure the automatic video cleaning and see all the motion events detected.</p>
         </div>
 
-        <h5 class="tiny-margin strong">Select time</h5>
-        <hr class="no-margin"/>
+        <h4 class="no-margin">Auto video cleaning</h4>
+        <hr class="tiny-margin"/>
+        <div class="row">
+            <div class="twelve columns configs-switch">
+                <table class="u-full-width padded-table config-table">
+                    <tbody>
+                    <tr class="row">
+                        <td>SD free space (%)</td>
+                        <td>
+                            <input class="u-full-width" type="text" placeholder="" data-key="FREE_SPACE" id="FREE_SPACE"/>
+                            <span class="switch-description">
+                                Percentage of free space to keep in the SD (0 to disable).
+                            </span>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="align-right">
+            <span class="strong">This change will take effect after the reboot of the camera.</span>
+        </div>
+        <br/>
+        <div class="align-right">
+            <div class="padded-right save-text" id="save-status"></div>
+            <input class="button-primary" type="button" id="button-save" value="Save"/>
+        </div>
+
+        <h4 class="no-margin">Select time</h4>
+        <hr class="tiny-margin"/>
 
         <div id="table-container"></div>
     </div>

@@ -143,6 +143,13 @@ if [[ $(get_config ONVIF) == "yes" ]] ; then
     fi
 fi
 
+FREE_SPACE=$(get_config FREE_SPACE)
+if [[ $FREE_SPACE != "0" ]] ; then
+    mkdir -p /var/spool/cron/crontabs/
+    echo "  0  *  *  *  *  /home/yi-hack/script/clean_records.sh $FREE_SPACE" > /var/spool/cron/crontabs/root
+    /usr/sbin/crond -c /var/spool/cron/crontabs/
+fi
+
 if [ -f "/tmp/sd/yi-hack/startup.sh" ]; then
     /tmp/sd/yi-hack/startup.sh
 fi

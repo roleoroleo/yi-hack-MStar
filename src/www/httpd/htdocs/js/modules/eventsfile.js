@@ -15,8 +15,6 @@ function getUrlVar(key)
 
 APP.eventsfile = (function ($) {
 
-    var timeoutVar;
-
     function init() {
         updateEventsFilePage();
         registerEventHandler();
@@ -68,11 +66,6 @@ APP.eventsfile = (function ($) {
             },
             error: function(response) {
                 console.log('error', response);
-            },
-            complete: function () {
-                clearTimeout(timeoutVar);
-                timeoutVar = setTimeout(updateEventsfilePage, 10000);
-
             }
         });
     }
