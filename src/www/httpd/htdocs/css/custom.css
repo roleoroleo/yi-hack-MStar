@@ -1,5 +1,5 @@
 body {
-	padding-top: 80px; 
+	padding-top: 80px
 }
 
 /* main navigation */
@@ -8,10 +8,8 @@ nav {
 	position: fixed;
 	width: 100%;
 	z-index: 10000;
-
 	background-color: #fff;
 	border-bottom: 1px solid #dcdcdc;
-	
 	transition: top 0.2s ease-in-out;
 }
 
@@ -25,18 +23,15 @@ nav ul li {
 	float: left;
 	position: relative;
 	margin: 0;
-	
 	list-style-type: none;
 }
 
 nav ul li a {
 	display: inline-block;
 	padding: 14px 16px;
-	
 	color: #757575;
 	font-size: 1.7rem;
 	text-decoration: none;
-	
 	transition: 0.2s;
 }
 
@@ -47,15 +42,13 @@ nav ul > li a:not(:only-child):after { content: '\00a0\00a0▼'; font-size: 0.8r
 nav ul ul {
 	position: absolute;
 	min-width: 180px;
-	
-	height: 0px;
+	height: 0;
 	overflow: hidden; /* hide sub menu */
 }
 
 nav ul li:hover ul {
 	height: auto;
 	overflow: visible; /* show sub menu */
-	
 	border: 1px solid #dcdcdc;
 }
 
@@ -65,7 +58,7 @@ nav ul ul li {
 }
 
 nav ul ul li a {
-	display: block;
+	display: block
 }
 
 /* Change background color of links on hover */
@@ -75,7 +68,9 @@ nav ul li a:hover {
 }
 
 /* Hide the list item that contains the link that should open and close the topnav on small screens */
-nav ul li.icon { display: none; }
+nav ul li.icon {
+	display: none
+}
 
 /* When the screen is less than 680 pixels wide, hide all list items, except for the first one ("Home"). Show the list item that contains the link to open and close the topnav (li.icon) */
 @media screen and (max-width:880px) {
@@ -110,31 +105,31 @@ nav ul li.icon { display: none; }
 }
 
 .strong {
-    font-weight: bold;
+    font-weight: bold
 }
 
 .italic {
-    font-style: italic;
+    font-style: italic
 }
 
 .float-right {
-	float: right;
+	float: right
 }
 
 .align-right {
-    text-align: right;
+    text-align: right
 }
 
 .inline {
-    display: inline;
+    display: inline
 }
 
 .inline-block {
-    display: inline-block;
+    display: inline-block
 }
 
 .no-margin {
-    margin: 0;
+    margin: 0
 }
 
 .tiny-margin {
@@ -143,20 +138,20 @@ nav ul li.icon { display: none; }
 }
 
 .padded-right {
-	padding-right: 20px;
+	padding-right: 20px
 }
 
 .ios-onclick-fix {
-    cursor: pointer;
+    cursor: pointer
 }
 
 table.ptz-table {
-    width: 35%;
+    width: 35%
 }
 
 table.ptz-table tr td {
     padding: 1px 1px 1px 1px;
-    border: 0px;
+    border: 0;
     text-align: center;
 }
 
@@ -169,10 +164,6 @@ table.padded-table td:first-child {
     width: 35%;
 }
 
-table.padded-table td:last-child {
-    /*text-shadow: 0.01px 0 0 currentColor;*/
-}
-
 table.config-table td:first-child {
 	vertical-align: top;
 	padding-top: 16px;
@@ -180,7 +171,7 @@ table.config-table td:first-child {
 }
 
 li.nav-elem-right {
-    float: right;
+    float: right
 }
 
 /* The switch - the box around the slider */
@@ -203,7 +194,9 @@ li.nav-elem-right {
 }
 
 /* Hide default HTML checkbox */
-.switch input {display:none;}
+.switch input {
+	display:none
+}
 
 /* The slider */
 .slider {
@@ -243,11 +236,11 @@ li.nav-elem-right {
 }
 
 input:checked + .slider {
-	background-color: #12b6ea;
+	background-color: #12b6ea
 }
 
 input:focus + .slider {
-	box-shadow: 0 0 1px #12b6ea;
+	box-shadow: 0 0 1px #12b6ea
 }
 
 input:checked + .slider:before {
@@ -264,11 +257,11 @@ input:checked + .slider:before {
 
 /* Rounded sliders */
 .slider.round {
-	border-radius: 34px;
+	border-radius: 34px
 }
 
 .slider.round:before {
-	border-radius: 50%;
+	border-radius: 50%
 }
 
 /* Switch text */
@@ -294,5 +287,5 @@ input:checked + .slider:before {
 
 .loading-text {
 	margin-top: 15px;
-	margin-bottom: 0px;
+	margin-bottom: 0;
 }
