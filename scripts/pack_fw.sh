@@ -39,12 +39,9 @@ compress_file()
     local DIR=$1
     local FILENAME=$2
     local FILE=$DIR/$FILENAME
-    if [[ -f "$FILE" ]]; then
-        printf "Compressing %s... " $FILENAME
-        7za a "$FILE.7z" "$FILE" > /dev/null
-        rm -f "$FILE"
-        printf "done!\n"
-    fi
+    echo -n "    Compressing $FILE..."
+    7za a "$FILE.7z" "$FILE" > /dev/null
+    echo "done!"
 }
 
 pack_image()
@@ -54,11 +51,11 @@ pack_image()
     local DIR=$3
     local OUT=$4
 
-    printf "> PACKING : %s_%s\n\n" $TYPE $CAMERA_ID
+    echo ">>> Packing ${TYPE}_${CAMERA_ID}"
 
-    printf "Creating jffs2 filesystem... "
+    echo -n "    Creating jffs2 filesystem in $DIR/${TYPE}_${CAMERA_ID}.jffs2... "
     mkfs.jffs2 -l -e 0x10000 -r $DIR/$TYPE -o $OUT/${TYPE}_${CAMERA_ID}.jffs2 || exit 1
-    printf "done!\n"
+    echo "done!"
 }
 
 ###############################################################################
@@ -103,11 +100,11 @@ printf " out_dir          : %s\n" $OUT_DIR
 echo "------------------------------------------------------------------------"
 echo ""
 
-printf "Starting...\n\n"
+echo -n ">>> Starting..."
 
-sleep 1 
+sleep 1
 
-printf "Checking if the required sysroot exists... "
+echo -n ">>> Checking if the required sysroot exists... "
 
 # Check if the sysroot exist
 if [[ ! -d "$SYSROOT_DIR/home" || ! -d "$SYSROOT_DIR/rootfs" ]]; then
@@ -119,25 +116,27 @@ if [[ ! -d "$SYSROOT_DIR/home" || ! -d "$SYSROOT_DIR/rootfs" ]]; then
     echo "You should create the $CAMERA_NAME sysroot before trying to pack the firmware."
     exit 1
 else
-    printf "yeah!\n"
+    echo "yeah!"
 fi
 
-printf "Creating the out directory... "
+echo -n ">>> Creating the out directory... "
 mkdir -p $OUT_DIR
-printf "%s created!\n\n" $OUT_DIR
+echo "${OUT_DIR} created!"
 
-printf "Creating the tmp directory... "
+echo -n ">>> Creating the tmp directory... "
 TMP_DIR=$(create_tmp_dir)
-printf "%s created!\n\n" $TMP_DIR
+echo "${TMP_DIR} created!"
 
 # Copy the sysroot to the tmp dir
-printf "Copying the sysroot contents... "
-rsync -a $SYSROOT_DIR/rootfs/* $TMP_DIR/rootfs || exit 1
-rsync -a $SYSROOT_DIR/home/* $TMP_DIR/home || exit 1
-printf "done!\n"
+echo ">>> Copying the sysroot contents to ${TMP_DIR}... "
+echo "    Copying rootfs..."
+rsync -a ${SYSROOT_DIR}/rootfs/* ${TMP_DIR}/rootfs || exit 1
+echo "    Copying home..."
+rsync -a ${SYSROOT_DIR}/home/* ${TMP_DIR}/home || exit 1
+echo "    done!"
 
 # We can safely replace chinese audio files with links to the us version
-printf "Removing unneeded audio files... "
+echo -n ">>> Removing unneeded audio files... "
 
 AUDIO_EXTENSION="*.aac"
 
@@ -155,46 +154,49 @@ done
 printf "done!\n"
 
 # Copy the build files to the tmp dir
-printf "Copying the build files... "
-rsync -a $BUILD_DIR/rootfs/* $TMP_DIR/rootfs || exit 1
-rsync -a $BUILD_DIR/home/* $TMP_DIR/home || exit 1
-printf "done!\n"
+echo -n ">>> Copying files from the build directory to ${TMP_DIR}... "
+cp -R $BUILD_DIR/rootfs/* $TMP_DIR/rootfs || exit 1
+cp -R $BUILD_DIR/home/* $TMP_DIR/home || exit 1
+echo "done!"
 
 # Removing back.bin file
-printf "Removing back.bin file... "
+echo -n ">>> Removing back.bin file... "
 rm -f $TMP_DIR/rootfs/etc/back.bin
-printf "done!\n\n"
+echo "done!"
 
 # insert the version file
-printf "Copying the version file... "
+echo -n ">>> Copying the version file... "
 cp $BASE_DIR/VERSION $TMP_DIR/home/yi-hack/version
-printf "done!\n\n"
+echo "done!"
 
 # insert the model suffix file
-printf "Creating the model suffix file... "
+echo -n ">>> Creating the model suffix file... "
 echo $CAMERA_ID > $TMP_DIR/home/yi-hack/model_suffix
-printf "done!\n\n"
+echo "done!"
 
 # fix the files ownership
-printf "Fixing the files ownership... "
+echo -n ">>> Fixing the files ownership... "
 chown -R root:root $TMP_DIR/*
-printf "done!\n\n"
+echo "done!"
 
 # Compress a couple of the yi app files
+echo ">>> Compressing yi app files..."
 compress_file "$TMP_DIR/home/app" cloudAPI
 compress_file "$TMP_DIR/home/app" oss
 compress_file "$TMP_DIR/home/app" p2p_tnp
 compress_file "$TMP_DIR/home/app" rmm
+echo "done!"
 
 # Compress the yi-hack folder
-printf "Compressing yi-hack... "
+echo -n ">>> Compressing yi-hack... "
 7za a $TMP_DIR/home/yi-hack/yi-hack.7z $TMP_DIR/home/yi-hack/* > /dev/null
 
+echo -n ">>> Removing duplicated compressed files from ${TMP_DIR}/home/yi-hack..."
 # Delete all the compressed files except system_init.sh and yi-hack.7z
 find $TMP_DIR/home/yi-hack/script/ -maxdepth 0 ! -name 'system_init.sh' -type f -exec rm -f {} +
 find $TMP_DIR/home/yi-hack/* -maxdepth 0 -type d ! -name 'script' -exec rm -rf {} +
 find $TMP_DIR/home/yi-hack/* -maxdepth 0 -type f -not -name 'yi-hack.7z' -exec rm {} +
-printf "done!\n\n"
+echo "done!"
 
 # home 
 pack_image "home" $CAMERA_ID $TMP_DIR $OUT_DIR
@@ -209,9 +211,9 @@ rm -f $OUT_DIR/*.tgz
 tar zcvf $OUT_DIR/${CAMERA_NAME}_${VER}.tgz -C $OUT_DIR sys_$CAMERA_ID home_$CAMERA_ID
 
 # Cleanup
-printf "Cleaning up the tmp folder... "
+echo -n ">>> Cleaning up the tmp folder... "
 rm -rf $TMP_DIR
-printf "done!\n\n"
+echo "done!"
 
 echo "------------------------------------------------------------------------"
 echo " Finished!"

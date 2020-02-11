@@ -35,7 +35,7 @@ create_sysroot_dir()
 
     local SYSROOT_DIR=$SYSROOT_BASE_DIR/$CAMERA_NAME
     if [[ -d $SYSROOT_DIR/home && -d $SYSROOT_DIR/rootfs ]]; then
-        echo "ERROR: The $CAMERA_NAME sysroot folder already exists. Exiting."
+        echo "ERROR: The $SYSROOT_BASE_DIR/$CAMERA_NAME folder already exists. Exiting."
         echo ""
         exit 1
     fi
