@@ -41,6 +41,7 @@ compress_file()
     local FILE=$DIR/$FILENAME
     echo -n "    Compressing $FILE..."
     7za a "$FILE.7z" "$FILE" > /dev/null
+    rm -f "$FILE"
     echo "done!"
 }
 
