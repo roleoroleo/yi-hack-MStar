@@ -28,6 +28,7 @@
 #include <sys/mman.h>
 #include <dirent.h>
 #include <getopt.h>
+#include <sys/time.h>
 
 #define RESOLUTION_LOW 360
 #define RESOLUTION_HIGH 1080
@@ -125,6 +126,14 @@ void print_usage(char *progname)
     fprintf(stderr, "\t\tprint this help\n");
 }
 
+long long current_timestamp() {
+    struct timeval te; 
+    gettimeofday(&te, NULL); // get current time
+    long long milliseconds = te.tv_sec*1000LL + te.tv_usec/1000; // calculate milliseconds
+
+    return milliseconds;
+}
+
 int main(int argc, char **argv)
 {
     int c, debug = 0, ssf0 = 0;
@@ -141,7 +150,6 @@ int main(int argc, char **argv)
     int len;
     unsigned int time, oldTime = 0;
     int stream_started = 0;
-
 
     while (1) {
         static struct option long_options[] =
@@ -239,6 +247,12 @@ int main(int argc, char **argv)
         sprintf(timeStampFile, "/proc/mstar/OMX/VMFE0/ENCODER_INFO/OBUF_nTimeStamp");
     }
 
+    char stdoutbuf[262144];
+
+    if (setvbuf(stdout, stdoutbuf, _IOFBF, sizeof(stdoutbuf)) != 0) {
+        fprintf(stderr, "Error setting stdout buffer\n");
+    }
+
     while (1) {
 
         fTime = fopen(timeStampFile, "r");
@@ -254,7 +268,7 @@ int main(int argc, char **argv)
             fclose(fTime);
 
             if (time == oldTime) {
-                usleep(8000); //200
+                usleep(8000);
                 continue;
             }
 
@@ -265,15 +279,16 @@ int main(int argc, char **argv)
             fclose(fLen);
 
             memcpy(buffer, addr, len);
+            oldTime = time;
             if (memcmp(SPS, buffer, sizeof(SPS)) == 0) {
+                if (debug) fprintf(stderr, "time: %u - len: %d\n", time, len);
                 if (ssf0) {
-                    oldTime = time;
                     fwrite(buffer, 1, 24, stdout);
                     fwrite(buffer + 76, 1, len - 76, stdout);
                 } else {
-                    oldTime = time;
                     fwrite(buffer, 1, len, stdout);
                 }
+                fflush(stdout);
                 stream_started = 1;
             }
         }
@@ -285,10 +300,10 @@ int main(int argc, char **argv)
             if (debug) fprintf(stderr, "time: %u\n", time);
 
             if (time == oldTime) {
-                usleep(8000); //200
+                usleep(8000);
                 continue;
-            } else if (time - oldTime > 100000 ) {
-                // If time - oldTime > 100000 (100 ms) assume sync lost
+            } else if (time - oldTime > 125000 ) {
+                // If time - oldTime > 125000 (125 ms) assume sync lost
                 if (debug) fprintf(stderr, "sync lost: %u - %u\n", time, oldTime);
                 break;
             }
@@ -299,6 +314,7 @@ int main(int argc, char **argv)
             fscanf(fLen, "%d", &len);
             fclose(fLen);
             if (debug) fprintf(stderr, "time: %u - len: %d\n", time, len);
+            if (debug) fprintf(stderr, "milliseconds: %lld\n", current_timestamp());
 
             memcpy(buffer, addr, len);
             oldTime = time;
@@ -315,6 +331,7 @@ int main(int argc, char **argv)
             } else {
                 fwrite(buffer, 1, len, stdout);
             }
+            fflush(stdout);
         }
     }
 

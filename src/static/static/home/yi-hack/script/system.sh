@@ -133,6 +133,7 @@ if [[ $(get_config RTSP) == "yes" ]] ; then
         h264grabber -r low | RRTSP_RES=1 RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD rRTSPServer &
         ONVIF_PROFILE_1="--name Profile_1 --width 640 --height 360 --url rtsp://%s$D_RTSP_PORT/ch0_1.h264 --snapurl http://%s$D_HTTPD_PORT/cgi-bin/snapshot.sh?res=low --type H264"
     fi
+    $YI_HACK_PREFIX/script/wd_rtsp.sh &
 fi
 
 if [[ $(get_config ONVIF) == "yes" ]] ; then
