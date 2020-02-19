@@ -34,7 +34,7 @@ restart_rtsp()
 check_rtsp()
 {
 #       echo "$(date +'%Y-%m-%d %H:%M:%S') - Checking RTSP process..." >> $LOG_FILE
-        SOCKET=`netstat -an 2>&1 | grep ":554 " | grep ESTABLISHED | grep -c ^`
+        SOCKET=`netstat -an 2>&1 | grep ":$RTSP_PORT " | grep ESTABLISHED | grep -c ^`
         CPU_1=`top -b -n 1 | grep h264grabber | grep -v grep | awk '{print $8}'`
         CPU_2=`top -b -n 1 | grep rRTSPServer | grep -v grep | awk '{print $8}'`
 
