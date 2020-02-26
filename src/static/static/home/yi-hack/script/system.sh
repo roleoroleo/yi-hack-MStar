@@ -155,7 +155,7 @@ fi
 FREE_SPACE=$(get_config FREE_SPACE)
 if [[ $FREE_SPACE != "0" ]] ; then
     mkdir -p /var/spool/cron/crontabs/
-    echo "  0  *  *  *  *  /home/yi-hack/script/clean_records.sh $FREE_SPACE" > /var/spool/cron/crontabs/root
+    echo "  0  *  *  *  *  /home/yi-hack/script/clean_record.sh $FREE_SPACE" > /var/spool/cron/crontabs/root
     /usr/sbin/crond -c /var/spool/cron/crontabs/
 fi
 
