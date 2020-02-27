@@ -16,15 +16,7 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/lib:/home/yi-hack/lib:/tmp/sd/yi-h
 export PATH=$PATH:/home/base/tools:/home/yi-hack/bin:/home/yi-hack/sbin:/tmp/sd/yi-hack/bin:/tmp/sd/yi-hack/sbin
 
 ulimit -s 1024
-
-# Use 2 last MAC address numbers to set a different hostname
-MAC=$(cat /sys/class/net/wlan0/address|cut -d ':' -f 5,6|sed 's/://g')
-if [ "$MAC" != "" ]; then
-    hostname yi-$MAC
-    hostname > /etc/hostname
-else
-    hostname -F /etc/hostname
-fi
+hostname -F /etc/hostname
 
 touch /tmp/httpd.conf
 

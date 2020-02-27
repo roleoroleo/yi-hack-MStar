@@ -53,12 +53,12 @@ APP.configurations = (function ($) {
 
         configs["HOSTNAME"] = $('input[type="text"][data-key="HOSTNAME"]').prop('value');
 
-        if(!validateHostname(configs["HOSTNAME"]))
-        {
-            saveStatusElem.text("Failed");
-            alert("Hostname not valid!");
-            return;
-        }
+//        if(!validateHostname(configs["HOSTNAME"]))
+//        {
+//            saveStatusElem.text("Failed");
+//            alert("Hostname not valid!");
+//            return;
+//        }
 
         configs["HTTPD_PORT"] = $('input[type="text"][data-key="HTTPD_PORT"]').prop('value');
         configs["RTSP_PORT"] = $('input[type="text"][data-key="RTSP_PORT"]').prop('value');

@@ -7,7 +7,7 @@ compress_html()
 
     echo "Compressing $SRC..."
     awk -f ./httpd/tools/remcomm.awk "$SRC" > ./_install/www/tmp.html
-    xmllint --noblanks ./_install/www/tmp.html > "$DST"
+    xmllint --html --noblanks ./_install/www/tmp.html > "$DST"
     rm ./_install/www/tmp.html
 }
 
