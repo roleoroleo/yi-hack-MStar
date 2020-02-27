@@ -181,23 +181,23 @@ chown -R root:root $TMP_DIR/*
 echo "done!"
 
 # Compress a couple of the yi app files
-echo ">>> Compressing yi app files..."
-compress_file "$TMP_DIR/home/app" cloudAPI
-compress_file "$TMP_DIR/home/app" oss
-compress_file "$TMP_DIR/home/app" p2p_tnp
-compress_file "$TMP_DIR/home/app" rmm
-echo "done!"
+#echo ">>> Compressing yi app files..."
+#compress_file "$TMP_DIR/home/app" cloudAPI
+#compress_file "$TMP_DIR/home/app" oss
+#compress_file "$TMP_DIR/home/app" p2p_tnp
+#compress_file "$TMP_DIR/home/app" rmm
+#echo "done!"
 
 # Compress the yi-hack folder
-echo -n ">>> Compressing yi-hack... "
-7za a $TMP_DIR/home/yi-hack/yi-hack.7z $TMP_DIR/home/yi-hack/* > /dev/null
+#echo -n ">>> Compressing yi-hack... "
+#7za a $TMP_DIR/home/yi-hack/yi-hack.7z $TMP_DIR/home/yi-hack/* > /dev/null
 
-echo -n ">>> Removing duplicated compressed files from ${TMP_DIR}/home/yi-hack..."
+#echo -n ">>> Removing duplicated compressed files from ${TMP_DIR}/home/yi-hack..."
 # Delete all the compressed files except system_init.sh and yi-hack.7z
-find $TMP_DIR/home/yi-hack/script/ -maxdepth 0 ! -name 'system_init.sh' -type f -exec rm -f {} +
-find $TMP_DIR/home/yi-hack/* -maxdepth 0 -type d ! -name 'script' -exec rm -rf {} +
-find $TMP_DIR/home/yi-hack/* -maxdepth 0 -type f -not -name 'yi-hack.7z' -exec rm {} +
-echo "done!"
+#find $TMP_DIR/home/yi-hack/script/ -maxdepth 0 ! -name 'system_init.sh' -type f -exec rm -f {} +
+#find $TMP_DIR/home/yi-hack/* -maxdepth 0 -type d ! -name 'script' -exec rm -rf {} +
+#find $TMP_DIR/home/yi-hack/* -maxdepth 0 -type f -not -name 'yi-hack.7z' -exec rm {} +
+#echo "done!"
 
 # home 
 pack_image "home" $CAMERA_ID $TMP_DIR $OUT_DIR
