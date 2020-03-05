@@ -16,3 +16,6 @@
 [submodule "src/onvif_srvd/onvif_srvd"]
 	path = src/onvif_srvd/onvif_srvd
 	url = https://github.com/roleoroleo/onvif_srvd
+[submodule "src/mqtt/mqttv4"]
+	path = src/mqtt/mqttv4
+	url = https://github.com/roleoroleo/mqttv4
