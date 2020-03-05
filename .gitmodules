@@ -10,9 +10,6 @@
 [submodule "src/mosquitto/mosquitto"]
 	path = src/mosquitto/mosquitto
 	url = https://github.com/eclipse/mosquitto
-[submodule "src/mqtt/mqttv4"]
-	path = src/mqtt/mqttv4
-	url = https://github.com/TheCrypt0/mqttv4
 [submodule "src/proxychains-ng/proxychains-ng"]
 	path = src/proxychains-ng/proxychains-ng
 	url = https://github.com/rofl0r/proxychains-ng
