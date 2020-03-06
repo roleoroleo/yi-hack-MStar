@@ -10,10 +10,6 @@ rm -rf ./_install
 cd mqttv4
 git reset --hard 
 
-cd ..
-patch -p0 < mqttv4.patch
-cd mqttv4
-
 cp ../config.mak config.mak
 
 mkdir -p ./lib
