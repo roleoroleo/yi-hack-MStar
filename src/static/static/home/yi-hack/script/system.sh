@@ -20,6 +20,8 @@ hostname -F /etc/hostname
 
 touch /tmp/httpd.conf
 
+$YI_HACK_PREFIX/script/check_conf.sh
+
 if [[ x$(get_config USERNAME) != "x" ]] ; then
     USERNAME=$(get_config USERNAME)
     PASSWORD=$(get_config PASSWORD)
