@@ -73,7 +73,7 @@ Currently this project supports only the following cameras:
 | **Yi 1080p Dome 6FUS** | 4.6.0* | h201c | Thanks to @skylarhays |
 | **Yi 1080p Dome BFUS** | 4.6.0* | h201c | Thanks to @skylarhays |
 | **Yi 1080p Home 4FUS** | 4.2.0* | y25 | - |
-| **Yi 1080p Home 9FUS** | 4.2.0* | y25 | - |
+| **Yi 1080p Home 9FUS** | 4.2.0* | y25 or y203c | if your camera refuses to flash with y25, try y203c |
 | **Yi 1080p Home 6FCN** | unknown | y203c | - |
 
 This firmware completely overwrite the original firmware.
@@ -86,11 +86,14 @@ So, USE AT YOUR OWN RISK.
 ## Getting Started
 1. Check that you have a correct Xiaomi Yi camera.
 
-2. Get a microSD card, 16gb or less, and format it by selecting File System as FAT32.
+1. Get a microSD card, 32gb or less, and format it by selecting File System as FAT32.
 
-3. Get the correct firmware files for your camera from the releases section (https://github.com/roleoroleo/yi-hack-6FUS_4.5.0/releases).
+1. Get the correct firmware files for your camera from the releases section (https://github.com/roleoroleo/yi-hack-6FUS_4.5.0/releases).
 
-4. Save both files (for example home_y203c and sys_y203c) on root path of microSD card.
+1. Unpack the `tgz` file. On Windows, you can use 7-Zip to access the `tar` file.
+Inside you'll find two files: `home_*` and `sys_*`. 
+
+4. Save both files (for example home_y203c and sys_y203c) on root path of microSD card. Don't rename the files.
 
 5. Remove power to the camera, insert the microSD card, turn the power back ON.
 
