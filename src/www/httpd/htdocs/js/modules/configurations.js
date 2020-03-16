@@ -25,7 +25,7 @@ APP.configurations = (function ($) {
                 loadingStatusElem.fadeOut(500);
 
                 $.each(response, function (key, state) {
-                    if(key=="HOSTNAME" || key=="HTTPD_PORT" || key=="RTSP_PORT" || key=="ONVIF_PORT" || key=="USERNAME")
+                    if(key=="HOSTNAME" || key=="HTTPD_PORT" || key=="RTSP_STREAM" || key=="RTSP_PORT" || key=="RTSP1_PORT" || key=="ONVIF_PORT" || key=="USERNAME")
                         $('input[type="text"][data-key="' + key +'"]').prop('value', state);
                     else if(key=="PASSWORD")
                         $('input[type="password"][data-key="' + key +'"]').prop('value', state);
@@ -61,7 +61,9 @@ APP.configurations = (function ($) {
 //        }
 
         configs["HTTPD_PORT"] = $('input[type="text"][data-key="HTTPD_PORT"]').prop('value');
+        configs["RTSP_STREAM"] = $('input[type="text"][data-key="RTSP_STREAM"]').prop('value');
         configs["RTSP_PORT"] = $('input[type="text"][data-key="RTSP_PORT"]').prop('value');
+        configs["RTSP1_PORT"] = $('input[type="text"][data-key="RTSP1_PORT"]').prop('value');
         configs["ONVIF_PORT"] = $('input[type="text"][data-key="ONVIF_PORT"]').prop('value');
         configs["USERNAME"] = $('input[type="text"][data-key="USERNAME"]').prop('value');
         configs["PASSWORD"] = $('input[type="password"][data-key="PASSWORD"]').prop('value');

@@ -33,6 +33,10 @@ case $(get_config RTSP_PORT) in
     ''|*[!0-9]*) RTSP_PORT=554 ;;
     *) RTSP_PORT=$(get_config RTSP_PORT) ;;
 esac
+case $(get_config RTSP1_PORT) in
+    ''|*[!0-9]*) RTSP1_PORT=8554 ;;
+    *) RTSP1_PORT=$(get_config RTSP1_PORT) ;;
+esac
 case $(get_config ONVIF_PORT) in
     ''|*[!0-9]*) ONVIF_PORT=80 ;;
     *) ONVIF_PORT=$(get_config ONVIF_PORT) ;;
@@ -123,20 +127,38 @@ if [[ $RTSP_PORT != "554" ]] ; then
     D_RTSP_PORT=:$RTSP_PORT
 fi
 
+if [[ $RTSP_PORT != "8554" ]] ; then
+    D_RTSP1_PORT=:$RTSP1_PORT
+fi
+
 if [[ $HTTPD_PORT != "80" ]] ; then
     D_HTTPD_PORT=:$HTTPD_PORT
 fi
 
 if [[ $(get_config RTSP) == "yes" ]] ; then
-    if [[ $(get_config RTSP_HIGH) == "yes" ]] ; then
+    if [[ $(get_config RTSP_STREAM) == "high" ]] ; then
         h264grabber -r high | RRTSP_RES=0 RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD rRTSPServer &
         ONVIF_PROFILE_0="--name Profile_0 --width 1920 --height 1080 --url rtsp://%s$D_RTSP_PORT/ch0_0.h264 --snapurl http://%s$D_HTTPD_PORT/cgi-bin/snapshot.sh?res=high --type H264"
-    else
+    fi
+    if [[ $(get_config RTSP_STREAM) == "low" ]] ; then
         h264grabber -r low | RRTSP_RES=1 RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD rRTSPServer &
         ONVIF_PROFILE_1="--name Profile_1 --width 640 --height 360 --url rtsp://%s$D_RTSP_PORT/ch0_1.h264 --snapurl http://%s$D_HTTPD_PORT/cgi-bin/snapshot.sh?res=low --type H264"
     fi
+
+    if [[ $(get_config RTSP_STREAM) == "both" ]] ; then
+        h264grabber -r high | RRTSP_RES=0 RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD rRTSPServer &
+        ONVIF_PROFILE_0="--name Profile_0 --width 1920 --height 1080 --url rtsp://%s$D_RTSP_PORT/ch0_0.h264 --snapurl http://%s$D_HTTPD_PORT/cgi-bin/snapshot.sh?res=high --type H264"
+        h264grabber -r low | RRTSP_RES=1 RRTSP_PORT=$RTSP1_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD rRTSPServer &
+        ONVIF_PROFILE_1="--name Profile_1 --width 640 --height 360 --url rtsp://%s$D_RTSP1_PORT/ch0_1.h264 --snapurl http://%s$D_HTTPD_PORT/cgi-bin/snapshot.sh?res=low --type H264"
+    fi
+	
+	
     $YI_HACK_PREFIX/script/wd_rtsp.sh &
 fi
+
+#if [[ $(get_config ONVIF) == "yes" ]] ; then
+#        onvif_srvd --pid_file /var/run/onvif_srvd.pid --model "Yi Hack" --manufacturer "Yi" --ifs wlan0 --port $ONVIF_PORT --scope onvif://www.onvif.org/Profile/S --name Profile_0 --width 640 --height 360 --url rtsp://%s$D_RTSP_PORT/ch0_1.h264# --snapurl http://%s$D_HTTPD_PORT/cgi-bin/snapshot.sh?res=low --type H264 $ONVIF_USERPWD
+#fi
 
 if [[ $(get_config ONVIF) == "yes" ]] ; then
     if [[ $MODEL_SUFFIX == "h201c" ]] ; then

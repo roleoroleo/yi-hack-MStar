@@ -23,11 +23,17 @@ get_config()
 restart_rtsp()
 {
     if [[ $(get_config RTSP) == "yes" ]] ; then
-        if [[ $(get_config RTSP_HIGH) == "yes" ]] ; then
+        if [[ $(get_config RTSP_STREAM) == "high" ]] ; then
             h264grabber -r high | RRTSP_RES=0 RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD rRTSPServer &
-        else
+        fi
+        if [[ $(get_config RTSP_STREAM) == "low" ]] ; then
             h264grabber -r low | RRTSP_RES=1 RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD rRTSPServer &
         fi
+        if [[ $(get_config RTSP_STREAM) == "both" ]] ; then
+            h264grabber -r high | RRTSP_RES=0 RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD rRTSPServer &
+            h264grabber -r low | RRTSP_RES=1 RRTSP_PORT=$RTSP1_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD rRTSPServer &
+		fi
+
     fi
 }
 
