@@ -34,28 +34,34 @@ restart_rtsp()
 check_rtsp()
 {
 #  echo "$(date +'%Y-%m-%d %H:%M:%S') - Checking RTSP process..." >> $LOG_FILE
-    SOCKET=`netstat -an 2>&1 | grep ":$RTSP_PORT " | grep ESTABLISHED | grep -c ^`
-    CPU_1=`top -b -n 2 -d 1 | grep h264grabber | grep -v grep | tail -n 1 | awk '{print $8}'`
-    CPU_2=`top -b -n 2 -d 1 | grep rRTSPServer | grep -v grep | tail -n 1 | awk '{print $8}'`
+    SOCKET=`netstat -an 2>&1 | grep ":$RTSP_PORT " | grep LISTEN | grep -c ^`
+    CPU_1=`top -b -n 1 -d 1 | grep h264grabber | grep -v grep | tail -n 1 | awk '{print $8}'`
+    CPU_2=`top -b -n 1 -d 1 | grep rRTSPServer | grep -v grep | tail -n 1 | awk '{print $8}'`
 
     if [ $SOCKET -eq 0 ]; then
-        if [ "$CPU_1" == "" ] || [ "$CPU_2" == "" ]; then
-            echo "$(date +'%Y-%m-%d %H:%M:%S') - No running process, restarting..." >> $LOG_FILE
-            killall -q rRTSPServer
-            killall -q h264grabber
-            sleep 1
-            restart_rtsp
-        fi
-        COUNTER=0
+        echo "$(date +'%Y-%m-%d %H:%M:%S') - No running process, restarting..." >> $LOG_FILE
+        killall -q -9 rRTSPServer
+        killall -q -9 h264grabber
+        sleep 1
+        restart_rtsp
     fi
+   
+    if [ "$CPU_1" == "" ] || [ "$CPU_2" == "" ]; then
+        echo "$(date +'%Y-%m-%d %H:%M:%S') - No running process, restarting..." >> $LOG_FILE
+        killall -q -9 rRTSPServer
+        killall -q -9 h264grabber
+        sleep 1
+        restart_rtsp
+    fi    
+    
     if [ $SOCKET -gt 0 ]; then
         if [ "$CPU_1" == "0.0" ] && [ "$CPU_2" == "0.0" ]; then
             COUNTER=$((COUNTER+1))
             echo "$(date +'%Y-%m-%d %H:%M:%S') - Detected possible locked process ($COUNTER)" >> $LOG_FILE
             if [ $COUNTER -ge $COUNTER_LIMIT ]; then
                 echo "$(date +'%Y-%m-%d %H:%M:%S') - Restarting process" >> $LOG_FILE
-                killall -q rRTSPServer
-                killall -q h264grabber
+                killall -q -9 rRTSPServer
+                killall -q -9 h264grabber
                 sleep 1
                 restart_rtsp
                 COUNTER=0
@@ -81,7 +87,5 @@ echo "$(date +'%Y-%m-%d %H:%M:%S') - Starting RTSP watchdog..." >> $LOG_FILE
 while true
 do
     check_rtsp
-    if [ $COUNTER -eq 0 ]; then
-        sleep $INTERVAL
-    fi
+    sleep $INTERVAL
 done
