@@ -6,7 +6,8 @@ APP.maintenance = (function ($) {
 
     function init() {
         registerEventHandler();
-        setStatus("Camera is online.");
+        setRebootStatus("Camera is online.");
+        getFwStatus();
     }
 
     function registerEventHandler() {
@@ -18,6 +19,9 @@ APP.maintenance = (function ($) {
         });
         $(document).on("click", '#button-reboot', function (e) {
             rebootCamera();
+        });
+        $(document).on("click", '#button-upgrade', function (e) {
+            upgradeFirmware();
         });
     }
 
@@ -75,7 +79,7 @@ APP.maintenance = (function ($) {
                 $('#button-reboot').attr("disabled", false);
             },
             success: function(data) {
-                setStatus("Camera is rebooting...");
+                setRebootStatus("Camera is rebooting.");
                 waitForBoot();
             }
         });
@@ -86,21 +90,78 @@ APP.maintenance = (function ($) {
             $.ajax({
                 url: '/',
                 success: function(data) {
-                    setStatus("Camera is back online, redirecting to home.");
+                    setRebootStatus("Camera is back online, redirecting to home.");
                     $('#button-reboot').attr("disabled", false);
                     window.location.href="/";
                 },
                 error: function(data) {
-                    setStatus("Waiting for the camera to come back online...");
+                    setRebootStatus("Waiting for the camera to come back online.");
                 },
                 timeout: 3000,
             });
         }, 5000);
     }
 
-    function setStatus(text)
+    function upgradeFirmware() {
+        $('#button-upgrade').attr("disabled", true);
+        setFwStatus("Firmware download in progress.");
+        $.ajax({
+            type: "GET",
+            url: 'cgi-bin/fw_upgrade.sh?get=upgrade',
+            error: function(response) {
+                console.log('error', response);
+                $('#button-upgrade').attr("disabled", false);
+            },
+            success: function(response) {
+                setFwStatus(response);
+                waitForUpgrade();
+            }
+        });
+    }
+
+    function waitForUpgrade() {
+        setInterval(function(){
+            $.ajax({
+                url: '/',
+                success: function(data) {
+                    setFwStatus("Camera is upgrading.");
+                    $('#button-upgrade').attr("disabled", false);
+                    window.location.href="/";
+                },
+                error: function(data) {
+                    setFwStatus("Waiting for the camera to come back online...");
+                },
+                timeout: 3000,
+            });
+        }, 5000);
+    }
+
+    function setRebootStatus(text)
     {
         $('input[type="text"][data-key="STATUS"]').prop('value', text);
+    }
+
+    function setFwStatus(text)
+    {
+        $('input[type="text"][data-key="FW"]').prop('value', text);
+    }
+
+    function getFwStatus() {
+        $.ajax({
+            type: "GET",
+            url: 'cgi-bin/fw_upgrade.sh?get=info',
+            dataType: "json",
+            error: function(response) {
+                console.log('error', response);
+                setFwStatus("Error getting fw info");
+            },
+            success: function(data) {
+                setFwStatus("Installed: " + data.fw_version + " - Available: " + data.latest_fw);
+                if (data.fw_version == data.latest_fw) {
+                    $('#button-upgrade').attr("disabled", true);
+                }
+            }
+        });
     }
 
     return {
