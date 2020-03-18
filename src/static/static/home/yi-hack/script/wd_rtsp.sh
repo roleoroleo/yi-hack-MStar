@@ -34,11 +34,14 @@ restart_rtsp()
 check_rtsp()
 {
 #  echo "$(date +'%Y-%m-%d %H:%M:%S') - Checking RTSP process..." >> $LOG_FILE
-    SOCKET=`netstat -an 2>&1 | grep ":$RTSP_PORT " | grep LISTEN | grep -c ^`
+    SOCKET_L=`netstat -an 2>&1 | grep ":$RTSP_PORT " | grep LISTEN | grep -c ^`
+    SOCKET_E=`netstat -an 2>&1 | grep ":$RTSP_PORT " | grep ESTABLISHED | grep -c ^`
+    PROCESS_H=`ps -ef | awk '/[h]264grabber/{print $1}'`
+    PROCESS_R=`ps -ef | awk '/[r]RTSPServer/{print $1}'`
     CPU_1=`top -b -n 1 -d 1 | grep h264grabber | grep -v grep | tail -n 1 | awk '{print $8}'`
     CPU_2=`top -b -n 1 -d 1 | grep rRTSPServer | grep -v grep | tail -n 1 | awk '{print $8}'`
 
-    if [ $SOCKET -eq 0 ]; then
+    if [ $SOCKET_L -eq 0 ]; then
         echo "$(date +'%Y-%m-%d %H:%M:%S') - No running process, restarting..." >> $LOG_FILE
         killall -q -9 rRTSPServer
         killall -q -9 h264grabber
@@ -46,7 +49,7 @@ check_rtsp()
         restart_rtsp
     fi
    
-    if [ "$CPU_1" == "" ] || [ "$CPU_2" == "" ]; then
+    if [ "$PROCESS_H" == "" ] || [ "$PROCESS_R" == "" ]; then
         echo "$(date +'%Y-%m-%d %H:%M:%S') - No running process, restarting..." >> $LOG_FILE
         killall -q -9 rRTSPServer
         killall -q -9 h264grabber
@@ -54,7 +57,7 @@ check_rtsp()
         restart_rtsp
     fi    
     
-    if [ $SOCKET -gt 0 ]; then
+    if [ $SOCKET_E -gt 0 ]; then
         if [ "$CPU_1" == "0.0" ] && [ "$CPU_2" == "0.0" ]; then
             COUNTER=$((COUNTER+1))
             echo "$(date +'%Y-%m-%d %H:%M:%S') - Detected possible locked process ($COUNTER)" >> $LOG_FILE
