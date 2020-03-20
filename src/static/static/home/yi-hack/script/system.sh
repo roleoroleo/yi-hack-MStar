@@ -164,4 +164,4 @@ fi
 
 if [ -f "/tmp/sd/yi-hack/startup.sh" ]; then
     /tmp/sd/yi-hack/startup.sh
-fip
+fi
