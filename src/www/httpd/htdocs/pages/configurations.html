@@ -69,10 +69,13 @@
                     <tr class="row">
                         <td>RTSP Stream</td>
                         <td>
-                            <input class="u-full-width" type="text" placeholder="" data-key="RTSP_STREAM" id="RTSP_STREAM"/>
-                            <span class="switch-description">
-                                Set low/high/both resolution stream. (It takes effect only if the "RTSP" option is enabled).
-                            </span>
+                            <div class="standard-select">
+                                <select data-key="RTSP_STREAM" id="RTSP_STREAM">
+                                    <option value="high">High</option>
+                                    <option value="low">Low</option>
+                                    <option value="both">Both</option>
+                                </select>
+                            </div>
                         </td>
                     </tr>
                     <tr class="row">
@@ -91,10 +94,13 @@
                     <tr class="row">
                         <td>ONVIF Profile</td>
                         <td>
-                            <input class="u-full-width" type="text" placeholder="" data-key="ONVIF_PROFILE" id="ONVIF_PROFILE"/>
-                            <span class="switch-description">
-                                Choose what profile(s) will be exported by ONVIF Server. Available parameters are low/high/both. (It takes effect only if both resolution streams are enabled above).
-                            </span>
+                            <div class="standard-select">
+                                <select data-key="ONVIF_PROFILE" id="ONVIF_PROFILE">
+                                    <option value="high">High</option>
+                                    <option value="low">Low</option>
+                                    <option value="both">Both</option>
+                                </select>
+                            </div>
                         </td>
                     </tr>
                     </tbody>
