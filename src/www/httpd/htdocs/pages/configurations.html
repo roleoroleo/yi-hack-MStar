@@ -67,15 +67,11 @@
                         </td>
                     </tr>
                     <tr class="row">
-                        <td>RTSP High Resolution</td>
+                        <td>RTSP Stream</td>
                         <td>
-                            <label class="switch small">
-                                <input type="checkbox" data-key="RTSP_HIGH"/>
-                                <span class="slider round"></span>
-                                <span class="switch-text"></span>
-                            </label>
+                            <input class="u-full-width" type="text" placeholder="" data-key="RTSP_STREAM" id="RTSP_STREAM"/>
                             <span class="switch-description">
-                                Set low/high resolution stream. (It takes effect only if the "RTSP" option is enabled).
+                                Set low/high/both resolution stream. (It takes effect only if the "RTSP" option is enabled).
                             </span>
                         </td>
                     </tr>
@@ -89,6 +85,15 @@
                             </label>
                             <span class="switch-description">
                                 Enable ONVIF Server.
+                            </span>
+                        </td>
+                    </tr>
+                    <tr class="row">
+                        <td>ONVIF Profile</td>
+                        <td>
+                            <input class="u-full-width" type="text" placeholder="" data-key="ONVIF_PROFILE" id="ONVIF_PROFILE"/>
+                            <span class="switch-description">
+                                Choose what profile(s) will be exported by ONVIF Server. Available parameters are low/high/both. (It takes effect only if both resolution streams are enabled above).
                             </span>
                         </td>
                     </tr>
@@ -217,6 +222,15 @@
                             <input class="u-full-width" type="text" placeholder="" data-key="RTSP_PORT" id="RTSP_PORT"/>
                             <span class="switch-description">
                                 TCP port used by RTSP Server (default 554).
+                            </span>
+                        </td>
+                    </tr>
+                    <tr class="row">
+                        <td>RTSP Slave Port</td>
+                        <td>
+                            <input class="u-full-width" type="text" placeholder="" data-key="RTSP1_PORT" id="RTSP1_PORT"/>
+                            <span class="switch-description">
+                                TCP port used by slave stream by RTSP Server (default 8554).
                             </span>
                         </td>
                     </tr>
