@@ -26,7 +26,7 @@ APP.camera_settings = (function ($) {
 
                 $.each(response, function (key, state) {
                     if(key=="SENSITIVITY")
-                        $('input[type="text"][data-key="' + key +'"]').prop('value', state);
+                        $('select[data-key="' + key +'"]').prop('value', state);
                     else
                         $('input[type="checkbox"][data-key="' + key +'"]').prop('checked', state === 'yes');
                 });
@@ -49,14 +49,7 @@ APP.camera_settings = (function ($) {
             configs[$(this).attr('data-key')] = $(this).prop('checked') ? 'yes' : 'no';
         });
 
-        configs["SENSITIVITY"] = $('input[type="text"][data-key="SENSITIVITY"]').prop('value');
-
-        if(!validateSensitivity(configs["SENSITIVITY"]))
-        {
-            saveStatusElem.text("Failed");
-            alert("Sensitivity not valid!");
-            return;
-        }
+        configs["SENSITIVITY"] = $('select[data-key="SENSITIVITY"]').prop('value');
 
         $.ajax({
             type: "POST",
@@ -88,13 +81,6 @@ APP.camera_settings = (function ($) {
                 console.log('error', response);
             }
         });
-    }
-
-    function validateSensitivity(sensitivity) {
-        if (sensitivity=='low' || sensitivity=='medium' || sensitivity=='high')
-            return true;
-        else
-            return false;
     }
 
     return {
