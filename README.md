@@ -20,6 +20,7 @@ There is a problem with ffmpeg, see https://github.com/roleoroleo/yi-hack-MStar/
 ## Table of Contents
 
 - [Features](#features)
+- [Performance](#performance)
 - [Supported cameras](#supported-cameras)
 - [Getting started](#getting-started)
 - [Build your own firmware](#build-your-own-firmware)
@@ -33,7 +34,7 @@ This firmware contains the following features.
 Apart from RTSP, snapshot and ONVIF, all the features are copied from the TheCrypt0 project.
 
 - FEATURES
-  - RTSP server - allows a RTSP stream of the video (high or low resolution) but without audio.
+  - RTSP server - allows a RTSP stream of the video (high and/or low resolution) but without audio.
     - rtsp://IP-CAM/ch0_0.h264        (high res)
     - rtsp://IP-CAM/ch0_1.h264        (low res)
   - ONVIF server (with support for h264 stream, snapshot, ptz and presets - standardized interfaces for IP cameras.
@@ -59,6 +60,13 @@ Apart from RTSP, snapshot and ONVIF, all the features are copied from the TheCry
   - Management of motion detect events and videos through a web page.
   - PTZ support through a web page.
   - The possibility to disable all the cloud features.
+  - Online firmware upgrade
+
+## Performance
+
+The performance of the cam is not so good (CPU, RAM, etc...).
+If you enable all the services you may have some problems.
+For example, enabling both rtsp streams is not recommended.
 
 ## Supported cameras
 
