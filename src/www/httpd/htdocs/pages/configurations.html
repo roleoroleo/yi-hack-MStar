@@ -53,54 +53,84 @@
                             </span>
                         </td>
                     </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <h4 class="no-margin">RTSP</h4>
+        <hr class="tiny-margin"/>
+        <div class="row">
+            <div class="twelve columns configs-switch">
+                <table class="u-full-width padded-table config-table">
+                    <tbody>
                     <tr class="row">
-                        <td>RTSP</td>
+                        <td>High Resolution Stream</td>
                         <td>
                             <label class="switch small">
-                                <input type="checkbox" data-key="RTSP"/>
+                                <input type="checkbox" data-key="RTSP_HIGH"/>
                                 <span class="slider round"></span>
                                 <span class="switch-text"></span>
                             </label>
                             <span class="switch-description">
-                                Enable RTSP Server.
+                                Enable 1920x1080 stream in RTSP Server.
                             </span>
                         </td>
                     </tr>
                     <tr class="row">
-                        <td>RTSP Stream</td>
+                        <td>RTSP Port</td>
                         <td>
-                            <div class="standard-select">
-                                <select data-key="RTSP_STREAM" id="RTSP_STREAM">
-                                    <option value="high">High</option>
-                                    <option value="low">Low</option>
-                                    <option value="both">Both</option>
-                                </select>
-                            </div>
+                            <input class="u-full-width" type="text" placeholder="" data-key="RTSP_HIGH_PORT" id="RTSP_HIGH_PORT"/>
+                            <span class="switch-description">
+                                TCP port used by RTSP Server for High Res Stream (default 554).
+                            </span>
                         </td>
                     </tr>
                     <tr class="row">
-                        <td>ONVIF</td>
+                        <td>ONVIF High Res Profile</td>
                         <td>
                             <label class="switch small">
-                                <input type="checkbox" data-key="ONVIF"/>
+                                <input type="checkbox" data-key="ONVIF_HIGH"/>
                                 <span class="slider round"></span>
                                 <span class="switch-text"></span>
                             </label>
                             <span class="switch-description">
-                                Enable ONVIF Server.
+                                Enable High Resolution profile in ONVIF Server.
                             </span>
                         </td>
                     </tr>
                     <tr class="row">
-                        <td>ONVIF Profile</td>
+                        <td>Low Resolution Stream</td>
                         <td>
-                            <div class="standard-select">
-                                <select data-key="ONVIF_PROFILE" id="ONVIF_PROFILE">
-                                    <option value="high">High</option>
-                                    <option value="low">Low</option>
-                                    <option value="both">Both</option>
-                                </select>
-                            </div>
+                            <label class="switch small">
+                                <input type="checkbox" data-key="RTSP_LOW"/>
+                                <span class="slider round"></span>
+                                <span class="switch-text"></span>
+                            </label>
+                            <span class="switch-description">
+                                Enable 640x360 stream in RTSP Server.
+                            </span>
+                        </td>
+                    </tr>
+                    <tr class="row">
+                        <td>RTSP Port</td>
+                        <td>
+                            <input class="u-full-width" type="text" placeholder="" data-key="RTSP_LOW_PORT" id="RTSP_LOW_PORT"/>
+                            <span class="switch-description">
+                                TCP port used by RTSP Server for Low Res Stream (default 8554).
+                            </span>
+                        </td>
+                    </tr>
+                    <tr class="row">
+                        <td>ONVIF Low Res Profile</td>
+                        <td>
+                            <label class="switch small">
+                                <input type="checkbox" data-key="ONVIF_LOW"/>
+                                <span class="slider round"></span>
+                                <span class="switch-text"></span>
+                            </label>
+                            <span class="switch-description">
+                                Enable Low Resolution profile in ONVIF Server.
+                            </span>
                         </td>
                     </tr>
                     </tbody>
@@ -200,43 +230,11 @@
                         </td>
                     </tr>
                     <tr class="row">
-                        <td>Proxychains-ng</td>
+                        <td>HTTPD Port</td>
                         <td>
-                            <label class="switch small">
-                                <input type="checkbox" data-key="PROXYCHAINSNG"/>
-                                <span class="slider round"></span>
-                                <span class="switch-text"></span>
-                            </label>
+                            <input class="u-full-width" type="text" placeholder="" data-key="HTTPD_PORT" id="HTTPD_PORT"/>
                             <span class="switch-description">
-                                Proxychains-ng is a way to bypass the region restrictions imposed by Yi when using a Chinese camera outside China. See the GitHub page for more info on how to configure it.
-                            </span>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        <h4 class="no-margin">TCP ports</h4>
-        <hr class="tiny-margin"/>
-        <div class="row">
-            <div class="twelve columns configs-switch">
-                <table class="u-full-width padded-table config-table">
-                    <tbody>
-                    <tr class="row">
-                        <td>RTSP Port</td>
-                        <td>
-                            <input class="u-full-width" type="text" placeholder="" data-key="RTSP_PORT" id="RTSP_PORT"/>
-                            <span class="switch-description">
-                                TCP port used by RTSP Server (default 554).
-                            </span>
-                        </td>
-                    </tr>
-                    <tr class="row">
-                        <td>RTSP Slave Port</td>
-                        <td>
-                            <input class="u-full-width" type="text" placeholder="" data-key="RTSP1_PORT" id="RTSP1_PORT"/>
-                            <span class="switch-description">
-                                TCP port used by slave stream by RTSP Server (default 8554).
+                                TCP port used by HTTPD Server (default 8080).
                             </span>
                         </td>
                     </tr>
@@ -250,11 +248,15 @@
                         </td>
                     </tr>
                     <tr class="row">
-                        <td>HTTPD Port</td>
+                        <td>Proxychains-ng</td>
                         <td>
-                            <input class="u-full-width" type="text" placeholder="" data-key="HTTPD_PORT" id="HTTPD_PORT"/>
+                            <label class="switch small">
+                                <input type="checkbox" data-key="PROXYCHAINSNG"/>
+                                <span class="slider round"></span>
+                                <span class="switch-text"></span>
+                            </label>
                             <span class="switch-description">
-                                TCP port used by HTTPD Server (default 8080).
+                                Proxychains-ng is a way to bypass the region restrictions imposed by Yi when using a Chinese camera outside China. See the GitHub page for more info on how to configure it.
                             </span>
                         </td>
                     </tr>
