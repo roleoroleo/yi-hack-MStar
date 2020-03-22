@@ -36,13 +36,13 @@ if [[ x$(get_config USERNAME) != "x" ]] ; then
     echo "/:$USERNAME:$PASSWORD" > /tmp/httpd.conf
 fi
 
-case $(get_config RTSP_PORT) in
-    ''|*[!0-9]*) RTSP_PORT=554 ;;
-    *) RTSP_PORT=$(get_config RTSP_PORT) ;;
+case $(get_config RTSP_HIGH_PORT) in
+    ''|*[!0-9]*) RTSP_HIGH_PORT=554 ;;
+    *) RTSP_HIGH_PORT=$(get_config RTSP_HIGH_PORT) ;;
 esac
-case $(get_config RTSP1_PORT) in
-    ''|*[!0-9]*) RTSP1_PORT=8554 ;;
-    *) RTSP1_PORT=$(get_config RTSP1_PORT) ;;
+case $(get_config RTSP_LOW_PORT) in
+    ''|*[!0-9]*) RTSP_LOW_PORT=8554 ;;
+    *) RTSP_LOW_PORT=$(get_config RTSP_LOW_PORT) ;;
 esac
 case $(get_config ONVIF_PORT) in
     ''|*[!0-9]*) ONVIF_PORT=80 ;;
@@ -130,41 +130,36 @@ sleep 5
 #    LOGIN_USERPWD=$LOGIN_USERPWD@
 #fi
 
-if [[ $RTSP_PORT != "554" ]] ; then
-    D_RTSP_PORT=:$RTSP_PORT
+if [[ $RTSP_HIGH_PORT != "554" ]] ; then
+    D_RTSP_HIGH_PORT=:$RTSP_HIGH_PORT
 fi
 
-if [[ $RTSP1_PORT != "554" ]] ; then
-    D_RTSP1_PORT=:$RTSP1_PORT
+if [[ $RTSP_LOW_PORT != "8554" ]] ; then
+    D_RTSP_LOW_PORT=:$RTSP_LOW_PORT
 fi
 
 if [[ $HTTPD_PORT != "80" ]] ; then
     D_HTTPD_PORT=:$HTTPD_PORT
 fi
 
-if [[ $(get_config RTSP) == "yes" ]] ; then
-    if [[ $(get_config RTSP_STREAM) == "high" ]]; then
-        h264grabber_h -r high | RRTSP_RES=0 RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD rRTSPServer_h &
-        ONVIF_PROFILE_0="--name Profile_0 --width 1920 --height 1080 --url rtsp://%s$D_RTSP_PORT/ch0_0.h264 --snapurl http://%s$D_HTTPD_PORT/cgi-bin/snapshot.sh?res=high --type H264"
-    fi
-    if [[ $(get_config RTSP_STREAM) == "low" ]]; then
-        h264grabber_l -r low | RRTSP_RES=1 RRTSP_PORT=$RTSP1_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD rRTSPServer_l &
-        ONVIF_PROFILE_1="--name Profile_1 --width 640 --height 360 --url rtsp://%s$D_RTSP1_PORT/ch0_1.h264 --snapurl http://%s$D_HTTPD_PORT/cgi-bin/snapshot.sh?res=low --type H264"
-    fi
-    if [[ $(get_config RTSP_STREAM) == "both" ]]; then
-        h264grabber_h -r high | RRTSP_RES=0 RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD rRTSPServer_h &
-        h264grabber_l -r low | RRTSP_RES=1 RRTSP_PORT=$RTSP1_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD rRTSPServer_l &
-        if [[ $(get_config ONVIF_PROFILE) == "high" ]] || [[ $(get_config ONVIF_PROFILE) == "both" ]] ; then
-            ONVIF_PROFILE_0="--name Profile_0 --width 1920 --height 1080 --url rtsp://%s$D_RTSP_PORT/ch0_0.h264 --snapurl http://%s$D_HTTPD_PORT/cgi-bin/snapshot.sh?res=high --type H264"
+if [[ $(get_config RTSP_HIGH) == "yes" ]] || [[ $(get_config RTSP_LOW) == "yes" ]]; then
+
+    if [[ $(get_config RTSP_HIGH) == "yes" ]]; then    
+        h264grabber_high -r high | RRTSP_RES=0 RRTSP_PORT=$RTSP_HIGH_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD rRTSPServer_high &       
+        if [[ $(get_config ONVIF_HIGH) == "yes" ]]; then
+            ONVIF_PROFILE_0="--name Profile_0 --width 1920 --height 1080 --url rtsp://%s$D_RTSP_HIGH_PORT/ch0_0.h264 --snapurl http://%s$D_HTTPD_PORT/cgi-bin/snapshot.sh?res=high --type H264"
         fi
-        if [[ $(get_config ONVIF_PROFILE) == "low" ]] || [[ $(get_config ONVIF_PROFILE) == "both" ]] ; then
+    fi
+    if [[ $(get_config RTSP_LOW) == "yes" ]]; then    
+        h264grabber_low -r low | RRTSP_RES=1 RRTSP_PORT=$RTSP_LOW_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD rRTSPServer_low &       
+        if [[ $(get_config ONVIF_LOW) == "yes" ]]; then
             ONVIF_PROFILE_1="--name Profile_1 --width 640 --height 360 --url rtsp://%s$D_RTSP1_PORT/ch0_1.h264 --snapurl http://%s$D_HTTPD_PORT/cgi-bin/snapshot.sh?res=low --type H264"
         fi
-    fi
+    fi    
     $YI_HACK_PREFIX/script/wd_rtsp.sh &
 fi
 
-if [[ $(get_config ONVIF) == "yes" ]] ; then
+if [[ $(get_config ONVIF_HIGH) == "yes" ]] || [[ $(get_config ONVIF_LOW) == "yes" ]] ; then
     if [[ $MODEL_SUFFIX == "h201c" ]] ; then
         onvif_srvd --pid_file /var/run/onvif_srvd.pid --model "Yi Hack" --manufacturer "Yi" --ifs wlan0 --port $ONVIF_PORT --scope onvif://www.onvif.org/Profile/S $ONVIF_PROFILE_0 $ONVIF_PROFILE_1 $ONVIF_USERPWD --ptz --move_left "/home/yi-hack/bin/ipc_cmd -m left" --move_right "/home/yi-hack/bin/ipc_cmd -m right" --move_up "/home/yi-hack/bin/ipc_cmd -m up" --move_down "/home/yi-hack/bin/ipc_cmd -m down" --move_stop "/home/yi-hack/bin/ipc_cmd -m stop" --move_preset "/home/yi-hack/bin/ipc_cmd -p"
     else
