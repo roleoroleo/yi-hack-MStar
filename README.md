@@ -36,7 +36,7 @@ Apart from RTSP, snapshot and ONVIF, all the features are copied from the TheCry
 - FEATURES
   - RTSP server - allows a RTSP stream of the video (high and/or low resolution) but without audio.
     - rtsp://IP-CAM/ch0_0.h264        (high res)
-    - rtsp://IP-CAM/ch0_1.h264        (low res)
+    - rtsp://IP-CAM:8554/ch0_1.h264   (low res)
   - ONVIF server (with support for h264 stream, snapshot, ptz and presets - standardized interfaces for IP cameras.
   - Snapshot service - allows to get a jpg with a web request.
   Gets the latest idr frame from the buffer and converts it to jpg (latest idr frame = no real time).
