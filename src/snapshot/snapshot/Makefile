@@ -2,17 +2,17 @@ OBJECTS_1 = imggrabber.o
 OBJECTS = $(OBJECTS_1)
 JPEGLIB = jpeg-9c
 JPEGLIB_DIR = ./$(JPEGLIB)
-INC_1 = -I$(JPEGLIB_DIR)
-LIB_1 = $(JPEGLIB_DIR)/.libs/libjpeg.a
+INC_J = -I$(JPEGLIB_DIR)
+LIB_J = $(JPEGLIB_DIR)/.libs/libjpeg.a
 
 all: imggrabber
 
 imggrabber.o: imggrabber.c $(HEADERS)
 	@$(build_jpeglib)
-	$(CC) -c $< $(INC_1) -fPIC -O2 -o $@
+	$(CC) -c $< $(INC_J) -fPIC -O2 -o $@
 
 imggrabber: $(OBJECTS_1)
-	$(CC) $(OBJECTS_1) $(LIB_1) -fPIC -O2 -o $@
+	$(CC) $(OBJECTS_1) $(LIB_J) -fPIC -O2 -o $@
 	$(STRIP) $@
 
 .PHONY: clean
