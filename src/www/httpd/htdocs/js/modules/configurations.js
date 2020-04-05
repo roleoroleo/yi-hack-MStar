@@ -25,7 +25,7 @@ APP.configurations = (function ($) {
                 loadingStatusElem.fadeOut(500);
 
                 $.each(response, function (key, state) {
-                    if(key=="HOSTNAME" || key=="HTTPD_PORT" || key=="RTSP_PORT" || key=="RTSP1_PORT" || key=="ONVIF_PORT" || key=="USERNAME")
+                    if(key=="HOSTNAME" || key=="TIMEZONE" || key=="HTTPD_PORT" || key=="RTSP_PORT" || key=="RTSP1_PORT" || key=="ONVIF_PORT" || key=="USERNAME")
                         $('input[type="text"][data-key="' + key +'"]').prop('value', state);
                     else if(key=="RTSP_STREAM" || key=="ONVIF_PROFILE")
                         $('select[data-key="' + key +'"]').prop('value', state);
@@ -62,6 +62,7 @@ APP.configurations = (function ($) {
 //            return;
 //        }
 
+        configs["TIMEZONE"] = $('input[type="text"][data-key="TIMEZONE"]').prop('value');
         configs["HTTPD_PORT"] = $('input[type="text"][data-key="HTTPD_PORT"]').prop('value');
         configs["RTSP_STREAM"] = $('select[data-key="RTSP_STREAM"]').prop('value');
         configs["RTSP_PORT"] = $('input[type="text"][data-key="RTSP_PORT"]').prop('value');

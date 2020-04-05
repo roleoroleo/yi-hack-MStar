@@ -64,10 +64,13 @@ for S in $PARAMS ; do
             hostname $VALUE
             echo "$VALUE" > /etc/hostname
         fi
+    elif [ "$KEY" == "TIMEZONE" ] ; then
+        echo $VALUE > /etc/TZ
     else
         VALUE=$(echo "$VALUE" | sedencode)
         sed -i "s/^\(${KEY}\s*=\s*\).*$/\1${VALUE}/" $CONF_FILE
     fi
+
 done
 
 # Yeah, it's pretty ugly.
