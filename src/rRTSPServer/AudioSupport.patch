@@ -1,0 +1,65 @@
+--- live/rRTSPServer.cpp	2020-04-03 19:00:31.222242542 +0000
++++ live_new/rRTSPServer.cpp	2020-04-03 18:59:22.065449478 +0000
+@@ -103,13 +103,17 @@
+   {
+     char const* streamName = "ch0_0.h264";
+     char const* inputFileName = "stdin";
+-
++    Boolean convertToULaw = True;
++    char const* inputAudioFileName = "/tmp/audio_fifo";
++ 
+     // First, make sure that the RTPSinks' buffers will be large enough to handle the huge size of DV frames (as big as 288000).
+     OutPacketBuffer::maxSize = 300000;
+ 
+     ServerMediaSession* sms_high
+       = ServerMediaSession::createNew(*env, streamName, streamName,
+ 				      descriptionString);
++    sms_high->addSubsession(WAVAudioFileServerMediaSubsession
++                       ::createNew(*env, inputAudioFileName, reuseFirstSource, convertToULaw));
+     sms_high->addSubsession(H264VideoFileServerMediaSubsession
+ 		       ::createNew(*env, inputFileName, reuseFirstSource));
+     rtspServer->addServerMediaSession(sms_high);
+@@ -122,13 +126,17 @@
+   {
+     char const* streamName = "ch0_1.h264";
+     char const* inputFileName = "stdin";
+-
++    Boolean convertToULaw = True;
++    char const* inputAudioFileName = "/tmp/audio_fifo";
++ 
+     // First, make sure that the RTPSinks' buffers will be large enough to handle the huge size of DV frames (as big as 288000).
+     OutPacketBuffer::maxSize = 300000;
+ 
+     ServerMediaSession* sms_low
+       = ServerMediaSession::createNew(*env, streamName, streamName,
+ 				      descriptionString);
++    sms_low->addSubsession(WAVAudioFileServerMediaSubsession
++                       ::createNew(*env, inputAudioFileName, reuseFirstSource, convertToULaw));
+     sms_low->addSubsession(H264VideoFileServerMediaSubsession
+ 		       ::createNew(*env, inputFileName, reuseFirstSource));
+     rtspServer->addServerMediaSession(sms_low);
+--- live/liveMedia/WAVAudioFileSource.cpp	2020-02-11 21:42:45.000000000 +0000
++++ live_new/liveMedia/WAVAudioFileSource.cpp	2020-04-03 19:03:24.259725094 +0000
+@@ -115,7 +115,7 @@
+   // http://www.ringthis.com/dev/wave_format.htm
+   // http://www.lightlink.com/tjweber/StripWav/Canon.html
+   // http://www.onicos.com/staff/iz/formats/wav.html
+-
++#if 0
+   Boolean success = False; // until we learn otherwise
+   do {
+     // RIFF Chunk:
+@@ -204,6 +204,13 @@
+     fBitsPerSample = 0;
+     return;
+   }
++#else
++  fWAVHeaderSize = 0;
++  fBitsPerSample = 16;
++  fSamplingFrequency = 16000;
++  fNumChannels = 1;
++  fAudioFormat = (unsigned char)WA_PCM;
++#endif
+ 
+   fPlayTimePerSample = 1e6/(double)fSamplingFrequency;
+ 
