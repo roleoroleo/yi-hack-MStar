@@ -1,3 +1,7 @@
+# DO NOT BUILD/FLASH THIS FIRMWARE! THESE ARE EXPERIMENTAL FEATURES.
+# Please check the original Roleo repo for stable builds.
+
+
 # Custom firmware for Yi camera based on MStar platform
 
 This firmware is completely based on the work done by TheCrypt0
