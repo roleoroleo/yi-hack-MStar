@@ -8,10 +8,18 @@ rm -rf ./_install
 rm -rf ./tinyalsa-1.0.0
 
 if [ ! -f $ARCHIVE ]; then
+<<<<<<< HEAD
     wget https://github.com/tinyalsa/tinyalsa/archive/$ARCHIVE
+=======
+    wget https://github.com/tinyalsa/tinyalsa/archive/v1.0.0.tar.gz
+>>>>>>> + Add tinyalsa v1.0.0 with YiHome specific patches
 fi
 tar zxvf $ARCHIVE
 
 patch -p0 < Yihack_tinyalsa.patch
 
 cd tinyalsa-1.0.0 || exit 1
+<<<<<<< HEAD
+=======
+
+>>>>>>> + Add tinyalsa v1.0.0 with YiHome specific patches

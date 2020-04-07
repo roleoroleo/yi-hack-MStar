@@ -21,7 +21,11 @@ cd $SCRIPT_DIR
 cd tinyalsa-1.0.0 || exit 1
 
 make clean
+<<<<<<< HEAD
 make LDFLAGS=-lpthread CROSS_COMPILE=${CROSSPREFIX} || exit 1
+=======
+make CROSS_COMPILE=${CROSSPREFIX} || exit 1
+>>>>>>> + Add tinyalsa v1.0.0 with YiHome specific patches
 
 mkdir -p ../_install/lib/ || exit 1
 

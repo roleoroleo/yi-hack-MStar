@@ -1,6 +1,38 @@
+<<<<<<< HEAD
 diff -Naur tinyalsa-1.0.0.ori/include/tinyalsa/pcm.h tinyalsa-1.0.0/include/tinyalsa/pcm.h
 --- tinyalsa-1.0.0.ori/include/tinyalsa/pcm.h	2016-10-02 04:37:39.000000000 +0200
 +++ tinyalsa-1.0.0/include/tinyalsa/pcm.h	2020-05-20 08:46:50.694744081 +0200
+=======
+diff -X exclude_file -uarN tinyalsa-1.0.0_org/Makefile tinyalsa-1.0.0/Makefile
+--- tinyalsa-1.0.0_org/Makefile	2020-04-02 20:01:35.165291305 +0000
++++ tinyalsa-1.0.0/Makefile	2020-04-02 19:58:59.682826872 +0000
+@@ -10,13 +10,13 @@
+ all:
+ 	$(MAKE) -C src
+ 	$(MAKE) -C utils
+-	$(MAKE) -C doxygen
++#	$(MAKE) -C doxygen
+ 
+ .PHONY: clean
+ clean:
+ 	$(MAKE) -C src clean
+ 	$(MAKE) -C utils clean
+-	$(MAKE) -C doxygen clean
++#	$(MAKE) -C doxygen clean
+ 
+ .PHONY: install
+ install: $(LIB) $(SHLIB)
+@@ -24,5 +24,5 @@
+ 	cp -Ru $(INCDIR)/tinyalsa $(DESTDIR)$(PREFIX)/include/
+ 	$(MAKE) -C src install
+ 	$(MAKE) -C utils install
+-	$(MAKE) -C doxygen install
++#	$(MAKE) -C doxygen install
+ 
+diff -X exclude_file -uarN tinyalsa-1.0.0_org/include/tinyalsa/pcm.h tinyalsa-1.0.0/include/tinyalsa/pcm.h
+--- tinyalsa-1.0.0_org/include/tinyalsa/pcm.h	2016-10-02 02:37:39.000000000 +0000
++++ tinyalsa-1.0.0/include/tinyalsa/pcm.h	2020-04-03 08:25:32.564096737 +0000
+>>>>>>> + Add tinyalsa v1.0.0 with YiHome specific patches
 @@ -218,6 +218,7 @@
                       unsigned int flags, struct pcm_config *config);
  int pcm_close(struct pcm *pcm);
@@ -19,9 +51,15 @@ diff -Naur tinyalsa-1.0.0.ori/include/tinyalsa/pcm.h tinyalsa-1.0.0/include/tiny
  #if defined(__cplusplus)
  }  /* extern "C" */
  #endif
+<<<<<<< HEAD
 diff -Naur tinyalsa-1.0.0.ori/include/tinyalsa/wave.h tinyalsa-1.0.0/include/tinyalsa/wave.h
 --- tinyalsa-1.0.0.ori/include/tinyalsa/wave.h	1970-01-01 01:00:00.000000000 +0100
 +++ tinyalsa-1.0.0/include/tinyalsa/wave.h	2020-05-20 08:46:50.694744081 +0200
+=======
+diff -X exclude_file -uarN tinyalsa-1.0.0_org/include/tinyalsa/wave.h tinyalsa-1.0.0/include/tinyalsa/wave.h
+--- tinyalsa-1.0.0_org/include/tinyalsa/wave.h	1970-01-01 00:00:00.000000000 +0000
++++ tinyalsa-1.0.0/include/tinyalsa/wave.h	2020-04-03 08:19:39.080292941 +0000
+>>>>>>> + Add tinyalsa v1.0.0 with YiHome specific patches
 @@ -0,0 +1,31 @@
 +#ifndef WAVE_H
 +#define WAVE_H
@@ -54,6 +92,7 @@ diff -Naur tinyalsa-1.0.0.ori/include/tinyalsa/wave.h tinyalsa-1.0.0/include/tin
 +};
 +
 +#endif
+<<<<<<< HEAD
 diff -Naur tinyalsa-1.0.0.ori/Makefile tinyalsa-1.0.0/Makefile
 --- tinyalsa-1.0.0.ori/Makefile	2016-10-02 04:37:39.000000000 +0200
 +++ tinyalsa-1.0.0/Makefile	2020-05-20 08:46:50.694744081 +0200
@@ -84,6 +123,12 @@ diff -Naur tinyalsa-1.0.0.ori/src/pcm.c tinyalsa-1.0.0/src/pcm.c
 --- tinyalsa-1.0.0.ori/src/pcm.c	2016-10-02 04:37:39.000000000 +0200
 +++ tinyalsa-1.0.0/src/pcm.c	2020-05-20 08:47:50.330708297 +0200
 @@ -34,12 +34,16 @@
+=======
+diff -X exclude_file -uarN tinyalsa-1.0.0_org/src/pcm.c tinyalsa-1.0.0/src/pcm.c
+--- tinyalsa-1.0.0_org/src/pcm.c	2016-10-02 02:37:39.000000000 +0000
++++ tinyalsa-1.0.0/src/pcm.c	2020-04-07 14:35:12.539167955 +0000
+@@ -34,12 +34,15 @@
+>>>>>>> + Add tinyalsa v1.0.0 with YiHome specific patches
  #include <errno.h>
  #include <unistd.h>
  #include <poll.h>
@@ -96,11 +141,18 @@ diff -Naur tinyalsa-1.0.0.ori/src/pcm.c tinyalsa-1.0.0/src/pcm.c
  #include <limits.h>
 +#include <sys/types.h>
 +#include <sys/stat.h>
+<<<<<<< HEAD
 +#include <pthread.h>
  
  #include <linux/ioctl.h>
  #define __force
 @@ -48,10 +52,18 @@
+=======
+ 
+ #include <linux/ioctl.h>
+ #define __force
+@@ -48,10 +51,14 @@
+>>>>>>> + Add tinyalsa v1.0.0 with YiHome specific patches
  #include <sound/asound.h>
  
  #include <tinyalsa/asoundlib.h>
@@ -110,16 +162,23 @@ diff -Naur tinyalsa-1.0.0.ori/src/pcm.c tinyalsa-1.0.0/src/pcm.c
  #define SNDRV_PCM_HW_PARAMS_NO_PERIOD_WAKEUP (1<<2)
  
 +#define CONVERT_TO_MONO
+<<<<<<< HEAD
 +#define CONVERT_TO_8KHZ
 +#ifdef CONVERT_TO_8KHZ
 +#define CONVERT_TO_MONO
 +#endif
+=======
+>>>>>>> + Add tinyalsa v1.0.0 with YiHome specific patches
 +//#define START_WAV_HEADER
 +
  static inline int param_is_mask(int p)
  {
      return (p >= SNDRV_PCM_HW_PARAM_FIRST_MASK) &&
+<<<<<<< HEAD
 @@ -186,6 +198,11 @@
+=======
+@@ -186,6 +193,11 @@
+>>>>>>> + Add tinyalsa v1.0.0 with YiHome specific patches
      unsigned int subdevice;
  };
  
@@ -131,7 +190,11 @@ diff -Naur tinyalsa-1.0.0.ori/src/pcm.c tinyalsa-1.0.0/src/pcm.c
  /** Gets the buffer size of the PCM.
   * @param pcm A PCM handle.
   * @return The buffer size of the PCM.
+<<<<<<< HEAD
 @@ -556,12 +573,15 @@
+=======
+@@ -556,12 +568,15 @@
+>>>>>>> + Add tinyalsa v1.0.0 with YiHome specific patches
              pcm->prepared = 0;
              pcm->running = 0;
              if (errno == EPIPE) {
@@ -148,7 +211,11 @@ diff -Naur tinyalsa-1.0.0.ori/src/pcm.c tinyalsa-1.0.0/src/pcm.c
          return 0;
      }
  }
+<<<<<<< HEAD
 @@ -764,6 +784,9 @@
+=======
+@@ -764,6 +779,9 @@
+>>>>>>> + Add tinyalsa v1.0.0 with YiHome specific patches
      pcm->running = 0;
      pcm->buffer_size = 0;
      pcm->fd = -1;
@@ -158,7 +225,11 @@ diff -Naur tinyalsa-1.0.0.ori/src/pcm.c tinyalsa-1.0.0/src/pcm.c
      free(pcm);
      return 0;
  }
+<<<<<<< HEAD
 @@ -928,6 +951,16 @@
+=======
+@@ -928,6 +946,16 @@
+>>>>>>> + Add tinyalsa v1.0.0 with YiHome specific patches
  #endif
  
      pcm->underruns = 0;
@@ -175,7 +246,11 @@ diff -Naur tinyalsa-1.0.0.ori/src/pcm.c tinyalsa-1.0.0/src/pcm.c
      return pcm;
  
  fail:
+<<<<<<< HEAD
 @@ -1244,3 +1277,140 @@
+=======
+@@ -1244,3 +1272,106 @@
+>>>>>>> + Add tinyalsa v1.0.0 with YiHome specific patches
      return pcm->pcm_delay;
  }
  
@@ -190,6 +265,7 @@ diff -Naur tinyalsa-1.0.0.ori/src/pcm.c tinyalsa-1.0.0/src/pcm.c
 +    return 0;
 +}
 +
+<<<<<<< HEAD
 +void* fifo_open_thread(void *data)
 +{
 +    int fd;
@@ -206,11 +282,17 @@ diff -Naur tinyalsa-1.0.0.ori/src/pcm.c tinyalsa-1.0.0/src/pcm.c
 +{
 +    char *fifo = "/tmp/audio_fifo";
 +    pthread_t open_thread;
+=======
++int pcm_create_snoop_fifo(struct pcm *pcm)
++{
++    char *fifo = "/tmp/audio_fifo";
+>>>>>>> + Add tinyalsa v1.0.0 with YiHome specific patches
 +
 +    if (mkfifo(fifo, 0666) < 0) {
 +        if (errno != EEXIST) {
 +            oops(pcm, errno, "cannot create snoop fifo");
 +            return -1;
+<<<<<<< HEAD
 +        }
 +    }
 +
@@ -218,6 +300,10 @@ diff -Naur tinyalsa-1.0.0.ori/src/pcm.c tinyalsa-1.0.0/src/pcm.c
 +        oops(pcm, errno, "Error creating thread\n");
 +        return -1;
 +    }
+=======
++        }    
++    } 
+>>>>>>> + Add tinyalsa v1.0.0 with YiHome specific patches
 +
 +    snoop_fd = open(fifo, O_WRONLY);
 +    if (snoop_fd <= 0) {
@@ -225,11 +311,14 @@ diff -Naur tinyalsa-1.0.0.ori/src/pcm.c tinyalsa-1.0.0/src/pcm.c
 +        return -1;
 +    }
 +
+<<<<<<< HEAD
 +    if(pthread_join(open_thread, NULL)) {
 +        oops(pcm, errno, "Failed to join unblocking thread");
 +        return -1;
 +    }
 +
+=======
+>>>>>>> + Add tinyalsa v1.0.0 with YiHome specific patches
 +    if (fcntl(snoop_fd, F_SETFL, O_NONBLOCK) != 0) {
 +        oops(pcm, errno, "cannot set non-block to snoop fifo");
 +        return -1;	
@@ -259,6 +348,7 @@ diff -Naur tinyalsa-1.0.0.ori/src/pcm.c tinyalsa-1.0.0/src/pcm.c
 +#ifdef CONVERT_TO_MONO
 +    for (i = 0; i < pcm_bytes_to_frames(pcm, bytes); i++) {
 +        mono_buf[i] = *pcm_ptr & 0xffff;
+<<<<<<< HEAD
 +        //mono_buf[i] = cnt++;
 +        pcm_ptr++;
 +#ifdef CONVERT_TO_8KHZ
@@ -271,6 +361,13 @@ diff -Naur tinyalsa-1.0.0.ori/src/pcm.c tinyalsa-1.0.0/src/pcm.c
 +#else
 +    if (write(snoop_fd, mono_buf, bytes / 2) < 0) {
 +#endif
+=======
++	//mono_buf[i] = cnt++;
++	pcm_ptr++;
++    }
++
++    if (write(snoop_fd, mono_buf, bytes / 2) < 0) {
+>>>>>>> + Add tinyalsa v1.0.0 with YiHome specific patches
 +#else
 +    if (write(snoop_fd, data, bytes) < 0) {
 +#endif
@@ -297,11 +394,15 @@ diff -Naur tinyalsa-1.0.0.ori/src/pcm.c tinyalsa-1.0.0/src/pcm.c
 +#else
 +    header.num_channels = 2;
 +#endif
+<<<<<<< HEAD
 +#ifdef CONVERT_TO_8KHZ
 +    header.sample_rate = 8000;
 +#else
 +    header.sample_rate = 16000;
 +#endif
+=======
++    header.sample_rate = 16000;
+>>>>>>> + Add tinyalsa v1.0.0 with YiHome specific patches
 +    header.bits_per_sample = pcm_format_to_bits(PCM_FORMAT_S16_LE);
 +    header.byte_rate = (header.bits_per_sample / 8) * header.num_channels * header.sample_rate;
 +    header.block_align = header.num_channels * (header.bits_per_sample / 8);
