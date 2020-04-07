@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 # DO NOT FLASH THIS FIRMWARE! THESE ARE EXPERIMENTAL FEATURES.
+=======
+# DO NOT BUILD/FLASH THIS FIRMWARE! THESE ARE EXPERIMENTAL FEATURES.
+>>>>>>> + Add litte warning to README
 # Please check the original Roleo repo for stable builds.
 
 
