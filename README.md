@@ -17,6 +17,21 @@ The RTSP server code derives from live555 - http://www.live555.com/ and from the
 
 There is a problem with ffmpeg, see https://github.com/roleoroleo/yi-hack-MStar/issues/36 for details.
 
+###RTSP audio support:
+The datapath of the audio is as follows:
+Mic -> ADC -> Kernel sound driver -> TinyAlsa lib -> OMX ALSA plugin -> Camera application (rmm)
+
+To maintain audio support for the original Yi application, the audio should be cloned at one of the steps with the following in mind:
+- Kernel driver can be used by 1 "sink"
+- TinyAlsa can only openend by one "sink"
+- OMX libs are closed source and are not compatible with the "available" I1 SDK.
+
+Audio support is implemented by replacing the original TinyAlsa library with a version that copies the read audio frames to a pipe. This pipe is read by the RTSP server. The RTSP server uses a patched WAVFileSource to read the audio data from the pipe. (Since it tries to read the WAV header 2x I saw no (quick) other way than to hardcode the PCM format into the WAVFileSource code.)
+
+Additionally:
+- The OMX ALSA library reads audio in 16-bit 16000Hz stereo, one channel is just empty. To reduce streaming bandwidth the TinyAlsa replacement library converts the stereo data to mono.
+- To reduce streaming bandwidth even further, the 16-bit PCM data is converted to 8-bit uLaw and finally results in 128kbit/s.
+
 ## Table of Contents
 
 - [Features](#features)
@@ -116,8 +131,13 @@ Quick explanation:
 - ./scripts/compile.sh
 - ./scripts/pack_fw.all.sh
 
+### Dev tips
+- If you kill the "rmm" process, the watchdog will reset the camera. This can be prevented by kicking it yourself in a seperate shell: while [ 1 ] ; do sleep 1; echo .; echo V > /dev/watchdog; done
+- The "rmm" process can be started with a different set of OMX Libraries by setting environment variables OMX_LIB_PATH and LD_LIBRARY_PATH. That way you dont have to overwrite the original files and possibly brick the system. For instance: OMX_LIB_PATH=/tmp/sd/test/ms LD_LIBRARY_PATH=/home/lib:/lib:/usr/lib:/usr/local/lib:/tmp/sd/test/ms:/home/app/locallib /home/app/rmm
+- The I1 SDK is not compatible with this camera. When using the OMX libraries from the system with the headers from the SDK, most applications end up with a "Floating point exception". Possibly the headers do not match the libraries or one of the kernel interfaces.
+
 ## Unbricking
-If your camera doesn't start repeat the hack as described above.
+If your camera doesn't start repeat the hack as described above (with a lower/higher version) .
 You can use the same procedure even if you have a backup copy of the original partitions.
 If the bootloader works correctly the camera will restart.
 
