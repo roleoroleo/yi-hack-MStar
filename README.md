@@ -17,7 +17,7 @@ The RTSP server code derives from live555 - http://www.live555.com/ and from the
 
 There is a problem with ffmpeg, see https://github.com/roleoroleo/yi-hack-MStar/issues/36 for details.
 
-###RTSP audio support:
+### RTSP audio support:
 The datapath of the audio is as follows:
 Mic -> ADC -> Kernel sound driver -> TinyAlsa lib -> OMX ALSA plugin -> Camera application (rmm)
 
