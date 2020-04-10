@@ -142,23 +142,27 @@ if [[ $HTTPD_PORT != "80" ]] ; then
     D_HTTPD_PORT=:$HTTPD_PORT
 fi
 
+if [[ $(get_config ONVIF_WM_SNAPSHOT) == "yes" ]] ; then
+    WATERMARK="&watermark=yes"
+fi
+
 if [[ $(get_config RTSP) == "yes" ]] ; then
     if [[ $(get_config RTSP_STREAM) == "high" ]]; then
         h264grabber_h -r high | RRTSP_RES=0 RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD rRTSPServer_h &
-        ONVIF_PROFILE_0="--name Profile_0 --width 1920 --height 1080 --url rtsp://%s$D_RTSP_PORT/ch0_0.h264 --snapurl http://%s$D_HTTPD_PORT/cgi-bin/snapshot.sh?res=high --type H264"
+        ONVIF_PROFILE_0="--name Profile_0 --width 1920 --height 1080 --url rtsp://%s$D_RTSP_PORT/ch0_0.h264 --snapurl http://%s$D_HTTPD_PORT/cgi-bin/snapshot.sh?res=high$WATERMARK --type H264"
     fi
     if [[ $(get_config RTSP_STREAM) == "low" ]]; then
         h264grabber_l -r low | RRTSP_RES=1 RRTSP_PORT=$RTSP1_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD rRTSPServer_l &
-        ONVIF_PROFILE_1="--name Profile_1 --width 640 --height 360 --url rtsp://%s$D_RTSP1_PORT/ch0_1.h264 --snapurl http://%s$D_HTTPD_PORT/cgi-bin/snapshot.sh?res=low --type H264"
+        ONVIF_PROFILE_1="--name Profile_1 --width 640 --height 360 --url rtsp://%s$D_RTSP1_PORT/ch0_1.h264 --snapurl http://%s$D_HTTPD_PORT/cgi-bin/snapshot.sh?res=low$WATERMARK --type H264"
     fi
     if [[ $(get_config RTSP_STREAM) == "both" ]]; then
         h264grabber_h -r high | RRTSP_RES=0 RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD rRTSPServer_h &
         h264grabber_l -r low | RRTSP_RES=1 RRTSP_PORT=$RTSP1_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD rRTSPServer_l &
         if [[ $(get_config ONVIF_PROFILE) == "high" ]] || [[ $(get_config ONVIF_PROFILE) == "both" ]] ; then
-            ONVIF_PROFILE_0="--name Profile_0 --width 1920 --height 1080 --url rtsp://%s$D_RTSP_PORT/ch0_0.h264 --snapurl http://%s$D_HTTPD_PORT/cgi-bin/snapshot.sh?res=high --type H264"
+            ONVIF_PROFILE_0="--name Profile_0 --width 1920 --height 1080 --url rtsp://%s$D_RTSP_PORT/ch0_0.h264 --snapurl http://%s$D_HTTPD_PORT/cgi-bin/snapshot.sh?res=high$WATERMARK --type H264"
         fi
         if [[ $(get_config ONVIF_PROFILE) == "low" ]] || [[ $(get_config ONVIF_PROFILE) == "both" ]] ; then
-            ONVIF_PROFILE_1="--name Profile_1 --width 640 --height 360 --url rtsp://%s$D_RTSP1_PORT/ch0_1.h264 --snapurl http://%s$D_HTTPD_PORT/cgi-bin/snapshot.sh?res=low --type H264"
+            ONVIF_PROFILE_1="--name Profile_1 --width 640 --height 360 --url rtsp://%s$D_RTSP1_PORT/ch0_1.h264 --snapurl http://%s$D_HTTPD_PORT/cgi-bin/snapshot.sh?res=low$WATERMARK --type H264"
         fi
     fi
     $YI_HACK_PREFIX/script/wd_rtsp.sh &

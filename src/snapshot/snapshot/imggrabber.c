@@ -32,6 +32,8 @@
 
 #include <jpeglib.h>
 
+#include "water_mark.h"
+
 #define RESOLUTION_LOW 360
 #define RESOLUTION_HIGH 1080
 
@@ -65,22 +67,31 @@ int compressYUYVtoJPEG(unsigned char *input, const int width, const int height, 
     uint8_t* outbuffer = NULL;
     unsigned long outlen = 0;
 
-    unsigned int sl, i, j;
+    unsigned int wsl, hsl, i, j;
     unsigned int offset;
     unsigned int uv;
 
     // width != dest_width currently not supported
-    if (width != dest_width) return -1;
+    if (width < dest_width) return -1;
 
     // height < dest_height currently not supported
     if (height < dest_height) return -1;
+
+    wsl = width - dest_width;
+    hsl = height - dest_height;
+
+    // width - dest_width must be even
+    if ((wsl % 2) == 1) return -1;
+
+    // height - dest_height must be even
+    if ((hsl % 2) == 1) return -1;
 
     cinfo.err = jpeg_std_error(&jerr);
     jpeg_create_compress(&cinfo);
     jpeg_mem_dest(&cinfo, &outbuffer, &outlen);
 
     // jrow is a libjpeg row of samples array of 1 row pointer
-    cinfo.image_width = width & -1;
+    cinfo.image_width = dest_width & -1;
     cinfo.image_height = dest_height & -1;
     cinfo.input_components = 3;
     cinfo.in_color_space = JCS_YCbCr; //libJPEG expects YUV 3bytes, 24bit
@@ -89,16 +100,14 @@ int compressYUYVtoJPEG(unsigned char *input, const int width, const int height, 
     jpeg_set_quality(&cinfo, JPEG_QUALITY, TRUE);
     jpeg_start_compress(&cinfo, TRUE);
 
-    uint8_t tmprowbuf[width * 3];
+    uint8_t tmprowbuf[dest_width * 3];
 
     JSAMPROW row_pointer[1];
     row_pointer[0] = &tmprowbuf[0];
 
-    sl = height - dest_height;
-
     while (cinfo.next_scanline < cinfo.image_height) {
-        offset = (cinfo.next_scanline + sl/2) * width; //offset to the correct row
-        uv = width * (height - (cinfo.next_scanline + sl/2 + 1) / 2);
+        offset = (cinfo.next_scanline + hsl/2) * width + wsl/2; //offset to the correct row
+        uv = width * (height - (cinfo.next_scanline + hsl/2 + 1) / 2) + wsl/2;
 
         for (i = 0, j = 0; i < cinfo.image_width; i += 2, j += 6) { //input strides by 2 bytes, output strides by 6 (2 pixels)
             tmprowbuf[j + 0] = input[offset + i];          // Y (unique to this pixel)
@@ -278,6 +287,7 @@ int main(int argc, char **argv)
     int c;
     const char memDevice[] = "/dev/mem";
     int resolution = RESOLUTION_HIGH;
+    int watermark = 0;
     FILE *fPtr, *fLen;
     int fMem;
     unsigned int ivAddr, ipAddr;
@@ -287,10 +297,13 @@ int main(int argc, char **argv)
     unsigned char check1[64], check2[64];
     int outlen;
 
+    WaterMarkInfo WM_info;
+
     while (1) {
         static struct option long_options[] =
         {
             {"resolution",  required_argument, 0, 'r'},
+            {"watermark",  no_argument, 0, 'w'},
             {"debug",  no_argument, 0, 'd'},
             {"help",  no_argument, 0, 'h'},
             {0, 0, 0, 0}
@@ -298,7 +311,7 @@ int main(int argc, char **argv)
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        c = getopt_long (argc, argv, "r:dh",
+        c = getopt_long (argc, argv, "r:wdh",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -312,6 +325,11 @@ int main(int argc, char **argv)
             } else if (strcasecmp("high", optarg) == 0) {
                 resolution = RESOLUTION_HIGH;
             }
+            break;
+
+        case 'w':
+            fprintf (stderr, "watermark on\n");
+            watermark = 1;
             break;
 
         case 'd':
@@ -389,12 +407,34 @@ int main(int argc, char **argv)
         // right position. We need to move it.
         memmove(buffer + W_LOW * H_LOW, buffer + W_LOW * H_LOW + UV_OFFSET_LOW,
             W_LOW * H_LOW / 2);
+
+        if (watermark) {
+            if(WMInit(&WM_info, "/home/yi-hack/etc/wm_res/low/wm_540p_") < 0){
+                fprintf(stderr, "water mark init error\n");
+            } else {
+                AddWM(&WM_info, W_LOW, H_LOW, buffer,
+                    buffer + W_LOW*H_LOW, W_LOW-230, H_LOW-20, NULL);
+                WMRelease(&WM_info);
+            }
+        }
+
         // create jpeg
         outlen = compressYUYVtoJPEG(buffer, W_LOW, H_LOW, W_LOW, H_LOW);
     } else {
         // The buffer contains YUV N21 image saved in blocks.
         // We need to convert to standard YUV N12 image.
         outlen = img2YUV(buffer, size, W_HIGH, H_HIGH);
+
+        if (watermark) {
+            if(WMInit(&WM_info, "/home/yi-hack/etc/wm_res/high/wm_540p_") < 0){
+                fprintf(stderr, "water mark init error\n");
+            } else {
+                AddWM(&WM_info, W_HIGH, H_HIGH, buffer,
+                    buffer + W_HIGH*H_HIGH, W_HIGH-460, H_HIGH-40, NULL);
+                WMRelease(&WM_info);
+            }
+        }
+
         // create jpeg
         outlen = compressYUYVtoJPEG(buffer, W_HIGH, H_HIGH, W_HIGH, RESOLUTION_HIGH);
     }
