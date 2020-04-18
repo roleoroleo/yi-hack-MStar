@@ -73,19 +73,10 @@ else
     (
         cd /home/app
         sleep 2
-        ./mp4record &
         # Trick to start circular buffer filling
-        ./cloud &
-        IDX=`hexdump -n 16 /dev/fshare_frame_buf | awk 'NR==1{print $8}'`
-        N=0
-        while [ "$IDX" -eq "0000" ] && [ $N -lt 50 ]; do
-            IDX=`hexdump -n 16 /dev/fshare_frame_buf | awk 'NR==1{print $8}'`
-            N=$(($N+1))
-            sleep 0.2
-        done
-        killall cloud
-        if [[ $(get_config REC_WITHOUT_CLOUD) == "no" ]] ; then
-            killall mp4record
+        ipc_cmd -x
+        if [[ $(get_config REC_WITHOUT_CLOUD) == "yes" ]] ; then
+            ./mp4record &
         fi
     )
 fi

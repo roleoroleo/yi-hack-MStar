@@ -72,6 +72,10 @@ void print_usage(char *progname)
     fprintf(stderr, "\t\tsend PTZ command: RIGHT, LEFT, DOWN, UP or STOP\n");
     fprintf(stderr, "\t-p NUM, --preset NUM\n");
     fprintf(stderr, "\t\tsend PTZ go to preset command: NUM = [0..7]\n");
+    fprintf(stderr, "\t-f FILE, --file FILE\n");
+    fprintf(stderr, "\t\tread binary command from FILE\n");
+    fprintf(stderr, "\t-x,     --xxx\n");
+    fprintf(stderr, "\t\tsend xxx message\n");
     fprintf(stderr, "\t-d,     --debug\n");
     fprintf(stderr, "\t\tenable debug\n");
     fprintf(stderr, "\t-h,     --help\n");
@@ -93,6 +97,13 @@ int main(int argc, char ** argv)
     int preset = NONE;
     int debug = 0;
     unsigned char preset_msg[20];
+    char file[1024];
+    unsigned char msg_file[1024];
+    FILE *fIn;
+    int nread = 0;
+    int xxx = 0;
+
+    file[0] = '\0';
 
     while (1) {
         static struct option long_options[] =
@@ -105,6 +116,8 @@ int main(int argc, char ** argv)
             {"rotate",  required_argument, 0, 'r'},
             {"move",  required_argument, 0, 'm'},
             {"preset",  required_argument, 0, 'p'},
+            {"file", required_argument, 0, 'f'},
+            {"xxx", no_argument, 0, 'x'},
             {"debug",  no_argument, 0, 'd'},
             {"help",  no_argument, 0, 'h'},
             {0, 0, 0, 0}
@@ -112,7 +125,7 @@ int main(int argc, char ** argv)
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        c = getopt_long (argc, argv, "t:s:l:v:i:r:m:p:dh",
+        c = getopt_long (argc, argv, "t:s:l:v:i:r:m:p:f:xdh",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -199,9 +212,23 @@ int main(int argc, char ** argv)
             }
             break;
 
+        case 'f':
+            /* Check for various possible errors */
+            if (strlen(optarg) < 1023) {
+                strcpy(file, optarg);
+            } else {
+                print_usage(argv[0]);
+                exit(EXIT_FAILURE);
+            }
+            break;
+
         case 'd':
             fprintf (stderr, "debug on\n");
             debug = 1;
+            break;
+
+        case 'x':
+            xxx = 1;
             break;
 
         case 'h':
@@ -230,59 +257,83 @@ int main(int argc, char ** argv)
     }
 
     if (switch_on == SWITCH_ON) {
-        mq_send(ipc_mq, IPC_SWITCH_ON, sizeof(IPC_SWITCH_ON), 0);
+        mq_send(ipc_mq, IPC_SWITCH_ON, sizeof(IPC_SWITCH_ON) - 1, 0);
     } else if (switch_on == SWITCH_OFF) {
-        mq_send(ipc_mq, IPC_SWITCH_OFF, sizeof(IPC_SWITCH_OFF), 0);
+        mq_send(ipc_mq, IPC_SWITCH_OFF, sizeof(IPC_SWITCH_OFF) - 1, 0);
     }
 
     if (sensitivity == SENSITIVITY_LOW) {
-        mq_send(ipc_mq, IPC_SENS_LOW, sizeof(IPC_SENS_LOW), 0);
+        mq_send(ipc_mq, IPC_SENS_LOW, sizeof(IPC_SENS_LOW) - 1, 0);
     } else if (sensitivity == SENSITIVITY_MEDIUM) {
-        mq_send(ipc_mq, IPC_SENS_MEDIUM, sizeof(IPC_SENS_MEDIUM), 0);
+        mq_send(ipc_mq, IPC_SENS_MEDIUM, sizeof(IPC_SENS_MEDIUM) - 1, 0);
     } else if (sensitivity == SENSITIVITY_HIGH) {
-        mq_send(ipc_mq, IPC_SENS_HIGH, sizeof(IPC_SENS_HIGH), 0);
+        mq_send(ipc_mq, IPC_SENS_HIGH, sizeof(IPC_SENS_HIGH) - 1, 0);
     }
 
     if (led == LED_OFF) {
-        mq_send(ipc_mq, IPC_LED_OFF, sizeof(IPC_LED_OFF), 0);
+        mq_send(ipc_mq, IPC_LED_OFF, sizeof(IPC_LED_OFF) - 1, 0);
     } else if (led == LED_ON) {
-        mq_send(ipc_mq, IPC_LED_ON, sizeof(IPC_LED_ON), 0);
+        mq_send(ipc_mq, IPC_LED_ON, sizeof(IPC_LED_ON) - 1, 0);
     }
 
     if (save == SAVE_ALWAYS) {
-        mq_send(ipc_mq, IPC_SAVE_ALWAYS, sizeof(IPC_SAVE_ALWAYS), 0);
+        mq_send(ipc_mq, IPC_SAVE_ALWAYS, sizeof(IPC_SAVE_ALWAYS) - 1, 0);
     } else if (save == SAVE_DETECT) {
-        mq_send(ipc_mq, IPC_SAVE_DETECT, sizeof(IPC_SAVE_DETECT), 0);
+        mq_send(ipc_mq, IPC_SAVE_DETECT, sizeof(IPC_SAVE_DETECT) - 1, 0);
     }
 
     if (ir == IR_OFF) {
-        mq_send(ipc_mq, IPC_IR_OFF, sizeof(IPC_IR_OFF), 0);
+        mq_send(ipc_mq, IPC_IR_OFF, sizeof(IPC_IR_OFF) - 1, 0);
     } else if (ir == IR_ON) {
-        mq_send(ipc_mq, IPC_IR_ON, sizeof(IPC_IR_ON), 0);
+        mq_send(ipc_mq, IPC_IR_ON, sizeof(IPC_IR_ON) - 1, 0);
     }
 
     if (rotate == ROTATE_OFF) {
-        mq_send(ipc_mq, IPC_ROTATE_OFF, sizeof(IPC_ROTATE_OFF), 0);
+        mq_send(ipc_mq, IPC_ROTATE_OFF, sizeof(IPC_ROTATE_OFF) - 1, 0);
     } else if (rotate == ROTATE_ON) {
-        mq_send(ipc_mq, IPC_ROTATE_ON, sizeof(IPC_ROTATE_ON), 0);
+        mq_send(ipc_mq, IPC_ROTATE_ON, sizeof(IPC_ROTATE_ON) - 1, 0);
     }
 
     if (move == MOVE_RIGHT) {
-        mq_send(ipc_mq, IPC_MOVE_RIGHT, sizeof(IPC_MOVE_RIGHT), 0);
+        mq_send(ipc_mq, IPC_MOVE_RIGHT, sizeof(IPC_MOVE_RIGHT) - 1, 0);
     } else if (move == MOVE_LEFT) {
-        mq_send(ipc_mq, IPC_MOVE_LEFT, sizeof(IPC_MOVE_LEFT), 0);
+        mq_send(ipc_mq, IPC_MOVE_LEFT, sizeof(IPC_MOVE_LEFT) - 1, 0);
     } else if (move == MOVE_DOWN) {
-        mq_send(ipc_mq, IPC_MOVE_DOWN, sizeof(IPC_MOVE_DOWN), 0);
+        mq_send(ipc_mq, IPC_MOVE_DOWN, sizeof(IPC_MOVE_DOWN) - 1, 0);
     } else if (move == MOVE_UP) {
-        mq_send(ipc_mq, IPC_MOVE_UP, sizeof(IPC_MOVE_UP), 0);
+        mq_send(ipc_mq, IPC_MOVE_UP, sizeof(IPC_MOVE_UP) - 1, 0);
     } else if (move == MOVE_STOP) {
-        mq_send(ipc_mq, IPC_MOVE_STOP, sizeof(IPC_MOVE_STOP), 0);
+        mq_send(ipc_mq, IPC_MOVE_STOP, sizeof(IPC_MOVE_STOP) - 1, 0);
     }
 
     if (preset != NONE) {
-        memcpy(preset_msg, IPC_GOTO_PRESET, sizeof(IPC_GOTO_PRESET));
+        memcpy(preset_msg, IPC_GOTO_PRESET, sizeof(IPC_GOTO_PRESET) - 1);
         preset_msg[16] = preset & 0xff;
-        mq_send(ipc_mq, preset_msg, sizeof(IPC_GOTO_PRESET), 0);
+        mq_send(ipc_mq, preset_msg, sizeof(IPC_GOTO_PRESET) - 1, 0);
+    }
+
+    if (file[0] != '\0') {
+        fIn = fopen(file, "r");
+        if (fIn == NULL) {
+            fprintf(stderr, "Error opening file %s\n", file);
+            exit(EXIT_FAILURE);
+        }
+
+        // Tell size
+        fseek(fIn, 0L, SEEK_END);
+        nread = ftell(fIn);
+        fseek(fIn, 0L, SEEK_SET);
+
+        if (fread(msg_file, 1, nread, fIn) != nread) {
+            fprintf(stderr, "Error reading file %s\n", file);
+            exit(EXIT_FAILURE);
+        }
+        fclose(fIn);
+        mq_send(ipc_mq, msg_file, nread, 0);
+    }
+
+    if (xxx == 1) {
+        mq_send(ipc_mq, IPC_XXX_0, sizeof(IPC_XXX_0) - 1, 0);
     }
 
     ipc_stop();
