@@ -11,12 +11,15 @@ int WMInit(WaterMarkInfo *WM_info, char WMPath[30])
     int height = 0;
     int start_bmp = 0;
 
+    WM_info->width = 0;
+    WM_info->height = 0;
+
     /* init watermark pic info */
     for (i = 0; i < watermark_pic_num; i++) {
         sprintf(filename, "%s%d.bmp", WMPath, i);
         icon_hdle = fopen(filename, "r");
         if (icon_hdle == NULL) {
-            fprintf(stderr, "get wartermark %s error\n", filename);
+            fprintf(stderr, "get watermark %s error\n", filename);
             return -1;
         }
 
@@ -30,10 +33,7 @@ int WMInit(WaterMarkInfo *WM_info, char WMPath[30])
 
         if (WM_info->width == 0) {
             WM_info->width = width;
-            if (height < 0)
-                WM_info->height = height * (-1);
-            else 
-                WM_info->height = height;
+            WM_info->height = height * (-1);
         }
 
         WM_info->single_pic[i].id = i;
