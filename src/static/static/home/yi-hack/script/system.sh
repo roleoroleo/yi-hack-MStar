@@ -23,8 +23,10 @@ touch /tmp/httpd.conf
 # Restore configuration after a firmware upgrade
 if [ -f $YI_HACK_PREFIX/.fw_upgrade_in_progress ]; then
     cp -f /tmp/sd/.fw_upgrade/*.conf $YI_HACK_PREFIX/etc/
+    cp -f /tmp/sd/.fw_upgrade/TZ $YI_HACK_PREFIX/etc/
     rm $YI_HACK_PREFIX/.fw_upgrade_in_progress
     chmod 0644 $YI_HACK_PREFIX/etc/*.conf
+    chmod 0644 $YI_HACK_PREFIX/etc/TZ
 fi
 
 $YI_HACK_PREFIX/script/check_conf.sh
