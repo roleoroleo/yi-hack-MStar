@@ -62,7 +62,7 @@ elif [ "$VAL" == "upgrade" ] ; then
     rm ${MODEL_SUFFIX}_${LATEST_FW}.tgz
     mv -f * ..
     cp $YI_HACK_PREFIX/etc/*.conf .
-    if [ -f /etc/TZ ]: then
+    if [ -f /etc/TZ ]; then
         cp /etc/TZ .
     fi
 
