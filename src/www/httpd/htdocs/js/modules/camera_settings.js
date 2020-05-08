@@ -52,19 +52,6 @@ APP.camera_settings = (function ($) {
         configs["SENSITIVITY"] = $('select[data-key="SENSITIVITY"]').prop('value');
 
         $.ajax({
-            type: "POST",
-            url: 'cgi-bin/set_configs.sh?conf=camera',
-            data: configs,
-            dataType: "json",
-            success: function(response) {
-                saveStatusElem.text("Saved");
-            },
-            error: function(response) {
-                saveStatusElem.text("Error while saving");
-                console.log('error', response);
-            }
-        });
-        $.ajax({
             type: "GET",
             url: 'cgi-bin/camera_settings.sh?' +
                 'save_video_on_motion=' + configs["SAVE_VIDEO_ON_MOTION"] +
@@ -75,9 +62,10 @@ APP.camera_settings = (function ($) {
                 '&switch_on=' + configs["SWITCH_ON"],
             dataType: "json",
             success: function(response) {
-
+                saveStatusElem.text("Saved");
             },
             error: function(response) {
+                saveStatusElem.text("Error while saving");
                 console.log('error', response);
             }
         });
