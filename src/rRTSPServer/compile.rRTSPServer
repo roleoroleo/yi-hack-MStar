@@ -30,5 +30,3 @@ cp ./rRTSPServer ../_install/bin || exit 1
 arm-linux-gnueabihf-strip ../_install/bin/* || exit 1
 
 cd ../_install/bin/
-ln -s rRTSPServer rRTSPServer_h
-ln -s rRTSPServer rRTSPServer_l
