@@ -68,6 +68,9 @@ void cb_dest_memcpy(cb_output_buffer *dest, unsigned char *src, size_t n)
         memcpy(uc_dest, src, n);
         dest->write_index += n;
     }
+    if (dest->write_index == dest->buffer + dest->size) {
+        dest->write_index = dest->buffer;
+    }
 }
 
 // Returns the 1st process id corresponding to pname
@@ -330,9 +333,9 @@ void print_usage(char *progname)
 {
     fprintf(stderr, "\nUsage: %s [-r RES] [-p PORT] [-d]\n\n", progname);
     fprintf(stderr, "\t-r RES, --resolution RES\n");
-    fprintf(stderr, "\t\tset resolution: low, high or both\n");
+    fprintf(stderr, "\t\tset resolution: low, high or both (default high)\n");
     fprintf(stderr, "\t-p PORT, --port PORT\n");
-    fprintf(stderr, "\t\tset TCP port\n");
+    fprintf(stderr, "\t\tset TCP port (default 554)\n");
     fprintf(stderr, "\t-d,     --debug\n");
     fprintf(stderr, "\t\tenable debug\n");
     fprintf(stderr, "\t-h,     --help\n");
@@ -465,7 +468,7 @@ int main(int argc, char** argv)
         output_buffer_low.write_index = output_buffer_low.buffer;
 
         if (output_buffer_low.buffer == NULL) {
-            if (debug) fprintf(stderr, "could not alloc memory\n");
+            fprintf(stderr, "could not alloc memory\n");
             exit(EXIT_FAILURE);
         }
 
@@ -490,7 +493,7 @@ int main(int argc, char** argv)
         output_buffer_high.write_index = output_buffer_high.buffer;
 
         if (output_buffer_high.buffer == NULL) {
-            if (debug) fprintf(stderr, "could not alloc memory\n");
+            fprintf(stderr, "could not alloc memory\n");
             exit(EXIT_FAILURE);
         }
 

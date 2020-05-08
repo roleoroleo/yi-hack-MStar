@@ -40,11 +40,12 @@
 #define BUF_SIZE 1786156
 #define FRAME_HEADER_SIZE 22
 
-#define USLEEP 100000
+#define MILLIS_10 10000
+#define MILLIS_25 25000
 
 #define RESOLUTION_LOW  360
 #define RESOLUTION_HIGH 1080
-#define RESOLUTION_BOTH (RESOLUTION_LOW + RESOLUTION_HIGH)
+#define RESOLUTION_BOTH 1440
 
 #define OUTPUT_BUFFER_SIZE_LOW  32768
 #define OUTPUT_BUFFER_SIZE_HIGH 131072
@@ -62,6 +63,7 @@ typedef struct
 {
     unsigned char *buffer;
     unsigned int size;
+    int resolution;
     unsigned char *write_index;             // absolute index
     unsigned char *read_index;              // absolute index
     pthread_mutex_t mutex;

@@ -74,13 +74,14 @@ void ByteStreamCBMemorySource::doGetNextFrame() {
     pthread_mutex_lock(&(fBuffer->mutex));
     while (fBuffer->read_index == fBuffer->write_index) {
         pthread_mutex_unlock(&(fBuffer->mutex));
-        usleep(5000);
+        usleep(25000);
         pthread_mutex_lock(&(fBuffer->mutex));
     }
 
     if (((fBuffer->write_index + fBuffer->size - fBuffer->read_index) % fBuffer->size) < fFrameSize) {
         fFrameSize = (fBuffer->write_index + fBuffer->size - fBuffer->read_index) % fBuffer->size;
         if (debug) fprintf(stderr, "1 - fFrameSize %d - fMaxSize %d - fLimitNumBytesToStream %d\n", fFrameSize, fMaxSize, fLimitNumBytesToStream);
+//        if (debug) fprintf(stderr, "10 - fFrameSize %d - fBuffer->write_index 0x%08x -  fBuffer->size %d - fBuffer->read_index 0x%08x\n", fFrameSize, fBuffer->write_index, fBuffer->size, fBuffer->read_index);
         if (fBuffer->read_index + fFrameSize > fBuffer->buffer + fBuffer->size) {
             memmove(fTo, fBuffer->read_index, fBuffer->buffer + fBuffer->size - fBuffer->read_index);
             memmove(fTo + (fBuffer->buffer + fBuffer->size - fBuffer->read_index), fBuffer->buffer, fFrameSize - (fBuffer->buffer + fBuffer->size - fBuffer->read_index));
@@ -103,6 +104,9 @@ void ByteStreamCBMemorySource::doGetNextFrame() {
         }
         pthread_mutex_unlock(&fBuffer->mutex);
         if (debug) fprintf(stderr, "22 - Completed\n");
+    }
+    if (fBuffer->read_index == fBuffer->buffer + fBuffer->size) {
+        fBuffer->read_index = fBuffer->buffer;
     }
 
     // Set the 'presentation time':
