@@ -32,7 +32,7 @@
                         <td>
                             <input class="u-full-width" type="text" placeholder="" data-key="TIMEZONE" id="TIMEZONE"/>
                             <span class="switch-description">
-                                Timezone. Get your timezone string from <a href="https://oldwiki.archive.openwrt.org/doc/uci/system#time_zones" rel="nofollow">this page</a> and copy here.
+                                Timezone. Get your timezone string from <a href="?page=tz">this page</a> and copy here.
                             </span>
                         </td>
                     </tr>
@@ -207,6 +207,15 @@
                         </td>
                     </tr>
                     <tr class="row">
+                        <td>NTP Server</td>
+                        <td>
+                            <input class="u-full-width" type="text" placeholder="" data-key="NTP_SERVER" id="NTP_SERVER"/>
+                            <span class="switch-description">
+                                NTP server name.
+                            </span>
+                        </td>
+                    </tr>
+                    <tr class="row">
                         <td>HTTPD</td>
                         <td>
                             <label class="switch small">
@@ -250,15 +259,6 @@
                             <input class="u-full-width" type="text" placeholder="" data-key="RTSP_PORT" id="RTSP_PORT"/>
                             <span class="switch-description">
                                 TCP port used by RTSP Server (default 554).
-                            </span>
-                        </td>
-                    </tr>
-                    <tr class="row">
-                        <td>RTSP Slave Port</td>
-                        <td>
-                            <input class="u-full-width" type="text" placeholder="" data-key="RTSP1_PORT" id="RTSP1_PORT"/>
-                            <span class="switch-description">
-                                TCP port used by slave stream by RTSP Server (default 8554).
                             </span>
                         </td>
                     </tr>
