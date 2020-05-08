@@ -89,6 +89,7 @@ APP.maintenance = (function ($) {
         setInterval(function(){
             $.ajax({
                 url: '/',
+                cache: false,
                 success: function(data) {
                     setRebootStatus("Camera is back online, redirecting to home.");
                     $('#button-reboot').attr("disabled", false);
