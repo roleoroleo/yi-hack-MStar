@@ -1,0 +1,4 @@
+# Ignore the install dir
+_install/
+tinyalsa-1.0.0
+v1.0.0.tar.gz

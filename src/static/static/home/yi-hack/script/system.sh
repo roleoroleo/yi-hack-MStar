@@ -15,6 +15,20 @@ get_config()
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/lib:/home/yi-hack/lib:/tmp/sd/yi-hack/lib
 export PATH=$PATH:/home/base/tools:/home/yi-hack/bin:/home/yi-hack/sbin:/tmp/sd/yi-hack/bin:/tmp/sd/yi-hack/sbin
 
+# RMM is blocked on the open call of the fifo until someone 
+# else opens it -> Wait for creation and dump some data to start rmm.
+j=0
+while [ ! -f /tmp/audio_fifo ];
+do 
+  sleep 1
+  let j++
+  echo $j
+  if [[ "$j" == "10" ]]; then 
+    break
+  fi
+done
+dd if=/tmp/audio_fifo of=/dev/null bs=1k count=8
+
 ulimit -s 1024
 hostname -F /etc/hostname
 
