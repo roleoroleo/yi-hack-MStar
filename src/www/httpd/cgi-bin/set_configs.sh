@@ -33,7 +33,7 @@ fi
 
 read POST_DATA
 
-PARAMS=$(echo "$POST_DATA" | tr "&" " ")
+PARAMS=$(echo "$POST_DATA" | tr "\n\r" " " | tr -d " " | sed 's/{\"//g' | sed 's/\"}//g' | sed 's/\",\"/ /g' | sed 's/\":\"/=/g')
 
 for S in $PARAMS ; do
     PARAM=$(echo "$S" | tr "=" " ")

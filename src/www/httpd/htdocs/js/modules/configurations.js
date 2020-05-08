@@ -75,7 +75,7 @@ APP.configurations = (function ($) {
         $.ajax({
             type: "POST",
             url: 'cgi-bin/set_configs.sh?conf=system',
-            data: configs,
+            data: JSON.stringify(configs),
             dataType: "json",
             success: function(response) {
                 saveStatusElem.text("Saved");

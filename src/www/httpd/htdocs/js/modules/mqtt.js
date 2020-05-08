@@ -75,7 +75,7 @@ APP.mqtt = (function ($) {
         $.ajax({
             type: "POST",
             url: 'cgi-bin/set_configs.sh?conf=mqtt',
-            data: configs,
+            data: JSON.stringify(configs),
             dataType: "json",
             success: function(response) {
                 saveStatusElem.text("Saved");
@@ -89,7 +89,7 @@ APP.mqtt = (function ($) {
         $.ajax({
             type: "POST",
             url: 'cgi-bin/set_configs.sh?conf=system',
-            data: configsSystem,
+            data: JSON.stringify(configsSystem),
             dataType: "json",
             success: function(response) {
             },
