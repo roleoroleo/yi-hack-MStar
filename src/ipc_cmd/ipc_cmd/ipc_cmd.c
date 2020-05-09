@@ -68,6 +68,8 @@ void print_usage(char *progname)
     fprintf(stderr, "\t\tset ir led: ON or OFF\n");
     fprintf(stderr, "\t-r ROTATE, --rotate ROTATE\n");
     fprintf(stderr, "\t\tset rotate: ON or OFF\n");
+    fprintf(stderr, "\t-b BABYCRYING, --babycrying BABYCRYING\n");
+    fprintf(stderr, "\t\tset baby crying detection: ON or OFF\n");
     fprintf(stderr, "\t-m MOVE, --move MOVE\n");
     fprintf(stderr, "\t\tsend PTZ command: RIGHT, LEFT, DOWN, UP or STOP\n");
     fprintf(stderr, "\t-p NUM, --preset NUM\n");
@@ -93,6 +95,7 @@ int main(int argc, char ** argv)
     int save = NONE;
     int ir = NONE;
     int rotate = NONE;
+    int babycrying = NONE;
     int move = NONE;
     int preset = NONE;
     int debug = 0;
@@ -114,6 +117,7 @@ int main(int argc, char ** argv)
             {"save",  required_argument, 0, 'v'},
             {"ir",  required_argument, 0, 'i'},
             {"rotate",  required_argument, 0, 'r'},
+            {"babycrying",  required_argument, 0, 'b'},
             {"move",  required_argument, 0, 'm'},
             {"preset",  required_argument, 0, 'p'},
             {"file", required_argument, 0, 'f'},
@@ -125,7 +129,7 @@ int main(int argc, char ** argv)
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        c = getopt_long (argc, argv, "t:s:l:v:i:r:m:p:f:xdh",
+        c = getopt_long (argc, argv, "t:s:l:v:i:r:b:m:p:f:xdh",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -180,6 +184,14 @@ int main(int argc, char ** argv)
                 rotate = ROTATE_OFF;
             } else if (strcasecmp("on", optarg) == 0) {
                 rotate = ROTATE_ON;
+            }
+            break;
+
+        case 'b':
+            if (strcasecmp("off", optarg) == 0) {
+                babycrying = BABYCRYING_OFF;
+            } else if (strcasecmp("on", optarg) == 0) {
+                babycrying = BABYCRYING_ON;
             }
             break;
 
@@ -292,6 +304,12 @@ int main(int argc, char ** argv)
         mq_send(ipc_mq, IPC_ROTATE_OFF, sizeof(IPC_ROTATE_OFF) - 1, 0);
     } else if (rotate == ROTATE_ON) {
         mq_send(ipc_mq, IPC_ROTATE_ON, sizeof(IPC_ROTATE_ON) - 1, 0);
+    }
+
+    if (babycrying == BABYCRYING_OFF) {
+        mq_send(ipc_mq, IPC_BABYCRYING_OFF, sizeof(IPC_BABYCRYING_OFF) - 1, 0);
+    } else if (babycrying == BABYCRYING_ON) {
+        mq_send(ipc_mq, IPC_BABYCRYING_ON, sizeof(IPC_BABYCRYING_ON) - 1, 0);
     }
 
     if (move == MOVE_RIGHT) {
