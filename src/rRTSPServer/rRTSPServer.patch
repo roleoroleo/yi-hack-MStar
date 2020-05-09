@@ -31,3 +31,16 @@ diff -Naur live.ori/liveMedia/H264or5VideoStreamFramer.cpp live/liveMedia/H264or
  }
  
  H264or5VideoStreamFramer::~H264or5VideoStreamFramer() {
+@@ -1195,8 +1195,13 @@
+       nextPT = usingSource()->fPresentationTime;
+       double nextFraction = nextPT.tv_usec/1000000.0 + 1/usingSource()->fFrameRate;
+       unsigned nextSecsIncrement = (long)nextFraction;
++#if 0
+       nextPT.tv_sec += (long)nextSecsIncrement;
+       nextPT.tv_usec = (long)((nextFraction - nextSecsIncrement)*1000000);
++#else
++      // Use system clock to set presentation time
++      gettimeofday(&nextPT, NULL);
++#endif
+     }
+     setParseState();

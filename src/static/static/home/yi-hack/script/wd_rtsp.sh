@@ -19,7 +19,7 @@ get_config()
 
 restart_rtsp()
 {
-    RRTSP_RES=$(get_config RTSP_STREAM) RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD rRTSPServer &
+    RRTSP_RES=$(get_config RTSP_STREAM) RRTSP_AUDIO=$(get_config RTSP_AUDIO) RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD rRTSPServer &
 }
 
 check_rtsp()

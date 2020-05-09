@@ -24,6 +24,7 @@
 #include "BasicUsageEnvironment.hh"
 
 #include "H264VideoCBMemoryServerMediaSubsession.hh"
+#include "WAVAudioFifoServerMediaSubsession.hh"
 
 #include <getopt.h>
 #include <pthread.h>
@@ -31,6 +32,7 @@
 #include <dirent.h>
 #include <errno.h>
 #include <limits.h>
+#include <sys/stat.h>
 
 #include "rRTSPServer.h"
 
@@ -39,6 +41,7 @@ unsigned char SEI_F0[] = { 0x00, 0x00, 0x00, 0x01, 0x06, 0xF0 };
 
 int debug;                                  /* Set to 1 to debug this .c */
 int resolution;
+int audio;
 int port;
 
 cb_output_buffer output_buffer_low;
@@ -319,21 +322,24 @@ void *capture(void *ptr)
     munmap(addr, size);
 }
 
-static void announceStream(RTSPServer* rtspServer, ServerMediaSession* sms, char const* streamName)
+static void announceStream(RTSPServer* rtspServer, ServerMediaSession* sms, char const* streamName, int audio)
 {
     char* url = rtspServer->rtspURL(sms);
     UsageEnvironment& env = rtspServer->envir();
     env << "\n\"" << streamName << "\" stream, from memory\n";
+    if (audio)
+        env << "Audio enabled\n";
     env << "Play this stream using the URL \"" << url << "\"\n";
     delete[] url;
 }
-
 
 void print_usage(char *progname)
 {
     fprintf(stderr, "\nUsage: %s [-r RES] [-p PORT] [-d]\n\n", progname);
     fprintf(stderr, "\t-r RES, --resolution RES\n");
     fprintf(stderr, "\t\tset resolution: low, high or both (default high)\n");
+    fprintf(stderr, "\t-a RES, --audio RES\n");
+    fprintf(stderr, "\t\tenable/disable audio for specific resolution: low, high or none (default none)\n");
     fprintf(stderr, "\t-p PORT, --port PORT\n");
     fprintf(stderr, "\t\tset TCP port (default 554)\n");
     fprintf(stderr, "\t-d,     --debug\n");
@@ -356,8 +362,13 @@ int main(int argc, char** argv)
     int res_low = RESOLUTION_LOW;
     int res_high = RESOLUTION_HIGH;
 
-    // Setting defaults
+    Boolean convertToULaw = True;
+    char const* inputAudioFileName = "/tmp/audio_fifo";
+    struct stat stat_buffer;
+
+    // Setting default
     resolution = RESOLUTION_HIGH;
+    audio = RESOLUTION_NONE;
     port = 554;
     debug = 0;
 
@@ -365,6 +376,7 @@ int main(int argc, char** argv)
         static struct option long_options[] =
         {
             {"resolution",  required_argument, 0, 'r'},
+            {"audio",  required_argument, 0, 'a'},
             {"port",  required_argument, 0, 'p'},
             {"debug",  no_argument, 0, 'd'},
             {"help",  no_argument, 0, 'h'},
@@ -373,7 +385,7 @@ int main(int argc, char** argv)
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        c = getopt_long (argc, argv, "r:p:dh",
+        c = getopt_long (argc, argv, "r:a:p:dh",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -388,6 +400,16 @@ int main(int argc, char** argv)
                 resolution = RESOLUTION_HIGH;
             } else if (strcasecmp("both", optarg) == 0) {
                 resolution = RESOLUTION_BOTH;
+            }
+            break;
+
+        case 'a':
+            if (strcasecmp("low", optarg) == 0) {
+                audio = RESOLUTION_LOW;
+            } else if (strcasecmp("high", optarg) == 0) {
+                audio = RESOLUTION_HIGH;
+            } else if (strcasecmp("none", optarg) == 0) {
+                audio = RESOLUTION_NONE;
             }
             break;
 
@@ -438,6 +460,17 @@ int main(int argc, char** argv)
         }
     }
 
+    str = getenv("RRTSP_AUDIO");
+    if (str != NULL) {
+        if (strcasecmp("low", str) == 0) {
+            audio = RESOLUTION_LOW;
+        } else if (strcasecmp("high", str) == 0) {
+            audio = RESOLUTION_HIGH;
+        } else if (strcasecmp("none", str) == 0) {
+            audio = RESOLUTION_NONE;
+        }
+    }
+
     str = getenv("RRTSP_PORT");
     if ((str != NULL) && (sscanf (str, "%i", &nm) == 1) && (nm >= 0)) {
         port = nm;
@@ -460,8 +493,14 @@ int main(int argc, char** argv)
         strcpy(pwd, str);
     }
 
+    // If fifo doesn't exist, disable audio
+    if (stat (inputAudioFileName, &stat_buffer) != 0) {
+        audio = RESOLUTION_NONE;
+    }
+
     if ((resolution == RESOLUTION_LOW) || (resolution == RESOLUTION_BOTH)) {
         // Fill output buffer struct
+        output_buffer_low.resolution = RESOLUTION_LOW;
         output_buffer_low.size = OUTPUT_BUFFER_SIZE_LOW;
         output_buffer_low.buffer = (unsigned char *) malloc(OUTPUT_BUFFER_SIZE_LOW * sizeof(unsigned char));
         output_buffer_low.read_index = output_buffer_low.buffer;
@@ -487,6 +526,7 @@ int main(int argc, char** argv)
 
     if ((resolution == RESOLUTION_HIGH) || (resolution == RESOLUTION_BOTH)) {
         // Fill output buffer struct
+        output_buffer_high.resolution = RESOLUTION_HIGH;
         output_buffer_high.size = OUTPUT_BUFFER_SIZE_HIGH;
         output_buffer_high.buffer = (unsigned char *) malloc(OUTPUT_BUFFER_SIZE_HIGH * sizeof(unsigned char));
         output_buffer_high.read_index = output_buffer_high.buffer;
@@ -552,9 +592,13 @@ int main(int argc, char** argv)
                                               descriptionString);
         sms_high->addSubsession(H264VideoCBMemoryServerMediaSubsession
                                    ::createNew(*env, &output_buffer_high, reuseFirstSource));
+        if (audio == RESOLUTION_HIGH) {
+            sms_high->addSubsession(WAVAudioFifoServerMediaSubsession
+                                   ::createNew(*env, inputAudioFileName, reuseFirstSource, convertToULaw));
+        }
         rtspServer->addServerMediaSession(sms_high);
 
-        announceStream(rtspServer, sms_high, streamName);
+        announceStream(rtspServer, sms_high, streamName, audio == RESOLUTION_HIGH);
     }
 
     // A H.264 video elementary stream:
@@ -570,9 +614,13 @@ int main(int argc, char** argv)
                                               descriptionString);
         sms_low->addSubsession(H264VideoCBMemoryServerMediaSubsession
                                    ::createNew(*env, &output_buffer_low, reuseFirstSource));
+        if (audio == RESOLUTION_LOW) {
+            sms_low->addSubsession(WAVAudioFifoServerMediaSubsession
+                                   ::createNew(*env, inputAudioFileName, reuseFirstSource, convertToULaw));
+        }
         rtspServer->addServerMediaSession(sms_low);
 
-        announceStream(rtspServer, sms_low, streamName);
+        announceStream(rtspServer, sms_low, streamName, audio == RESOLUTION_LOW);
     }
 
     // Also, attempt to create a HTTP server for RTSP-over-HTTP tunneling.
