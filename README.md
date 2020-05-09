@@ -1,7 +1,3 @@
-# DO NOT FLASH THIS FIRMWARE! THESE ARE EXPERIMENTAL FEATURES.
-# Please check the original Roleo repo for stable builds.
-
-
 # Custom firmware for Yi camera based on MStar platform
 
 This firmware is completely based on the work done by TheCrypt0
@@ -21,7 +17,7 @@ The RTSP server code derives from live555 - http://www.live555.com/ and from the
 
 There is a problem with ffmpeg, see https://github.com/roleoroleo/yi-hack-MStar/issues/36 for details.
 
-### RTSP audio support:
+### RTSP audio support (many thanks to @PieVo for adding it):
 The datapath of the audio is as follows:
 Mic -> ADC -> Kernel sound driver -> TinyAlsa lib -> OMX ALSA plugin -> Camera application (rmm)
 
