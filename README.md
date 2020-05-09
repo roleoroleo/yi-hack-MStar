@@ -15,7 +15,7 @@ I was inspired by the following topic:
 
 The RTSP server code derives from live555 - http://www.live555.com/ and from the archive rtsp2303_srcbin_20170414-1630.zip posted in the link above.
 
-There is a problem with ffmpeg, see https://github.com/roleoroleo/yi-hack-MStar/issues/36 for details.
+There is a known problem with ffmpeg, see https://github.com/roleoroleo/yi-hack-MStar/issues/36 for details.
 
 ### RTSP audio support (many thanks to @PieVo for adding it):
 The datapath of the audio is as follows:
@@ -51,24 +51,25 @@ Apart from RTSP, snapshot and ONVIF, all the features are copied from the TheCry
 - FEATURES
   - RTSP server - allows a RTSP stream of the video (high and/or low resolution) but without audio.
     - rtsp://IP-CAM/ch0_0.h264        (high res)
-    - rtsp://IP-CAM:8554/ch0_1.h264   (low res)
+    - rtsp://IP-CAM/ch0_1.h264        (low res)
   - ONVIF server (with support for h264 stream, snapshot, ptz and presets - standardized interfaces for IP cameras.
   - Snapshot service - allows to get a jpg with a web request.
-  Gets the latest idr frame from the buffer and converts it to jpg (latest idr frame = no real time).
+  Gets the latest yuv image from the kernel buffer and converts it to jpg.
     - http://IP-CAM:8080/cgi-bin/snapshot.sh?res=low        (select resolution: low or high)
-    - http://IP-CAM:8080/cgi-bin/snapshot.sh        (default high)
-  - MQTT - Motion detection through mqtt protocol.
+    - http://IP-CAM:8080/cgi-bin/snapshot.sh                (default high)
+  - MQTT - Motion detection and baby crying detection through mqtt protocol.
   - Web server - web configutation interface (port 8080).
   - SSH server - dropbear.
   - Telnet server - busybox.
   - FTP server.
   - Authentication for HTTP, RTSP and ONVIF server.
   - Proxychains-ng - Disabled by default. Useful if the camera is region locked.
-  - Watermark removed.
+  - Original watermark image removed.
   - The possibility to change some camera settings (copied from official app):
     - camera on/off
     - video saving mode
     - detection sensitivity
+    - baby crying detection
     - status led
     - ir led
     - rotate
@@ -82,6 +83,7 @@ Apart from RTSP, snapshot and ONVIF, all the features are copied from the TheCry
 The performance of the cam is not so good (CPU, RAM, etc...).
 If you enable all the services you may have some problems.
 For example, enabling both rtsp streams is not recommended.
+Disable cloud is recommended to save resources.
 
 ## Supported cameras
 
@@ -150,7 +152,7 @@ You can use the same procedure even if you have a backup copy of the original pa
 If the bootloader works correctly the camera will restart.
 
 ## Acknowledgments
-Special thanks to the following people.
+Special thanks to the following people for the previous projects I started from.
 - @TheCrypt0 - [https://github.com/TheCrypt0/yi-hack-v4](https://github.com/TheCrypt0/yi-hack-v4)
 - @andy2301 - [Ideas for the RTSP](https://github.com/xmflsct/yi-hack-1080p/issues/5#issuecomment-298093437)
 - All the people who worked on the previous projects "yi-hack".
