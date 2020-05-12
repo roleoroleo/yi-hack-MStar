@@ -124,6 +124,7 @@ APP.maintenance = (function ($) {
         setInterval(function(){
             $.ajax({
                 url: '/',
+                cache: false,
                 success: function(data) {
                     setFwStatus("Camera is upgrading.");
                     $('#button-upgrade').attr("disabled", false);
