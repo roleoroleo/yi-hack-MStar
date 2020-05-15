@@ -9,6 +9,7 @@ cd $SCRIPT_DIR
 mkdir -p ../../build/home/yi-hack/bin/
 mkdir -p ../../build/rootfs/bin/
 mkdir -p ../../build/rootfs/sbin/
+mkdir -p ../../build/rootfs/usr/bin/
 
 arm-linux-gnueabihf-strip ./_install/dropbearmulti
 rsync -a ./_install/dropbearmulti ../../build/home/yi-hack/bin/

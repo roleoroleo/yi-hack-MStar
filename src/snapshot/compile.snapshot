@@ -27,5 +27,9 @@ make || exit 1
 mkdir -p ../_install/bin || exit 1
 
 cp ./imggrabber ../_install/bin || exit 1
+mkdir -p ../_install/etc/wm_res/low/
+cp ./wm_res/low/* ../_install/etc/wm_res/low/ || exit 1
+mkdir -p ../_install/etc/wm_res/high/
+cp ./wm_res/high/* ../_install/etc/wm_res/high/ || exit 1
 
 ${STRIP} ../_install/bin/* || exit 1

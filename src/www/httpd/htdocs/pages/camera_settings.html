@@ -55,9 +55,25 @@
                     <tr class="row">
                         <td>Detection sensitivity</td>
                         <td>
-                            <input class="u-full-width" type="text" placeholder="" data-key="SENSITIVITY" id="SENSITIVITY"/>
+                            <div class="standard-select">
+                                <select data-key="SENSITIVITY" id="SENSITIVITY">
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high">High</option>
+                                </select>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="row">
+                        <td>Baby crying detect</td>
+                        <td>
+                            <label class="switch small">
+                                <input type="checkbox" data-key="BABY_CRYING_DETECT"/>
+                                <span class="slider round"></span>
+                                <span class="switch-text"></span>
+                            </label>
                             <span class="switch-description">
-                                Set the sensitivity for the motion detection algorithm: low, medium or high.
+                                Enable/disable baby crying detect.
                             </span>
                         </td>
                     </tr>

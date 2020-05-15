@@ -19,7 +19,22 @@ I was inspired by the following topic:
 
 The RTSP server code derives from live555 - http://www.live555.com/ and from the archive rtsp2303_srcbin_20170414-1630.zip posted in the link above.
 
-There is a problem with ffmpeg, see https://github.com/roleoroleo/yi-hack-MStar/issues/36 for details.
+There is a known problem with ffmpeg, see https://github.com/roleoroleo/yi-hack-MStar/issues/36 for details.
+
+### RTSP audio support (many thanks to @PieVo for adding it):
+The datapath of the audio is as follows:
+Mic -> ADC -> Kernel sound driver -> TinyAlsa lib -> OMX ALSA plugin -> Camera application (rmm)
+
+To maintain audio support for the original Yi application, the audio should be cloned at one of the steps with the following in mind:
+- Kernel driver can be used by 1 "sink"
+- TinyAlsa can only openend by one "sink"
+- OMX libs are closed source and are not compatible with the "available" I1 SDK.
+
+Audio support is implemented by replacing the original TinyAlsa library with a version that copies the read audio frames to a pipe. This pipe is read by the RTSP server. The RTSP server uses a patched WAVFileSource to read the audio data from the pipe. (Since it tries to read the WAV header 2x I saw no (quick) other way than to hardcode the PCM format into the WAVFileSource code.)
+
+Additionally:
+- The OMX ALSA library reads audio in 16-bit 16000Hz stereo, one channel is just empty. To reduce streaming bandwidth the TinyAlsa replacement library converts the stereo data to mono.
+- To reduce streaming bandwidth even further, the 16-bit PCM data is converted to 8-bit uLaw and finally results in 128kbit/s.
 
 ### RTSP audio support:
 The datapath of the audio is as follows:
@@ -39,6 +54,7 @@ Additionally:
 ## Table of Contents
 
 - [Features](#features)
+- [Performance](#performance)
 - [Supported cameras](#supported-cameras)
 - [Getting started](#getting-started)
 - [Build your own firmware](#build-your-own-firmware)
@@ -52,32 +68,41 @@ This firmware contains the following features.
 Apart from RTSP, snapshot and ONVIF, all the features are copied from the TheCrypt0 project.
 
 - FEATURES
-  - RTSP server - allows a RTSP stream of the video (high or low resolution) but without audio.
+  - RTSP server - allows a RTSP stream of the video (high and/or low resolution) but without audio.
     - rtsp://IP-CAM/ch0_0.h264        (high res)
     - rtsp://IP-CAM/ch0_1.h264        (low res)
   - ONVIF server (with support for h264 stream, snapshot, ptz and presets - standardized interfaces for IP cameras.
   - Snapshot service - allows to get a jpg with a web request.
-  Gets the latest idr frame from the buffer and converts it to jpg (latest idr frame = no real time).
+  Gets the latest yuv image from the kernel buffer and converts it to jpg.
     - http://IP-CAM:8080/cgi-bin/snapshot.sh?res=low        (select resolution: low or high)
-    - http://IP-CAM:8080/cgi-bin/snapshot.sh        (default high)
-  - MQTT - Motion detection through mqtt protocol.
+    - http://IP-CAM:8080/cgi-bin/snapshot.sh                (default high)
+  - MQTT - Motion detection and baby crying detection through mqtt protocol.
   - Web server - web configutation interface (port 8080).
   - SSH server - dropbear.
   - Telnet server - busybox.
   - FTP server.
   - Authentication for HTTP, RTSP and ONVIF server.
   - Proxychains-ng - Disabled by default. Useful if the camera is region locked.
-  - Watermark removed.
+  - Original watermark image removed.
   - The possibility to change some camera settings (copied from official app):
     - camera on/off
     - video saving mode
     - detection sensitivity
+    - baby crying detection
     - status led
     - ir led
     - rotate
   - Management of motion detect events and videos through a web page.
   - PTZ support through a web page.
   - The possibility to disable all the cloud features.
+  - Online firmware upgrade
+
+## Performance
+
+The performance of the cam is not so good (CPU, RAM, etc...).
+If you enable all the services you may have some problems.
+For example, enabling both rtsp streams is not recommended.
+Disable cloud is recommended to save resources.
 
 ## Supported cameras
 
@@ -146,7 +171,7 @@ You can use the same procedure even if you have a backup copy of the original pa
 If the bootloader works correctly the camera will restart.
 
 ## Acknowledgments
-Special thanks to the following people.
+Special thanks to the following people for the previous projects I started from.
 - @TheCrypt0 - [https://github.com/TheCrypt0/yi-hack-v4](https://github.com/TheCrypt0/yi-hack-v4)
 - @andy2301 - [Ideas for the RTSP](https://github.com/xmflsct/yi-hack-1080p/issues/5#issuecomment-298093437)
 - All the people who worked on the previous projects "yi-hack".

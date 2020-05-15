@@ -289,3 +289,61 @@ input:checked + .slider:before {
 	margin-top: 15px;
 	margin-bottom: 0;
 }
+
+/* Select */
+select {
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	-ms-appearance: none;
+	appearance: none;
+	outline: 0;
+	box-shadow: none;
+	border: 0 !important;
+	background: #12b6ea;
+	background-image: none;
+	width: 100%;
+}
+
+/* Remove IE arrow */
+select::-ms-expand {
+	display: none;
+}
+
+/* Custom Select */
+.standard-select {
+	position: relative;
+	width: 20em;
+	height: 3em;
+	line-height: 3;
+	background: #12b6ea;
+	overflow: hidden;
+	border-radius: .25em;
+}
+
+select {
+	flex: 1;
+	padding: 0 .5em;
+	color: #fff;
+	cursor: pointer;
+}
+
+/* Arrow */
+.standard-select::after {
+	content: '\25BC';
+	position: absolute;
+	top: 0;
+	right: 0;
+	padding: 0 1em;
+	background: #33c4f8;
+	color: white;
+	cursor: pointer;
+	pointer-events: none;
+	-webkit-transition: .25s all ease;
+	-o-transition: .25s all ease;
+    transition: .25s all ease;
+}
+
+/* Transition */
+.standard-select:hover::after {
+	color: #12b6ea;
+}

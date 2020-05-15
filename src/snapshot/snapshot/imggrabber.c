@@ -32,13 +32,15 @@
 
 #include <jpeglib.h>
 
+#include "water_mark.h"
+
 #define RESOLUTION_LOW 360
 #define RESOLUTION_HIGH 1080
 
 #define W_LOW 640
 #define H_LOW 360
 #define W_HIGH 1920
-#define H_HIGH 1080
+#define H_HIGH 1088
 
 #define W_MB 16
 #define H_MB 16
@@ -47,7 +49,7 @@
 #define UV_OFFSET_HIGH 0x0023a000
 
 #define PROC_FILE "/proc/umap/vb"
-#define JPEG_QUALITY 90
+#define JPEG_QUALITY 100
 
 int debug = 0;
 
@@ -55,7 +57,7 @@ int debug = 0;
  * Converts a YUYV raw buffer to a JPEG buffer.
  * Input is YUYV (YUV 420SP NV12). Output is JPEG binary.
  */
-int compressYUYVtoJPEG(uint8_t *input, const int width, const int height)
+int compressYUYVtoJPEG(unsigned char *input, const int width, const int height, const int dest_width, const int dest_height)
 {
     struct jpeg_compress_struct cinfo;
     struct jpeg_error_mgr jerr;
@@ -65,17 +67,32 @@ int compressYUYVtoJPEG(uint8_t *input, const int width, const int height)
     uint8_t* outbuffer = NULL;
     unsigned long outlen = 0;
 
-    unsigned int i, j;
+    unsigned int wsl, hsl, i, j;
     unsigned int offset;
     unsigned int uv;
+
+    // width != dest_width currently not supported
+    if (width < dest_width) return -1;
+
+    // height < dest_height currently not supported
+    if (height < dest_height) return -1;
+
+    wsl = width - dest_width;
+    hsl = height - dest_height;
+
+    // width - dest_width must be even
+    if ((wsl % 2) == 1) return -1;
+
+    // height - dest_height must be even
+    if ((hsl % 2) == 1) return -1;
 
     cinfo.err = jpeg_std_error(&jerr);
     jpeg_create_compress(&cinfo);
     jpeg_mem_dest(&cinfo, &outbuffer, &outlen);
 
     // jrow is a libjpeg row of samples array of 1 row pointer
-    cinfo.image_width = width & -1;
-    cinfo.image_height = height & -1;
+    cinfo.image_width = dest_width & -1;
+    cinfo.image_height = dest_height & -1;
     cinfo.input_components = 3;
     cinfo.in_color_space = JCS_YCbCr; //libJPEG expects YUV 3bytes, 24bit
 
@@ -83,13 +100,14 @@ int compressYUYVtoJPEG(uint8_t *input, const int width, const int height)
     jpeg_set_quality(&cinfo, JPEG_QUALITY, TRUE);
     jpeg_start_compress(&cinfo, TRUE);
 
-    uint8_t tmprowbuf[width * 3];
+    uint8_t tmprowbuf[dest_width * 3];
 
     JSAMPROW row_pointer[1];
     row_pointer[0] = &tmprowbuf[0];
+
     while (cinfo.next_scanline < cinfo.image_height) {
-        offset = cinfo.next_scanline * cinfo.image_width; //offset to the correct row
-        uv = cinfo.image_width * (cinfo.image_height - (cinfo.next_scanline + 1) / 2);
+        offset = (cinfo.next_scanline + hsl/2) * width + wsl/2; //offset to the correct row
+        uv = width * (height - (cinfo.next_scanline + hsl/2 + 1) / 2) + wsl/2;
 
         for (i = 0, j = 0; i < cinfo.image_width; i += 2, j += 6) { //input strides by 2 bytes, output strides by 6 (2 pixels)
             tmprowbuf[j + 0] = input[offset + i];          // Y (unique to this pixel)
@@ -251,8 +269,19 @@ void print_usage(char *progname)
     fprintf(stderr, "\nUsage: %s [-r RES] [-d]\n\n", progname);
     fprintf(stderr, "\t-r RES, --resolution RES\n");
     fprintf(stderr, "\t\tset resolution: LOW or HIGH (default HIGH)\n");
+    fprintf(stderr, "\t-w, --watermark\n");
+    fprintf(stderr, "\t\tadd watermark to image\n");
     fprintf(stderr, "\t-d, --debug\n");
     fprintf(stderr, "\t\tenable debug\n");
+}
+
+void fillCheck(unsigned char *check, int checkSize, unsigned char *buf, int bufSize)
+{
+    int i;
+
+    for (i=0; i<checkSize; i++) {
+        check[i] = buf[bufSize/checkSize*i];
+    }
 }
 
 int main(int argc, char **argv)
@@ -260,18 +289,23 @@ int main(int argc, char **argv)
     int c;
     const char memDevice[] = "/dev/mem";
     int resolution = RESOLUTION_HIGH;
+    int watermark = 0;
     FILE *fPtr, *fLen;
     int fMem;
     unsigned int ivAddr, ipAddr;
     unsigned int size;
     unsigned char *addr;
     unsigned char *buffer;
+    unsigned char check1[64], check2[64];
     int outlen;
+
+    WaterMarkInfo WM_info;
 
     while (1) {
         static struct option long_options[] =
         {
             {"resolution",  required_argument, 0, 'r'},
+            {"watermark",  no_argument, 0, 'w'},
             {"debug",  no_argument, 0, 'd'},
             {"help",  no_argument, 0, 'h'},
             {0, 0, 0, 0}
@@ -279,7 +313,7 @@ int main(int argc, char **argv)
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        c = getopt_long (argc, argv, "r:dh",
+        c = getopt_long (argc, argv, "r:wdh",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -293,6 +327,11 @@ int main(int argc, char **argv)
             } else if (strcasecmp("high", optarg) == 0) {
                 resolution = RESOLUTION_HIGH;
             }
+            break;
+
+        case 'w':
+            fprintf (stderr, "watermark on\n");
+            watermark = 1;
             break;
 
         case 'd':
@@ -333,8 +372,8 @@ int main(int argc, char **argv)
 
     if (debug) fprintf(stderr, "vaddr: 0x%08x - paddr: 0x%08x - size: %u\n", ivAddr, ipAddr, size);
 
-    // allocate buffer memory
-    buffer = (unsigned char *) malloc(size);
+    // allocate buffer memory (png header + data buffer)
+    buffer = (unsigned char *) malloc(size * sizeof(unsigned char));
 
     // open /dev/mem and error checking
     fMem = open(memDevice, O_RDONLY); // | O_SYNC);
@@ -355,23 +394,55 @@ int main(int argc, char **argv)
 
     if (debug) fprintf(stderr, "copy buffer: len %d\n", size);
     memcpy(buffer, addr, size);
+    memset(check1, '\0', sizeof(check1));
+    fillCheck(check2, sizeof(check2), buffer, size);
+
+    while (memcmp(check1, check2, sizeof(check1)) != 0) {
+        if (debug) fprintf(stderr, "copy again buffer: len %d\n", size);
+        memcpy(buffer, addr, size);
+        memcpy(check1, check2, sizeof(check1));
+        fillCheck(check2, sizeof(check2), buffer, size);
+    }
 
     if (resolution == RESOLUTION_LOW) {
         // The buffer contains YUV N12 image but the UV part is not in the
         // right position. We need to move it.
         memmove(buffer + W_LOW * H_LOW, buffer + W_LOW * H_LOW + UV_OFFSET_LOW,
             W_LOW * H_LOW / 2);
+
+        if (watermark) {
+            if(WMInit(&WM_info, "/home/yi-hack/etc/wm_res/low/wm_540p_") < 0){
+                fprintf(stderr, "water mark init error\n");
+            } else {
+                AddWM(&WM_info, W_LOW, H_LOW, buffer,
+                    buffer + W_LOW*H_LOW, W_LOW-230, H_LOW-20, NULL);
+                WMRelease(&WM_info);
+            }
+        }
+
         // create jpeg
-        outlen = compressYUYVtoJPEG(buffer, W_LOW, H_LOW);
+        outlen = compressYUYVtoJPEG(buffer, W_LOW, H_LOW, W_LOW, H_LOW);
     } else {
         // The buffer contains YUV N21 image saved in blocks.
         // We need to convert to standard YUV N12 image.
         outlen = img2YUV(buffer, size, W_HIGH, H_HIGH);
+
+        if (watermark) {
+            if(WMInit(&WM_info, "/home/yi-hack/etc/wm_res/high/wm_540p_") < 0){
+                fprintf(stderr, "water mark init error\n");
+            } else {
+                AddWM(&WM_info, W_HIGH, H_HIGH, buffer,
+                    buffer + W_HIGH*H_HIGH, W_HIGH-460, H_HIGH-40, NULL);
+                WMRelease(&WM_info);
+            }
+        }
+
         // create jpeg
-        outlen = compressYUYVtoJPEG(buffer, W_HIGH, H_HIGH);
+        outlen = compressYUYVtoJPEG(buffer, W_HIGH, H_HIGH, W_HIGH, RESOLUTION_HIGH);
     }
 
-    fwrite(buffer, 1, outlen, stdout);
+    if (outlen != -1)
+        fwrite(buffer, 1, outlen, stdout);
 
     // Free memory
     munmap(addr, size);

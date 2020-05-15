@@ -33,7 +33,7 @@ fi
 
 read POST_DATA
 
-PARAMS=$(echo "$POST_DATA" | tr "&" " ")
+PARAMS=$(echo "$POST_DATA" | tr "\n\r" " " | tr -d " " | sed 's/{\"//g' | sed 's/\"}//g' | sed 's/\",\"/ /g' | sed 's/\":\"/=/g')
 
 for S in $PARAMS ; do
     PARAM=$(echo "$S" | tr "=" " ")
@@ -50,13 +50,27 @@ for S in $PARAMS ; do
     done
 
     if [ "$KEY" == "HOSTNAME" ] ; then
-        if [ ! -z $VALUE ] ; then
+        if [ -z $VALUE ] ; then
+
+            # Use 2 last MAC address numbers to set a different hostname
+            MAC=$(cat /sys/class/net/wlan0/address|cut -d ':' -f 5,6|sed 's/://g')
+            if [ "$MAC" != "" ]; then
+                hostname yi-$MAC
+            else
+                hostname yi-hack
+            fi
+            hostname > /etc/hostname
+        else
+            hostname $VALUE
             echo "$VALUE" > /etc/hostname
         fi
+    elif [ "$KEY" == "TIMEZONE" ] ; then
+        echo $VALUE > /etc/TZ
     else
         VALUE=$(echo "$VALUE" | sedencode)
         sed -i "s/^\(${KEY}\s*=\s*\).*$/\1${VALUE}/" $CONF_FILE
-    fi   
+    fi
+
 done
 
 # Yeah, it's pretty ugly.

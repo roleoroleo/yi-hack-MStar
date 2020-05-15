@@ -26,7 +26,7 @@ APP.camera_settings = (function ($) {
 
                 $.each(response, function (key, state) {
                     if(key=="SENSITIVITY")
-                        $('input[type="text"][data-key="' + key +'"]').prop('value', state);
+                        $('select[data-key="' + key +'"]').prop('value', state);
                     else
                         $('input[type="checkbox"][data-key="' + key +'"]').prop('checked', state === 'yes');
                 });
@@ -49,19 +49,18 @@ APP.camera_settings = (function ($) {
             configs[$(this).attr('data-key')] = $(this).prop('checked') ? 'yes' : 'no';
         });
 
-        configs["SENSITIVITY"] = $('input[type="text"][data-key="SENSITIVITY"]').prop('value');
-
-        if(!validateSensitivity(configs["SENSITIVITY"]))
-        {
-            saveStatusElem.text("Failed");
-            alert("Sensitivity not valid!");
-            return;
-        }
+        configs["SENSITIVITY"] = $('select[data-key="SENSITIVITY"]').prop('value');
 
         $.ajax({
-            type: "POST",
-            url: 'cgi-bin/set_configs.sh?conf=camera',
-            data: configs,
+            type: "GET",
+            url: 'cgi-bin/camera_settings.sh?' +
+                'save_video_on_motion=' + configs["SAVE_VIDEO_ON_MOTION"] +
+                '&sensitivity=' + configs["SENSITIVITY"] +
+                '&baby_crying_detect=' + configs["BABY_CRYING_DETECT"] +
+                '&led=' + configs["LED"] +
+                '&ir=' + configs["IR"] +
+                '&rotate=' + configs["ROTATE"] +
+                '&switch_on=' + configs["SWITCH_ON"],
             dataType: "json",
             success: function(response) {
                 saveStatusElem.text("Saved");
@@ -71,29 +70,6 @@ APP.camera_settings = (function ($) {
                 console.log('error', response);
             }
         });
-        $.ajax({
-            type: "GET",
-            url: 'cgi-bin/camera_settings.sh?switch_on=' + configs["SWITCH_ON"] +
-                '&save_video_on_motion=' + configs["SAVE_VIDEO_ON_MOTION"] +
-                '&sensitivity=' + configs["SENSITIVITY"] +
-                '&led=' + configs["LED"] +
-                '&ir=' + configs["IR"] +
-                '&rotate=' + configs["ROTATE"],
-            dataType: "json",
-            success: function(response) {
-
-            },
-            error: function(response) {
-                console.log('error', response);
-            }
-        });
-    }
-
-    function validateSensitivity(sensitivity) {
-        if (sensitivity=='low' || sensitivity=='medium' || sensitivity=='high')
-            return true;
-        else
-            return false;
     }
 
     return {

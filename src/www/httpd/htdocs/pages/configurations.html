@@ -23,7 +23,16 @@
                         <td>
                             <input class="u-full-width" type="text" placeholder="" data-key="HOSTNAME" id="HOSTNAME"/>
                             <span class="switch-description">
-                                Camera's hostname on the network.
+                                Camera's hostname on the network. Leave blank to generate automatically.
+                            </span>
+                        </td>
+                    </tr>
+                    <tr class="row">
+                        <td>Timezone</td>
+                        <td>
+                            <input class="u-full-width" type="text" placeholder="" data-key="TIMEZONE" id="TIMEZONE"/>
+                            <span class="switch-description">
+                                Timezone. Get your timezone string from <a href="?page=tz">this page</a> and copy here.
                             </span>
                         </td>
                     </tr>
@@ -67,15 +76,36 @@
                         </td>
                     </tr>
                     <tr class="row">
-                        <td>RTSP High Resolution</td>
+                        <td>RTSP Stream</td>
                         <td>
-                            <label class="switch small">
-                                <input type="checkbox" data-key="RTSP_HIGH"/>
-                                <span class="slider round"></span>
-                                <span class="switch-text"></span>
-                            </label>
+                            <div class="standard-select">
+                                <select data-key="RTSP_STREAM" id="RTSP_STREAM">
+                                    <option value="high">High</option>
+                                    <option value="low">Low</option>
+                                    <option value="both">Both</option>
+                                </select>
+                            </div>
                             <span class="switch-description">
-                                Set low/high resolution stream. (It takes effect only if the "RTSP" option is enabled).
+                                Select stream resolution.
+                            </span>
+                        </td>
+                    </tr>
+                    <tr class="row">
+                        <td>RTSP Audio</td>
+                        <td>
+                            <div class="standard-select">
+                                <select data-key="RTSP_AUDIO" id="RTSP_AUDIO">
+                                    <option value="high">High</option>
+                                    <option value="low">Low</option>
+                                    <option value="none">None</option>
+                                </select>
+                                <br/>
+                                <span class="strong">WARNING: this is an experimental feature.</span>
+                            </div>
+                            <span class="switch-description">
+                                Select the stream to enable audio for (both is not allowed).
+                                <br/>
+                                <span class="strong">WARNING: this is an experimental feature.</span>
                             </span>
                         </td>
                     </tr>
@@ -89,6 +119,31 @@
                             </label>
                             <span class="switch-description">
                                 Enable ONVIF Server.
+                            </span>
+                        </td>
+                    </tr>
+                    <tr class="row">
+                        <td>ONVIF Profile</td>
+                        <td>
+                            <div class="standard-select">
+                                <select data-key="ONVIF_PROFILE" id="ONVIF_PROFILE">
+                                    <option value="high">High</option>
+                                    <option value="low">Low</option>
+                                    <option value="both">Both</option>
+                                </select>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="row">
+                        <td>ONVIF watermark</td>
+                        <td>
+                            <label class="switch small">
+                                <input type="checkbox" data-key="ONVIF_WM_SNAPSHOT"/>
+                                <span class="slider round"></span>
+                                <span class="switch-text"></span>
+                            </label>
+                            <span class="switch-description">
+                                Add watermark to snapshot.
                             </span>
                         </td>
                     </tr>
@@ -170,6 +225,15 @@
                             </label>
                             <span class="switch-description">
                                 Enable or disable the Network Time Protocol Daemon. This is required to sync the time on the camera if the cloud features are disabled.
+                            </span>
+                        </td>
+                    </tr>
+                    <tr class="row">
+                        <td>NTP Server</td>
+                        <td>
+                            <input class="u-full-width" type="text" placeholder="" data-key="NTP_SERVER" id="NTP_SERVER"/>
+                            <span class="switch-description">
+                                NTP server name.
                             </span>
                         </td>
                     </tr>

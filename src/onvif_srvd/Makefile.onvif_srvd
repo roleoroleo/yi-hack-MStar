@@ -273,7 +273,7 @@ define build_gsoap
     # build
     if [ ! -f $(SOAPCPP2) ] || [ ! -f $(WSDL2H) ]; then \
          cd gsoap-2.8; \
-         ./configure --disable-c-locale --disable-ssl && \
+         ./configure --disable-c-locale && \
          make -j1; \
          cd ..;\
     fi
@@ -286,7 +286,7 @@ define build_openssl
     # get archive
     if [ ! -f SDK/openssl.tar.gz ]; then \
         mkdir -p SDK; \
-        wget -O ./SDK/openssl.tar.gz.tmp "https://www.openssl.org/source/openssl-1.0.2u.tar.gz" && \
+        wget -O ./SDK/openssl.tar.gz.tmp "https://www.openssl.org/source/old/1.0.2/openssl-1.0.2u.tar.gz" && \
         mv ./SDK/openssl.tar.gz.tmp ./SDK/openssl.tar.gz; \
     fi
 

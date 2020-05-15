@@ -3,6 +3,7 @@
 CONF_FILE="etc/system.conf"
 
 YI_HACK_PREFIX="/home/yi-hack"
+YI_PREFIX="/home/app"
 
 MODEL_SUFFIX=$(cat /home/yi-hack/model_suffix)
 
@@ -31,16 +32,28 @@ dd if=/tmp/audio_fifo of=/dev/null bs=1k count=8
 
 ulimit -s 1024
 
-# Use 2 last MAC address numbers to set a different hostname
-MAC=$(cat /sys/class/net/wlan0/address|cut -d ':' -f 5,6|sed 's/://g')
-if [ "$MAC" != "" ]; then
-    hostname yi-$MAC
-    hostname > /etc/hostname
-else
-    hostname -F /etc/hostname
+# Remove core files, if any
+rm -f $YI_HACK_PREFIX/bin/core
+rm -f $YI_PREFIX/core
+
+if [ ! -L /home/yi-hack-v4 ]; then
+    ln -s $YI_HACK_PREFIX /home/yi-hack-v4
 fi
 
+hostname -F /etc/hostname
+
 touch /tmp/httpd.conf
+
+# Restore configuration after a firmware upgrade
+if [ -f $YI_HACK_PREFIX/.fw_upgrade_in_progress ]; then
+    cp -f /tmp/sd/.fw_upgrade/*.conf $YI_HACK_PREFIX/etc/
+    cp -f /tmp/sd/.fw_upgrade/TZ $YI_HACK_PREFIX/etc/
+    rm $YI_HACK_PREFIX/.fw_upgrade_in_progress
+    chmod 0644 $YI_HACK_PREFIX/etc/*.conf
+    chmod 0644 $YI_HACK_PREFIX/etc/TZ
+fi
+
+$YI_HACK_PREFIX/script/check_conf.sh
 
 if [[ x$(get_config USERNAME) != "x" ]] ; then
     USERNAME=$(get_config USERNAME)
@@ -65,7 +78,18 @@ esac
 if [[ $(get_config DISABLE_CLOUD) == "no" ]] ; then
     (
         cd /home/app
-        sleep 2
+        if [[ $(get_config RTSP_AUDIO) == "none" ]] ; then
+            sleep 2
+        else
+            OLD_LD_LIBRARY_PATH=$LD_LIBRARY_PATH
+            killall rmm
+            sleep 2
+            export LD_LIBRARY_PATH="/home/yi-hack/lib:/lib:/home/lib:/home/ms:/home/app/locallib"
+            ./rmm &
+            export LD_LIBRARY_PATH=$OLD_LD_LIBRARY_PATH
+            sleep 2
+            dd if=/tmp/audio_fifo of=/dev/null bs=1 count=2048
+        fi
         ./mp4record &
         ./cloud &
         ./p2p_tnp &
@@ -81,20 +105,22 @@ if [[ $(get_config DISABLE_CLOUD) == "no" ]] ; then
 else
     (
         cd /home/app
-        sleep 2
-        ./mp4record &
+        if [[ $(get_config RTSP_AUDIO) == "none" ]] ; then
+            sleep 2
+        else
+            OLD_LD_LIBRARY_PATH=$LD_LIBRARY_PATH
+            killall rmm
+            sleep 2
+            export LD_LIBRARY_PATH="/home/yi-hack/lib:/lib:/home/lib:/home/ms:/home/app/locallib"
+            ./rmm &
+            export LD_LIBRARY_PATH=$OLD_LD_LIBRARY_PATH
+            sleep 2
+            dd if=/tmp/audio_fifo of=/dev/null bs=1 count=2048
+        fi
         # Trick to start circular buffer filling
-        ./cloud &
-        IDX=`hexdump -n 16 /dev/fshare_frame_buf | awk 'NR==1{print $8}'`
-        N=0
-        while [ "$IDX" -eq "0000" ] && [ $N -lt 50 ]; do
-            IDX=`hexdump -n 16 /dev/fshare_frame_buf | awk 'NR==1{print $8}'`
-            N=$(($N+1))
-            sleep 0.2
-        done
-        killall cloud
-        if [[ $(get_config REC_WITHOUT_CLOUD) == "no" ]] ; then
-            killall mp4record
+        ipc_cmd -x
+        if [[ $(get_config REC_WITHOUT_CLOUD) == "yes" ]] ; then
+            ./mp4record &
         fi
     )
 fi
@@ -130,15 +156,6 @@ fi
 
 sleep 5
 
-#if [[ x$USERNAME != "x" ]] ; then
-#    LOGIN_USERPWD=$USERNAME
-#
-#    if [[ x$PASSWORD != "x" ]] ; then
-#        LOGIN_USERPWD=$LOGIN_USERPWD:$PASSWORD
-#    fi
-#    LOGIN_USERPWD=$LOGIN_USERPWD@
-#fi
-
 if [[ $RTSP_PORT != "554" ]] ; then
     D_RTSP_PORT=:$RTSP_PORT
 fi
@@ -147,13 +164,26 @@ if [[ $HTTPD_PORT != "80" ]] ; then
     D_HTTPD_PORT=:$HTTPD_PORT
 fi
 
+if [[ $(get_config ONVIF_WM_SNAPSHOT) == "yes" ]] ; then
+    WATERMARK="&watermark=yes"
+fi
+
 if [[ $(get_config RTSP) == "yes" ]] ; then
-    if [[ $(get_config RTSP_HIGH) == "yes" ]] ; then
-        h264grabber -r high | RRTSP_RES=0 RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD rRTSPServer &
-        ONVIF_PROFILE_0="--name Profile_0 --width 1920 --height 1080 --url rtsp://%s$D_RTSP_PORT/ch0_0.h264 --snapurl http://%s$D_HTTPD_PORT/cgi-bin/snapshot.sh?res=high --type H264"
-    else
-        h264grabber -r low | RRTSP_RES=1 RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD rRTSPServer &
-        ONVIF_PROFILE_1="--name Profile_1 --width 640 --height 360 --url rtsp://%s$D_RTSP_PORT/ch0_1.h264 --snapurl http://%s$D_HTTPD_PORT/cgi-bin/snapshot.sh?res=low --type H264"
+    RRTSP_RES=$(get_config RTSP_STREAM) RRTSP_AUDIO=$(get_config RTSP_AUDIO) RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD rRTSPServer &
+
+    if [[ $(get_config RTSP_STREAM) == "high" ]]; then
+        ONVIF_PROFILE_0="--name Profile_0 --width 1920 --height 1080 --url rtsp://%s$D_RTSP_PORT/ch0_0.h264 --snapurl http://%s$D_HTTPD_PORT/cgi-bin/snapshot.sh?res=high$WATERMARK --type H264"
+    fi
+    if [[ $(get_config RTSP_STREAM) == "low" ]]; then
+        ONVIF_PROFILE_1="--name Profile_1 --width 640 --height 360 --url rtsp://%s$D_RTSP_PORT/ch0_1.h264 --snapurl http://%s$D_HTTPD_PORT/cgi-bin/snapshot.sh?res=low$WATERMARK --type H264"
+    fi
+    if [[ $(get_config RTSP_STREAM) == "both" ]]; then
+        if [[ $(get_config ONVIF_PROFILE) == "high" ]] || [[ $(get_config ONVIF_PROFILE) == "both" ]] ; then
+            ONVIF_PROFILE_0="--name Profile_0 --width 1920 --height 1080 --url rtsp://%s$D_RTSP_PORT/ch0_0.h264 --snapurl http://%s$D_HTTPD_PORT/cgi-bin/snapshot.sh?res=high$WATERMARK --type H264"
+        fi
+        if [[ $(get_config ONVIF_PROFILE) == "low" ]] || [[ $(get_config ONVIF_PROFILE) == "both" ]] ; then
+            ONVIF_PROFILE_1="--name Profile_1 --width 640 --height 360 --url rtsp://%s$D_RTSP_PORT/ch0_1.h264 --snapurl http://%s$D_HTTPD_PORT/cgi-bin/snapshot.sh?res=low$WATERMARK --type H264"
+        fi
     fi
     $YI_HACK_PREFIX/script/wd_rtsp.sh &
 fi

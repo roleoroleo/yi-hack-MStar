@@ -1,6 +1,7 @@
 #!/bin/sh
 
 YI_HACK_PREFIX="/home/yi-hack"
+CONF_FILE="$YI_HACK_PREFIX/etc/camera.conf"
 
 CONF_LAST="CONF_LAST"
 
@@ -13,6 +14,9 @@ do
         continue
     fi
     CONF_LAST=$CONF
+    CONF_UPPER="$(echo $CONF | tr '[a-z]' '[A-Z]')"
+
+    sed -i "s/^\(${CONF_UPPER}\s*=\s*\).*$/\1${VAL}/" $CONF_FILE
 
     if [ "$CONF" == "switch_on" ] ; then
         if [ "$VAL" == "no" ] ; then
@@ -28,6 +32,12 @@ do
         fi
     elif [ "$CONF" == "sensitivity" ] ; then
         ipc_cmd -s $VAL
+    elif [ "$CONF" == "baby_crying_detect" ] ; then
+        if [ "$VAL" == "no" ] ; then
+            ipc_cmd -b off
+        else
+            ipc_cmd -b on
+        fi
     elif [ "$CONF" == "led" ] ; then
         if [ "$VAL" == "no" ] ; then
             ipc_cmd -l off
@@ -47,6 +57,7 @@ do
             ipc_cmd -r on
         fi
     fi
+    sleep 1
 done
 
 printf "Content-type: application/json\r\n\r\n"

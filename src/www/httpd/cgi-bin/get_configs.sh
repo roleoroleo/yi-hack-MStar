@@ -35,6 +35,7 @@ done < "$CONF_FILE"
 
 if [ "$CONF_TYPE" == "system" ] ; then
     printf "\"%s\":\"%s\",\n"  "HOSTNAME" "$(cat /etc/hostname)"
+    printf "\"%s\":\"%s\",\n"  "TIMEZONE" "$(cat /etc/TZ)"
 fi
 
 # Empty values to "close" the json

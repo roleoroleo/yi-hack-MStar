@@ -22,7 +22,7 @@ APP.global = (function ($) {
     function initPage() {
         let currentPage = retrievePageFromUrl();
         loadPage(currentPage);
-        $('#nav-title').text(hostname);
+//        $('#nav-title').text(hostname);
         document.title = hostname + " - " + currentPage;
     }
 

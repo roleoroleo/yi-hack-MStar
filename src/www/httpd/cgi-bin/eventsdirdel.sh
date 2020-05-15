@@ -29,7 +29,11 @@ if [ "$CONF" == "dir" ] ; then
     DIR="$VAL"
 fi
 
-validateDir $DIR
+if [ "$DIR" == "all" ]; then
+    DIR="*"
+else
+    validateDir $DIR
+fi
 
 if [ "$DIR" != "none" ] ; then
     rm -rf /tmp/sd/record/$DIR

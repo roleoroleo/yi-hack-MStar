@@ -69,6 +69,8 @@ if [ $RES -eq 0 ]; then
     if [ \( -f "system.conf" \) -a \( -f "camera.conf" \) ]; then
         mv -f *.conf /home/yi-hack/etc/
         mv -f TZ /home/yi-hack/etc/
+        chmod 0644 /home/yi-hack/etc/*.conf
+        chmod 0644 /home/yi-hack/etc/TZ
         RES=0
     else
         RES=1

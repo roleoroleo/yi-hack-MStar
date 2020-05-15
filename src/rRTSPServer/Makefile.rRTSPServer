@@ -1,5 +1,5 @@
 ##### Change the following for your environment:
-COMPILE_OPTS =		$(INCLUDES) -I. -O2 -DSOCKLEN_T=socklen_t -D_LARGEFILE_SOURCE=1 -D_FILE_OFFSET_BITS=64 -DNO_OPENSSL=1
+COMPILE_OPTS =		$(INCLUDES) -I. -I./include -O2 -DSOCKLEN_T=socklen_t -D_LARGEFILE_SOURCE=1 -D_FILE_OFFSET_BITS=64 -DNO_OPENSSL=1
 C =			c
 C_COMPILER =		$(CC)
 C_FLAGS =		$(COMPILE_OPTS) $(CPPFLAGS) $(CFLAGS)
@@ -65,13 +65,17 @@ livemedia:
 	@echo "For more information about this source code (including your obligations under the LGPL), please see our FAQ at http://live555.com/liveMedia/faq.html"
 
 .$(C).$(OBJ):
-	$(C_COMPILER) -c $(C_FLAGS) $<
+	$(C_COMPILER) -c $(C_FLAGS) -o $@ $<
 .$(CPP).$(OBJ):
-	$(CPLUSPLUS_COMPILER) -c $(CPLUSPLUS_FLAGS) $<
+	$(CPLUSPLUS_COMPILER) -c $(CPLUSPLUS_FLAGS) -o $@ $<
 
-rRTSPServer_OBJS	= rRTSPServer.$(OBJ)
+rRTSPServer_OBJS	= src/rRTSPServer.$(OBJ) \
+				src/ByteStreamCBMemorySource.$(OBJ) src/H264VideoCBMemoryServerMediaSubsession.$(OBJ) \
+				src/CBMemoryServerMediaSubsession.$(OBJ) \
+				src/WAVAudioFifoSource.$(OBJ) src/WAVAudioFifoServerMediaSubsession.$(OBJ)
+
 rRTSPServer$(EXE):	$(rRTSPServer_OBJS) $(LOCAL_LIBS)
-	$(LINK)$@ $(CONSOLE_LINK_OPTS) $(rRTSPServer_OBJS) $(LIBS)
+	$(LINK)$@ $(CONSOLE_LINK_OPTS) $(rRTSPServer_OBJS) $(LIBS) -lpthread
 
 install:
 	cd $(LIVEMEDIA_DIR) ; $(MAKE) install

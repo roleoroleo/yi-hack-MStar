@@ -10,12 +10,12 @@
 [submodule "src/mosquitto/mosquitto"]
 	path = src/mosquitto/mosquitto
 	url = https://github.com/eclipse/mosquitto
-[submodule "src/mqtt/mqttv4"]
-	path = src/mqtt/mqttv4
-	url = https://github.com/TheCrypt0/mqttv4
 [submodule "src/proxychains-ng/proxychains-ng"]
 	path = src/proxychains-ng/proxychains-ng
 	url = https://github.com/rofl0r/proxychains-ng
 [submodule "src/onvif_srvd/onvif_srvd"]
 	path = src/onvif_srvd/onvif_srvd
 	url = https://github.com/roleoroleo/onvif_srvd
+[submodule "src/mqtt/mqttv4"]
+	path = src/mqtt/mqttv4
+	url = https://github.com/roleoroleo/mqttv4
