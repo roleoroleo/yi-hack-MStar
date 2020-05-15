@@ -31,6 +31,7 @@ declare -A CAMERAS
 CAMERAS["y203c"]="y203c"
 CAMERAS["h201c"]="h201c"
 CAMERAS["y25"]="y25"
+CAMERAS["y23"]="y23"
 
 ###############################################################################
 # Common functions

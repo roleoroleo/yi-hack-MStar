@@ -99,6 +99,7 @@ Currently this project supports only the following cameras:
 | **Yi 1080p Dome BFUS** | 4.6.0* | h201c | Thanks to @skylarhays |
 | **Yi 1080p Home 4FUS** | 4.2.0* | y25 | - |
 | **Yi 1080p Home 9FUS** | 4.2.0* | y25 | - |
+| **Yi 1080p Home 6FUS** | 2.1.0* | y23 | - |
 | **Yi 1080p Home 6FCN** | unknown | y203c | - |
 
 This firmware completely overwrite the original firmware.
