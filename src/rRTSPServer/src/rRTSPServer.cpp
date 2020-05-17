@@ -24,7 +24,6 @@
 #include "BasicUsageEnvironment.hh"
 
 #include "H264VideoCBMemoryServerMediaSubsession.hh"
-#include "WAVAudioFifoServerMediaSubsession.hh"
 
 #include <getopt.h>
 #include <pthread.h>
@@ -592,10 +591,6 @@ int main(int argc, char** argv)
                                               descriptionString);
         sms_high->addSubsession(H264VideoCBMemoryServerMediaSubsession
                                    ::createNew(*env, &output_buffer_high, reuseFirstSource));
-        if (audio == RESOLUTION_HIGH) {
-            sms_high->addSubsession(WAVAudioFifoServerMediaSubsession
-                                   ::createNew(*env, inputAudioFileName, reuseFirstSource, convertToULaw));
-        }
         rtspServer->addServerMediaSession(sms_high);
 
         announceStream(rtspServer, sms_high, streamName, audio == RESOLUTION_HIGH);
@@ -614,10 +609,6 @@ int main(int argc, char** argv)
                                               descriptionString);
         sms_low->addSubsession(H264VideoCBMemoryServerMediaSubsession
                                    ::createNew(*env, &output_buffer_low, reuseFirstSource));
-        if (audio == RESOLUTION_LOW) {
-            sms_low->addSubsession(WAVAudioFifoServerMediaSubsession
-                                   ::createNew(*env, inputAudioFileName, reuseFirstSource, convertToULaw));
-        }
         rtspServer->addServerMediaSession(sms_low);
 
         announceStream(rtspServer, sms_low, streamName, audio == RESOLUTION_LOW);
