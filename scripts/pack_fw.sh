@@ -165,6 +165,11 @@ echo -n ">>> Removing back.bin file... "
 rm -f $TMP_DIR/rootfs/etc/back.bin
 echo "done!"
 
+# adding defaults
+echo -n ">>> Adding defaults... "
+7za a $TMP_DIR/home/yi-hack/etc/defaults.7z $TMP_DIR/home/yi-hack/etc/*.conf > /dev/null
+echo "done!"
+
 # insert the version file
 echo -n ">>> Copying the version file... "
 cp $BASE_DIR/VERSION $TMP_DIR/home/yi-hack/version

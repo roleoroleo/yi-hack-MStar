@@ -20,6 +20,9 @@ APP.maintenance = (function ($) {
         $(document).on("click", '#button-reboot', function (e) {
             rebootCamera();
         });
+        $(document).on("click", '#button-reset', function (e) {
+            resetCamera();
+        });
         $(document).on("click", '#button-upgrade', function (e) {
             upgradeFirmware();
         });
@@ -103,6 +106,22 @@ APP.maintenance = (function ($) {
         }, 5000);
     }
 
+    function resetCamera() {
+        $('#button-reset').attr("disabled", true);
+        $.ajax({
+            type: "GET",
+            url: 'cgi-bin/reset.sh',
+            dataType: "json",
+            error: function(response) {
+                console.log('error', response);
+                $('#button-reset').attr("disabled", false);
+            },
+            success: function(data) {
+                setResetStatus("Reset completed, reboot your camera.");
+            }
+        });
+    }
+
     function upgradeFirmware() {
         $('#button-upgrade').attr("disabled", true);
         setFwStatus("Firmware download in progress.");
@@ -141,6 +160,11 @@ APP.maintenance = (function ($) {
     function setRebootStatus(text)
     {
         $('input[type="text"][data-key="STATUS"]').prop('value', text);
+    }
+
+    function setResetStatus(text)
+    {
+        $('input[type="text"][data-key="RESET"]').prop('value', text);
     }
 
     function setFwStatus(text)
