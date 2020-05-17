@@ -65,16 +65,16 @@ if [[ $(get_config DISABLE_CLOUD) == "no" ]] ; then
     (
         cd /home/app
         if [[ $(get_config RTSP_AUDIO) == "none" ]] ; then
+            ./rmm &
             sleep 2
         else
             OLD_LD_LIBRARY_PATH=$LD_LIBRARY_PATH
-            killall rmm
-            sleep 2
             export LD_LIBRARY_PATH="/home/yi-hack/lib:/lib:/home/lib:/home/ms:/home/app/locallib"
             ./rmm &
             export LD_LIBRARY_PATH=$OLD_LD_LIBRARY_PATH
-            sleep 2
+            sleep 3
             dd if=/tmp/audio_fifo of=/dev/null bs=1 count=2048
+            sleep 1
         fi
         ./mp4record &
         ./cloud &
@@ -92,16 +92,16 @@ else
     (
         cd /home/app
         if [[ $(get_config RTSP_AUDIO) == "none" ]] ; then
+            ./rmm &
             sleep 2
         else
             OLD_LD_LIBRARY_PATH=$LD_LIBRARY_PATH
-            killall rmm
-            sleep 2
             export LD_LIBRARY_PATH="/home/yi-hack/lib:/lib:/home/lib:/home/ms:/home/app/locallib"
             ./rmm &
             export LD_LIBRARY_PATH=$OLD_LD_LIBRARY_PATH
-            sleep 2
+            sleep 3
             dd if=/tmp/audio_fifo of=/dev/null bs=1 count=2048
+            sleep 1
         fi
         # Trick to start circular buffer filling
         ipc_cmd -x
