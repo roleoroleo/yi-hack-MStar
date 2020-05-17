@@ -26,20 +26,26 @@ if [ ! -L /home/yi-hack-v4 ]; then
     ln -s $YI_HACK_PREFIX /home/yi-hack-v4
 fi
 
-hostname -F /etc/hostname
-
 touch /tmp/httpd.conf
 
 # Restore configuration after a firmware upgrade
 if [ -f $YI_HACK_PREFIX/.fw_upgrade_in_progress ]; then
     cp -f /tmp/sd/.fw_upgrade/*.conf $YI_HACK_PREFIX/etc/
-    cp -f /tmp/sd/.fw_upgrade/TZ $YI_HACK_PREFIX/etc/
-    rm $YI_HACK_PREFIX/.fw_upgrade_in_progress
     chmod 0644 $YI_HACK_PREFIX/etc/*.conf
-    chmod 0644 $YI_HACK_PREFIX/etc/TZ
+    if [ -f /tmp/sd/.fw_upgrade/hostname ]; then
+        cp -f /tmp/sd/.fw_upgrade/hostname /etc/
+        chmod 0644 /etc/hostname
+    fi
+    if [ -f /tmp/sd/.fw_upgrade/TZ ]; then
+        cp -f /tmp/sd/.fw_upgrade/TZ /etc/
+        chmod 0644 /etc/TZ
+    fi
+    rm $YI_HACK_PREFIX/.fw_upgrade_in_progress
 fi
 
 $YI_HACK_PREFIX/script/check_conf.sh
+
+hostname -F /etc/hostname
 
 if [[ x$(get_config USERNAME) != "x" ]] ; then
     USERNAME=$(get_config USERNAME)

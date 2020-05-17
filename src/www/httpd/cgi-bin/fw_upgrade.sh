@@ -61,9 +61,12 @@ elif [ "$VAL" == "upgrade" ] ; then
     tar zxvf ${MODEL_SUFFIX}_${LATEST_FW}.tgz
     rm ${MODEL_SUFFIX}_${LATEST_FW}.tgz
     mv -f * ..
-    cp $YI_HACK_PREFIX/etc/*.conf .
-    if [ -f $YI_HACK_PREFIX/etc/TZ ]; then
-        cp $YI_HACK_PREFIX/etc/TZ .
+    cp -f $YI_HACK_PREFIX/etc/*.conf .
+    if [ -f /etc/hostname ]; then
+        cp -f /etc/hostname .
+    fi
+    if [ -f /etc/TZ ]; then
+        cp /etc/TZ .
     fi
 
     # Report the status to the caller
