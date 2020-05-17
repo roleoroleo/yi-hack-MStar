@@ -19,19 +19,19 @@ get_config()
 
 restart_rtsp()
 {
-    RRTSP_RES=$(get_config RTSP_STREAM) RRTSP_AUDIO=$(get_config RTSP_AUDIO) RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD rRTSPServer &
+    RRTSP_RES=$(get_config RTSP_STREAM) RRTSP_AUDIO=$(get_config RTSP_AUDIO) RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD $EXE &
 }
 
 check_rtsp()
 {
 #  echo "$(date +'%Y-%m-%d %H:%M:%S') - Checking RTSP process..." >> $LOG_FILE
     SOCKET=`$YI_HACK_PREFIX/bin/netstat -an 2>&1 | grep ":$RTSP_PORT " | grep ESTABLISHED | grep -c ^`
-    CPU=`top -b -n 2 -d 1 | grep rRTSPServer | grep -v grep | tail -n 1 | awk '{print $8}'`
+    CPU=`top -b -n 2 -d 1 | grep $EXE | grep -v grep | tail -n 1 | awk '{print $8}'`
 
     if [ $SOCKET -eq 0 ]; then
         if [ "$CPU" == "" ]; then
             echo "$(date +'%Y-%m-%d %H:%M:%S') - No running processes, restarting..." >> $LOG_FILE
-            killall -q rRTSPServer
+            killall -q $EXE
             sleep 1
             restart_rtsp
         fi
@@ -43,7 +43,7 @@ check_rtsp()
             echo "$(date +'%Y-%m-%d %H:%M:%S') - Detected possible locked process ($COUNTER)" >> $LOG_FILE
             if [ $COUNTER -ge $COUNTER_LIMIT ]; then
                 echo "$(date +'%Y-%m-%d %H:%M:%S') - Restarting rtsp process" >> $LOG_FILE
-                killall -q rRTSPServer
+                killall -q $EXE
                 sleep 1
                 restart_rtsp
                 COUNTER=0
@@ -67,6 +67,12 @@ case $(get_config RTSP_PORT) in
     ''|*[!0-9]*) RTSP_PORT=554 ;;
     *) RTSP_PORT=$(get_config RTSP_PORT) ;;
 esac
+
+if [[ $(get_config RTSP_AUDIO) == "none" ]] ; then
+    EXE=rRTSPServer
+else
+    EXE=rRTSPServer_audio
+fi
 
 echo "$(date +'%Y-%m-%d %H:%M:%S') - Starting RTSP watchdog..." >> $LOG_FILE
 
