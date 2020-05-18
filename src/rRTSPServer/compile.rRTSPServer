@@ -14,9 +14,13 @@ export CC=${CROSSPREFIX}gcc
 export LD=${CROSSPREFIX}ld
 export AS=${CROSSPREFIX}as
 export AR=${CROSSPREFIX}ar
+export LDFLAGS="-L`pwd`/dummylib -lOMX_AVQE_A"
+
 
 SCRIPT_DIR=$(cd `dirname $0` && pwd)
 cd $SCRIPT_DIR
+
+make -C dummylib
 
 cd live || exit 1
 
