@@ -43,6 +43,7 @@ int debug;                                  /* Set to 1 to debug this .c */
 int resolution;
 int audio;
 int port;
+int nr_level;
 
 cb_output_buffer output_buffer_low;
 cb_output_buffer output_buffer_high;
@@ -342,6 +343,8 @@ void print_usage(char *progname)
     fprintf(stderr, "\t\tenable/disable audio for specific resolution: low, high or none (default none)\n");
     fprintf(stderr, "\t-p PORT, --port PORT\n");
     fprintf(stderr, "\t\tset TCP port (default 554)\n");
+    fprintf(stderr, "\t-n LEVEL, --noisereduction LEVEL\n");
+    fprintf(stderr, "\t\tset a noise reduction level from 0-30: 0 = disabled, 30 = maximum noise reduction (default 0)\n");
     fprintf(stderr, "\t-d,     --debug\n");
     fprintf(stderr, "\t\tenable debug\n");
     fprintf(stderr, "\t-h,     --help\n");
@@ -371,6 +374,7 @@ int main(int argc, char** argv)
     audio = RESOLUTION_NONE;
     port = 554;
     debug = 0;
+    nr_level = 0;
 
     while (1) {
         static struct option long_options[] =
@@ -378,6 +382,7 @@ int main(int argc, char** argv)
             {"resolution",  required_argument, 0, 'r'},
             {"audio",  required_argument, 0, 'a'},
             {"port",  required_argument, 0, 'p'},
+            {"noisereduction", required_argument, 0, 'n'},
             {"debug",  no_argument, 0, 'd'},
             {"help",  no_argument, 0, 'h'},
             {0, 0, 0, 0}
@@ -385,7 +390,7 @@ int main(int argc, char** argv)
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        c = getopt_long (argc, argv, "r:a:p:dh",
+        c = getopt_long (argc, argv, "r:a:p:n:dh",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -419,6 +424,21 @@ int main(int argc, char** argv)
 
             /* Check for various possible errors */
             if ((errno == ERANGE && (port == LONG_MAX || port == LONG_MIN)) || (errno != 0 && port == 0)) {
+                print_usage(argv[0]);
+                exit(EXIT_FAILURE);
+            }
+            if (endptr == optarg) {
+                print_usage(argv[0]);
+                exit(EXIT_FAILURE);
+            }
+            break;
+
+	case 'n':
+            errno = 0;    /* To distinguish success/failure after call */
+            nr_level = strtol(optarg, &endptr, 10);
+
+            /* Check for various possible errors */
+            if ((errno == ERANGE && (nr_level > 30 || nr_level < 0)) || (errno != 0 && nr_level == 0)) {
                 print_usage(argv[0]);
                 exit(EXIT_FAILURE);
             }
@@ -594,7 +614,7 @@ int main(int argc, char** argv)
                                    ::createNew(*env, &output_buffer_high, reuseFirstSource));
         if (audio == RESOLUTION_HIGH) {
             sms_high->addSubsession(WAVAudioFifoServerMediaSubsession
-                                   ::createNew(*env, inputAudioFileName, reuseFirstSource, convertToULaw));
+                                   ::createNew(*env, inputAudioFileName, reuseFirstSource, convertToULaw, nr_level));
         }
         rtspServer->addServerMediaSession(sms_high);
 
@@ -616,7 +636,7 @@ int main(int argc, char** argv)
                                    ::createNew(*env, &output_buffer_low, reuseFirstSource));
         if (audio == RESOLUTION_LOW) {
             sms_low->addSubsession(WAVAudioFifoServerMediaSubsession
-                                   ::createNew(*env, inputAudioFileName, reuseFirstSource, convertToULaw));
+                                   ::createNew(*env, inputAudioFileName, reuseFirstSource, convertToULaw, nr_level));
         }
         rtspServer->addServerMediaSession(sms_low);
 
