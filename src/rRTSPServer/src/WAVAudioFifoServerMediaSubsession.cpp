@@ -23,19 +23,22 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 #include "WAVAudioFifoSource.hh"
 #include "uLawAudioFilter.hh"
 #include "SimpleRTPSink.hh"
+#include "YiNoiseReduction.hh"
 
 WAVAudioFifoServerMediaSubsession* WAVAudioFifoServerMediaSubsession
 ::createNew(UsageEnvironment& env, char const* fileName, Boolean reuseFirstSource,
-	    Boolean convertToULaw) {
+	    Boolean convertToULaw, unsigned int noiseReductionLevel) {
   return new WAVAudioFifoServerMediaSubsession(env, fileName,
-					       reuseFirstSource, convertToULaw);
+					       reuseFirstSource, convertToULaw, noiseReductionLevel);
 }
 
 WAVAudioFifoServerMediaSubsession
 ::WAVAudioFifoServerMediaSubsession(UsageEnvironment& env, char const* fileName,
-				    Boolean reuseFirstSource, Boolean convertToULaw)
+				    Boolean reuseFirstSource, Boolean convertToULaw,
+				    unsigned int noiseReductionLevel)
   : FileServerMediaSubsession(env, fileName, reuseFirstSource),
-    fConvertToULaw(convertToULaw) {
+    fConvertToULaw(convertToULaw),
+    fNoiseReductionLevel(noiseReductionLevel) {
 }
 
 WAVAudioFifoServerMediaSubsession
@@ -97,6 +100,7 @@ void WAVAudioFifoServerMediaSubsession
 FramedSource* WAVAudioFifoServerMediaSubsession
 ::createNewStreamSource(unsigned /*clientSessionId*/, unsigned& estBitrate) {
   FramedSource* resultSource = NULL;
+  FramedSource* intermediateSource = NULL;
   do {
     WAVAudioFifoSource* wavSource = WAVAudioFifoSource::createNew(envir(), fFileName);
     if (wavSource == NULL) break;
@@ -120,14 +124,20 @@ FramedSource* WAVAudioFifoServerMediaSubsession
     resultSource = wavSource; // by default
     if (fAudioFormat == WA_PCM) {
       if (fBitsPerSample == 16) {
-	// Note that samples in the WAV audio file are in little-endian order.
+	// If a value of 0 is provided, noise reduction is not used
+        if (fNoiseReductionLevel > 0) {
+          intermediateSource = YiNoiseReduction::createNew(envir(), wavSource, fNoiseReductionLevel);
+        } else {
+          intermediateSource = wavSource;
+        }
+        // Note that samples in the WAV audio file are in little-endian order.
 	if (fConvertToULaw) {
 	  // Add a filter that converts from raw 16-bit PCM audio to 8-bit u-law audio:
-	  resultSource = uLawFromPCMAudioSource::createNew(envir(), wavSource, 1/*little-endian*/);
+	  resultSource = uLawFromPCMAudioSource::createNew(envir(), intermediateSource, 1/*little-endian*/);
 	  bitsPerSecond /= 2;
 	} else {
 	  // Add a filter that converts from little-endian to network (big-endian) order:
-	  resultSource = EndianSwap16::createNew(envir(), wavSource);
+	  resultSource = EndianSwap16::createNew(envir(), intermediateSource);
 	}
       } else if (fBitsPerSample == 20 || fBitsPerSample == 24) {
 	// Add a filter that converts from little-endian to network (big-endian) order:

@@ -30,13 +30,13 @@ class WAVAudioFifoServerMediaSubsession: public FileServerMediaSubsession{
 public:
   static WAVAudioFifoServerMediaSubsession*
   createNew(UsageEnvironment& env, char const* fileName, Boolean reuseFirstSource,
-	    Boolean convertToULaw = False);
+	    Boolean convertToULaw = False, unsigned int noiseReductionLevel = 0);
       // If "convertToULaw" is True, 16-bit audio streams are converted to
       // 8-bit u-law audio prior to streaming.
 
 protected:
   WAVAudioFifoServerMediaSubsession(UsageEnvironment& env, char const* fileName,
-				    Boolean reuseFirstSource, Boolean convertToULaw);
+				    Boolean reuseFirstSource, Boolean convertToULaw, unsigned int noiseReductionLevel);
       // called only by createNew();
   virtual ~WAVAudioFifoServerMediaSubsession();
 
@@ -63,6 +63,7 @@ protected:
   unsigned fSamplingFrequency;
   unsigned fNumChannels;
   float fFileDuration;
+  unsigned int fNoiseReductionLevel;
 };
 
 #endif
