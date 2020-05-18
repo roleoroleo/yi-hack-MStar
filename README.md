@@ -1,7 +1,3 @@
-# DO NOT FLASH THIS FIRMWARE! THESE ARE EXPERIMENTAL FEATURES.
-# Please check the original Roleo repo for stable builds.
-
-
 # Custom firmware for Yi camera based on MStar platform
 
 This firmware is completely based on the work done by TheCrypt0
@@ -22,21 +18,6 @@ The RTSP server code derives from live555 - http://www.live555.com/ and from the
 There is a known problem with ffmpeg, see https://github.com/roleoroleo/yi-hack-MStar/issues/36 for details.
 
 ### RTSP audio support (many thanks to @PieVo for adding it):
-The datapath of the audio is as follows:
-Mic -> ADC -> Kernel sound driver -> TinyAlsa lib -> OMX ALSA plugin -> Camera application (rmm)
-
-To maintain audio support for the original Yi application, the audio should be cloned at one of the steps with the following in mind:
-- Kernel driver can be used by 1 "sink"
-- TinyAlsa can only openend by one "sink"
-- OMX libs are closed source and are not compatible with the "available" I1 SDK.
-
-Audio support is implemented by replacing the original TinyAlsa library with a version that copies the read audio frames to a pipe. This pipe is read by the RTSP server. The RTSP server uses a patched WAVFileSource to read the audio data from the pipe. (Since it tries to read the WAV header 2x I saw no (quick) other way than to hardcode the PCM format into the WAVFileSource code.)
-
-Additionally:
-- The OMX ALSA library reads audio in 16-bit 16000Hz stereo, one channel is just empty. To reduce streaming bandwidth the TinyAlsa replacement library converts the stereo data to mono.
-- To reduce streaming bandwidth even further, the 16-bit PCM data is converted to 8-bit uLaw and finally results in 128kbit/s.
-
-### RTSP audio support:
 The datapath of the audio is as follows:
 Mic -> ADC -> Kernel sound driver -> TinyAlsa lib -> OMX ALSA plugin -> Camera application (rmm)
 
