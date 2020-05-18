@@ -142,6 +142,9 @@ WAVAudioFifoSource::WAVAudioFifoSource(UsageEnvironment& env, FILE* fid)
   unsigned samplesPerFrame = desiredSamplesPerFrame < maxSamplesPerFrame ? desiredSamplesPerFrame : maxSamplesPerFrame;
   fPreferredFrameSize = (samplesPerFrame*fNumChannels*fBitsPerSample)/8;
 
+  // Yi Mstar noise reduction requires a framesize of 512
+  fPreferredFrameSize = 512;
+
   fFidIsSeekable = FileIsSeekable(fFid);
   // Now that we've finished reading the WAV header, all future reads (of audio samples) from the file will be asynchronous:
   makeSocketNonBlocking(fileno(fFid));
