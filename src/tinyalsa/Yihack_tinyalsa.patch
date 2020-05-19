@@ -1,6 +1,6 @@
-diff -X exclude_file -uarN tinyalsa-1.0.0_org/Makefile tinyalsa-1.0.0/Makefile
---- tinyalsa-1.0.0_org/Makefile	2020-04-02 20:01:35.165291305 +0000
-+++ tinyalsa-1.0.0/Makefile	2020-04-02 19:58:59.682826872 +0000
+diff -Naur tinyalsa-1.0.0.ori/Makefile tinyalsa-1.0.0/Makefile
+--- tinyalsa-1.0.0.ori/Makefile	2016-10-02 04:37:39.000000000 +0200
++++ tinyalsa-1.0.0/Makefile	2020-05-17 13:49:50.163644988 +0200
 @@ -10,13 +10,13 @@
  all:
  	$(MAKE) -C src
@@ -24,9 +24,9 @@ diff -X exclude_file -uarN tinyalsa-1.0.0_org/Makefile tinyalsa-1.0.0/Makefile
 -	$(MAKE) -C doxygen install
 +#	$(MAKE) -C doxygen install
  
-diff -X exclude_file -uarN tinyalsa-1.0.0_org/include/tinyalsa/pcm.h tinyalsa-1.0.0/include/tinyalsa/pcm.h
---- tinyalsa-1.0.0_org/include/tinyalsa/pcm.h	2016-10-02 02:37:39.000000000 +0000
-+++ tinyalsa-1.0.0/include/tinyalsa/pcm.h	2020-04-03 08:25:32.564096737 +0000
+diff -Naur tinyalsa-1.0.0.ori/include/tinyalsa/pcm.h tinyalsa-1.0.0/include/tinyalsa/pcm.h
+--- tinyalsa-1.0.0.ori/include/tinyalsa/pcm.h	2016-10-02 04:37:39.000000000 +0200
++++ tinyalsa-1.0.0/include/tinyalsa/pcm.h	2020-05-17 13:49:50.163644988 +0200
 @@ -218,6 +218,7 @@
                       unsigned int flags, struct pcm_config *config);
  int pcm_close(struct pcm *pcm);
@@ -45,9 +45,9 @@ diff -X exclude_file -uarN tinyalsa-1.0.0_org/include/tinyalsa/pcm.h tinyalsa-1.
  #if defined(__cplusplus)
  }  /* extern "C" */
  #endif
-diff -X exclude_file -uarN tinyalsa-1.0.0_org/include/tinyalsa/wave.h tinyalsa-1.0.0/include/tinyalsa/wave.h
---- tinyalsa-1.0.0_org/include/tinyalsa/wave.h	1970-01-01 00:00:00.000000000 +0000
-+++ tinyalsa-1.0.0/include/tinyalsa/wave.h	2020-04-03 08:19:39.080292941 +0000
+diff -Naur tinyalsa-1.0.0.ori/include/tinyalsa/wave.h tinyalsa-1.0.0/include/tinyalsa/wave.h
+--- tinyalsa-1.0.0.ori/include/tinyalsa/wave.h	1970-01-01 01:00:00.000000000 +0100
++++ tinyalsa-1.0.0/include/tinyalsa/wave.h	2020-05-17 13:49:50.163644988 +0200
 @@ -0,0 +1,31 @@
 +#ifndef WAVE_H
 +#define WAVE_H
@@ -80,9 +80,9 @@ diff -X exclude_file -uarN tinyalsa-1.0.0_org/include/tinyalsa/wave.h tinyalsa-1
 +};
 +
 +#endif
-diff -X exclude_file -uarN tinyalsa-1.0.0_org/src/pcm.c tinyalsa-1.0.0/src/pcm.c
---- tinyalsa-1.0.0_org/src/pcm.c	2016-10-02 02:37:39.000000000 +0000
-+++ tinyalsa-1.0.0/src/pcm.c	2020-04-07 14:35:12.539167955 +0000
+diff -Naur tinyalsa-1.0.0.ori/src/pcm.c tinyalsa-1.0.0/src/pcm.c
+--- tinyalsa-1.0.0.ori/src/pcm.c	2016-10-02 04:37:39.000000000 +0200
++++ tinyalsa-1.0.0/src/pcm.c	2020-05-17 13:53:24.371474019 +0200
 @@ -34,12 +34,15 @@
  #include <errno.h>
  #include <unistd.h>
@@ -99,7 +99,7 @@ diff -X exclude_file -uarN tinyalsa-1.0.0_org/src/pcm.c tinyalsa-1.0.0/src/pcm.c
  
  #include <linux/ioctl.h>
  #define __force
-@@ -48,10 +51,14 @@
+@@ -48,10 +51,18 @@
  #include <sound/asound.h>
  
  #include <tinyalsa/asoundlib.h>
@@ -109,12 +109,16 @@ diff -X exclude_file -uarN tinyalsa-1.0.0_org/src/pcm.c tinyalsa-1.0.0/src/pcm.c
  #define SNDRV_PCM_HW_PARAMS_NO_PERIOD_WAKEUP (1<<2)
  
 +#define CONVERT_TO_MONO
++#define CONVERT_TO_8KHZ
++#ifdef CONVERT_TO_8KHZ
++#define CONVERT_TO_MONO
++#endif
 +//#define START_WAV_HEADER
 +
  static inline int param_is_mask(int p)
  {
      return (p >= SNDRV_PCM_HW_PARAM_FIRST_MASK) &&
-@@ -186,6 +193,11 @@
+@@ -186,6 +197,11 @@
      unsigned int subdevice;
  };
  
@@ -126,7 +130,7 @@ diff -X exclude_file -uarN tinyalsa-1.0.0_org/src/pcm.c tinyalsa-1.0.0/src/pcm.c
  /** Gets the buffer size of the PCM.
   * @param pcm A PCM handle.
   * @return The buffer size of the PCM.
-@@ -556,12 +568,15 @@
+@@ -556,12 +572,15 @@
              pcm->prepared = 0;
              pcm->running = 0;
              if (errno == EPIPE) {
@@ -143,7 +147,7 @@ diff -X exclude_file -uarN tinyalsa-1.0.0_org/src/pcm.c tinyalsa-1.0.0/src/pcm.c
          return 0;
      }
  }
-@@ -764,6 +779,9 @@
+@@ -764,6 +783,9 @@
      pcm->running = 0;
      pcm->buffer_size = 0;
      pcm->fd = -1;
@@ -153,7 +157,7 @@ diff -X exclude_file -uarN tinyalsa-1.0.0_org/src/pcm.c tinyalsa-1.0.0/src/pcm.c
      free(pcm);
      return 0;
  }
-@@ -928,6 +946,16 @@
+@@ -928,6 +950,16 @@
  #endif
  
      pcm->underruns = 0;
@@ -170,7 +174,7 @@ diff -X exclude_file -uarN tinyalsa-1.0.0_org/src/pcm.c tinyalsa-1.0.0/src/pcm.c
      return pcm;
  
  fail:
-@@ -1244,3 +1272,106 @@
+@@ -1244,3 +1276,117 @@
      return pcm->pcm_delay;
  }
  
@@ -231,11 +235,18 @@ diff -X exclude_file -uarN tinyalsa-1.0.0_org/src/pcm.c tinyalsa-1.0.0/src/pcm.c
 +#ifdef CONVERT_TO_MONO
 +    for (i = 0; i < pcm_bytes_to_frames(pcm, bytes); i++) {
 +        mono_buf[i] = *pcm_ptr & 0xffff;
-+	//mono_buf[i] = cnt++;
-+	pcm_ptr++;
++        //mono_buf[i] = cnt++;
++        pcm_ptr++;
++#ifdef CONVERT_TO_8KHZ
++        pcm_ptr++;
++#endif
 +    }
 +
++#ifdef CONVERT_TO_8KHZ
++    if (write(snoop_fd, mono_buf, bytes / 4) < 0) {
++#else
 +    if (write(snoop_fd, mono_buf, bytes / 2) < 0) {
++#endif
 +#else
 +    if (write(snoop_fd, data, bytes) < 0) {
 +#endif
@@ -262,7 +273,11 @@ diff -X exclude_file -uarN tinyalsa-1.0.0_org/src/pcm.c tinyalsa-1.0.0/src/pcm.c
 +#else
 +    header.num_channels = 2;
 +#endif
++#ifdef CONVERT_TO_8KHZ
++    header.sample_rate = 8000;
++#else
 +    header.sample_rate = 16000;
++#endif
 +    header.bits_per_sample = pcm_format_to_bits(PCM_FORMAT_S16_LE);
 +    header.byte_rate = (header.bits_per_sample / 8) * header.num_channels * header.sample_rate;
 +    header.block_align = header.num_channels * (header.bits_per_sample / 8);
