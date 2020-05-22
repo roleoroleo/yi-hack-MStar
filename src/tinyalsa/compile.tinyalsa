@@ -21,7 +21,7 @@ cd $SCRIPT_DIR
 cd tinyalsa-1.0.0 || exit 1
 
 make clean
-make CROSS_COMPILE=${CROSSPREFIX} || exit 1
+make LDFLAGS=-lpthread CROSS_COMPILE=${CROSSPREFIX} || exit 1
 
 mkdir -p ../_install/lib/ || exit 1
 
