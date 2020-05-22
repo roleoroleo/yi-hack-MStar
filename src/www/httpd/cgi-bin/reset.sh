@@ -2,6 +2,9 @@
 
 cd /home/yi-hack/etc
 
+rm -f /etc/hostname
+rm -f /etc/TZ
+
 rm camera.conf
 rm mqttv4.conf
 rm proxychains.conf
