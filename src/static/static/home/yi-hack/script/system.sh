@@ -13,6 +13,20 @@ get_config()
     grep -w $1 $YI_HACK_PREFIX/$CONF_FILE | cut -d "=" -f2
 }
 
+start_buffer()
+{
+    # Trick to start circular buffer filling
+    ./cloud &
+    IDX=`hexdump -n 16 /dev/fshare_frame_buf | awk 'NR==1{print $8}'`
+    N=0
+    while [ "$IDX" -eq "0000" ] && [ $N -lt 50 ]; do
+        IDX=`hexdump -n 16 /dev/fshare_frame_buf | awk 'NR==1{print $8}'`
+        N=$(($N+1))
+        sleep 0.2
+    done
+    killall cloud
+}
+
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/lib:/home/yi-hack/lib:/tmp/sd/yi-hack/lib
 export PATH=$PATH:/home/base/tools:/home/yi-hack/bin:/home/yi-hack/sbin:/tmp/sd/yi-hack/bin:/tmp/sd/yi-hack/sbin
 
@@ -79,8 +93,6 @@ if [[ $(get_config DISABLE_CLOUD) == "no" ]] ; then
             ./rmm &
             export LD_LIBRARY_PATH=$OLD_LD_LIBRARY_PATH
             sleep 4
-            dd if=/tmp/audio_fifo of=/dev/null bs=1 count=2048
-            sleep 2
         fi
         ./mp4record &
         ./cloud &
@@ -106,11 +118,9 @@ else
             ./rmm &
             export LD_LIBRARY_PATH=$OLD_LD_LIBRARY_PATH
             sleep 4
-            dd if=/tmp/audio_fifo of=/dev/null bs=1 count=2048
-            sleep 2
         fi
         # Trick to start circular buffer filling
-        ipc_cmd -x
+        start_buffer
         if [[ $(get_config REC_WITHOUT_CLOUD) == "yes" ]] ; then
             ./mp4record &
         fi
