@@ -152,6 +152,8 @@ if [[ $(get_config NTPD) == "yes" ]] ; then
     sleep 5 && ntpd -p $(get_config NTP_SERVER) &
 fi
 
+ipc_multiplexer &
+sleep 1
 if [[ $(get_config MQTT) == "yes" ]] ; then
     mqttv4 &
 fi
