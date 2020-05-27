@@ -12,7 +12,7 @@ fi
 if [ -f /etc/hostname ]; then
     cp /etc/hostname .
 fi
-7za a config.7z * >/dev/null 2>&1
+7za a config.7z * > /dev/null 2>&1
 cat $TMP_DIR/config.7z
 cd /tmp
 rm -rf $TMP_DIR

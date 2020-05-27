@@ -15,8 +15,7 @@
  */
 
 /*
- * Dump h264 content from rmm memory and copy it to
- * a circular buffer.
+ * Dump h264 content from rmm memory and copy it to a circular buffer.
  * Then send the circular buffer to live555.
  */
 
