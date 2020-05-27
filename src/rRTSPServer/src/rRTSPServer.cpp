@@ -40,7 +40,6 @@ unsigned char SEI_F0[] = { 0x00, 0x00, 0x00, 0x01, 0x06, 0xF0 };
 
 int debug;                                  /* Set to 1 to debug this .c */
 int resolution;
-int audio;
 int port;
 
 cb_output_buffer output_buffer_low;
@@ -176,6 +175,7 @@ void *capture(void *ptr)
     int stream_started = 0;
     cb_output_buffer *cb_current;
     int res;
+    int repeat = 0;
 
     res = *((int *) ptr);
     if (res == RESOLUTION_LOW) {
@@ -239,7 +239,7 @@ void *capture(void *ptr)
             fclose(fTime);
 
             if (time == oldTime) {
-                usleep(8000);
+                usleep(1000);
                 continue;
             }
 
@@ -277,8 +277,13 @@ void *capture(void *ptr)
 //            if (debug) fprintf(stderr, "time: %u\n", time);
 
             if (time == oldTime) {
-                usleep(8000);
+                usleep(1000);
                 continue;
+            } else if (time - oldTime <= 75000 ) {
+                repeat = 1;
+            } else if (time - oldTime > 75000 ) {
+                fprintf(stderr, "frame lost: %u\n", time - oldTime);
+                repeat = 2;
             } else if (time - oldTime > 125000 ) {
                 // If time - oldTime > 125000 (125 ms) assume sync lost
                 if (debug) fprintf(stderr, "sync lost: %u - %u\n", time, oldTime);
@@ -295,25 +300,28 @@ void *capture(void *ptr)
             memcpy(buffer, addr, len);
             oldTime = time;
 
-            if (remove_sf0) {
-                if (memcmp(SEI_F0, buffer, sizeof(SEI_F0)) == 0) {
-                    pthread_mutex_lock(&(cb_current->mutex));
-                    cb_dest_memcpy(cb_current, buffer + 52, len - 52);
-                    pthread_mutex_unlock(&(cb_current->mutex));
-                } else if (memcmp(SPS, buffer, sizeof(SPS)) == 0) {
-                    pthread_mutex_lock(&(cb_current->mutex));
-                    cb_dest_memcpy(cb_current, buffer, 24);
-                    cb_dest_memcpy(cb_current, buffer + 76, len - 76);
-                    pthread_mutex_unlock(&(cb_current->mutex));
+            while (repeat > 0) {
+                if (remove_sf0) {
+                    if (memcmp(SEI_F0, buffer, sizeof(SEI_F0)) == 0) {
+                        pthread_mutex_lock(&(cb_current->mutex));
+                        cb_dest_memcpy(cb_current, buffer + 52, len - 52);
+                        pthread_mutex_unlock(&(cb_current->mutex));
+                    } else if (memcmp(SPS, buffer, sizeof(SPS)) == 0) {
+                        pthread_mutex_lock(&(cb_current->mutex));
+                        cb_dest_memcpy(cb_current, buffer, 24);
+                        cb_dest_memcpy(cb_current, buffer + 76, len - 76);
+                        pthread_mutex_unlock(&(cb_current->mutex));
+                    } else {
+                        pthread_mutex_lock(&(cb_current->mutex));
+                        cb_dest_memcpy(cb_current, buffer, len);
+                        pthread_mutex_unlock(&(cb_current->mutex));
+                    }
                 } else {
                     pthread_mutex_lock(&(cb_current->mutex));
                     cb_dest_memcpy(cb_current, buffer, len);
                     pthread_mutex_unlock(&(cb_current->mutex));
                 }
-            } else {
-                pthread_mutex_lock(&(cb_current->mutex));
-                cb_dest_memcpy(cb_current, buffer, len);
-                pthread_mutex_unlock(&(cb_current->mutex));
+                repeat--;
             }
         }
     }
@@ -321,13 +329,11 @@ void *capture(void *ptr)
     munmap(addr, size);
 }
 
-static void announceStream(RTSPServer* rtspServer, ServerMediaSession* sms, char const* streamName, int audio)
+static void announceStream(RTSPServer* rtspServer, ServerMediaSession* sms, char const* streamName)
 {
     char* url = rtspServer->rtspURL(sms);
     UsageEnvironment& env = rtspServer->envir();
     env << "\n\"" << streamName << "\" stream, from memory\n";
-    if (audio)
-        env << "Audio enabled\n";
     env << "Play this stream using the URL \"" << url << "\"\n";
     delete[] url;
 }
@@ -337,8 +343,6 @@ void print_usage(char *progname)
     fprintf(stderr, "\nUsage: %s [-r RES] [-p PORT] [-d]\n\n", progname);
     fprintf(stderr, "\t-r RES, --resolution RES\n");
     fprintf(stderr, "\t\tset resolution: low, high or both (default high)\n");
-    fprintf(stderr, "\t-a RES, --audio RES\n");
-    fprintf(stderr, "\t\tenable/disable audio for specific resolution: low, high or none (default none)\n");
     fprintf(stderr, "\t-p PORT, --port PORT\n");
     fprintf(stderr, "\t\tset TCP port (default 554)\n");
     fprintf(stderr, "\t-d,     --debug\n");
@@ -361,13 +365,8 @@ int main(int argc, char** argv)
     int res_low = RESOLUTION_LOW;
     int res_high = RESOLUTION_HIGH;
 
-    Boolean convertToULaw = True;
-    char const* inputAudioFileName = "/tmp/audio_fifo";
-    struct stat stat_buffer;
-
     // Setting default
     resolution = RESOLUTION_HIGH;
-    audio = RESOLUTION_NONE;
     port = 554;
     debug = 0;
 
@@ -375,7 +374,6 @@ int main(int argc, char** argv)
         static struct option long_options[] =
         {
             {"resolution",  required_argument, 0, 'r'},
-            {"audio",  required_argument, 0, 'a'},
             {"port",  required_argument, 0, 'p'},
             {"debug",  no_argument, 0, 'd'},
             {"help",  no_argument, 0, 'h'},
@@ -399,16 +397,6 @@ int main(int argc, char** argv)
                 resolution = RESOLUTION_HIGH;
             } else if (strcasecmp("both", optarg) == 0) {
                 resolution = RESOLUTION_BOTH;
-            }
-            break;
-
-        case 'a':
-            if (strcasecmp("low", optarg) == 0) {
-                audio = RESOLUTION_LOW;
-            } else if (strcasecmp("high", optarg) == 0) {
-                audio = RESOLUTION_HIGH;
-            } else if (strcasecmp("none", optarg) == 0) {
-                audio = RESOLUTION_NONE;
             }
             break;
 
@@ -459,17 +447,6 @@ int main(int argc, char** argv)
         }
     }
 
-    str = getenv("RRTSP_AUDIO");
-    if (str != NULL) {
-        if (strcasecmp("low", str) == 0) {
-            audio = RESOLUTION_LOW;
-        } else if (strcasecmp("high", str) == 0) {
-            audio = RESOLUTION_HIGH;
-        } else if (strcasecmp("none", str) == 0) {
-            audio = RESOLUTION_NONE;
-        }
-    }
-
     str = getenv("RRTSP_PORT");
     if ((str != NULL) && (sscanf (str, "%i", &nm) == 1) && (nm >= 0)) {
         port = nm;
@@ -490,11 +467,6 @@ int main(int argc, char** argv)
     str = getenv("RRTSP_PWD");
     if ((str != NULL) && (strlen(str) < sizeof(pwd))) {
         strcpy(pwd, str);
-    }
-
-    // If fifo doesn't exist, disable audio
-    if (stat (inputAudioFileName, &stat_buffer) != 0) {
-        audio = RESOLUTION_NONE;
     }
 
     if ((resolution == RESOLUTION_LOW) || (resolution == RESOLUTION_BOTH)) {
@@ -593,7 +565,7 @@ int main(int argc, char** argv)
                                    ::createNew(*env, &output_buffer_high, reuseFirstSource));
         rtspServer->addServerMediaSession(sms_high);
 
-        announceStream(rtspServer, sms_high, streamName, audio == RESOLUTION_HIGH);
+        announceStream(rtspServer, sms_high, streamName);
     }
 
     // A H.264 video elementary stream:
@@ -611,7 +583,7 @@ int main(int argc, char** argv)
                                    ::createNew(*env, &output_buffer_low, reuseFirstSource));
         rtspServer->addServerMediaSession(sms_low);
 
-        announceStream(rtspServer, sms_low, streamName, audio == RESOLUTION_LOW);
+        announceStream(rtspServer, sms_low, streamName);
     }
 
     // Also, attempt to create a HTTP server for RTSP-over-HTTP tunneling.

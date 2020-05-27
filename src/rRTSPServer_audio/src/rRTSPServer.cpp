@@ -177,6 +177,7 @@ void *capture(void *ptr)
     int stream_started = 0;
     cb_output_buffer *cb_current;
     int res;
+    int repeat = 0;
 
     res = *((int *) ptr);
     if (res == RESOLUTION_LOW) {
@@ -240,7 +241,7 @@ void *capture(void *ptr)
             fclose(fTime);
 
             if (time == oldTime) {
-                usleep(8000);
+                usleep(1000);
                 continue;
             }
 
@@ -278,8 +279,13 @@ void *capture(void *ptr)
 //            if (debug) fprintf(stderr, "time: %u\n", time);
 
             if (time == oldTime) {
-                usleep(8000);
+                usleep(1000);
                 continue;
+            } else if (time - oldTime <= 75000 ) {
+                repeat = 1;
+            } else if (time - oldTime > 75000 ) {
+                fprintf(stderr, "frame lost: %u\n", time - oldTime);
+                repeat = 2;
             } else if (time - oldTime > 125000 ) {
                 // If time - oldTime > 125000 (125 ms) assume sync lost
                 if (debug) fprintf(stderr, "sync lost: %u - %u\n", time, oldTime);
@@ -296,25 +302,28 @@ void *capture(void *ptr)
             memcpy(buffer, addr, len);
             oldTime = time;
 
-            if (remove_sf0) {
-                if (memcmp(SEI_F0, buffer, sizeof(SEI_F0)) == 0) {
-                    pthread_mutex_lock(&(cb_current->mutex));
-                    cb_dest_memcpy(cb_current, buffer + 52, len - 52);
-                    pthread_mutex_unlock(&(cb_current->mutex));
-                } else if (memcmp(SPS, buffer, sizeof(SPS)) == 0) {
-                    pthread_mutex_lock(&(cb_current->mutex));
-                    cb_dest_memcpy(cb_current, buffer, 24);
-                    cb_dest_memcpy(cb_current, buffer + 76, len - 76);
-                    pthread_mutex_unlock(&(cb_current->mutex));
+            while (repeat > 0) {
+                if (remove_sf0) {
+                    if (memcmp(SEI_F0, buffer, sizeof(SEI_F0)) == 0) {
+                        pthread_mutex_lock(&(cb_current->mutex));
+                        cb_dest_memcpy(cb_current, buffer + 52, len - 52);
+                        pthread_mutex_unlock(&(cb_current->mutex));
+                    } else if (memcmp(SPS, buffer, sizeof(SPS)) == 0) {
+                        pthread_mutex_lock(&(cb_current->mutex));
+                        cb_dest_memcpy(cb_current, buffer, 24);
+                        cb_dest_memcpy(cb_current, buffer + 76, len - 76);
+                        pthread_mutex_unlock(&(cb_current->mutex));
+                    } else {
+                        pthread_mutex_lock(&(cb_current->mutex));
+                        cb_dest_memcpy(cb_current, buffer, len);
+                        pthread_mutex_unlock(&(cb_current->mutex));
+                    }
                 } else {
                     pthread_mutex_lock(&(cb_current->mutex));
                     cb_dest_memcpy(cb_current, buffer, len);
                     pthread_mutex_unlock(&(cb_current->mutex));
                 }
-            } else {
-                pthread_mutex_lock(&(cb_current->mutex));
-                cb_dest_memcpy(cb_current, buffer, len);
-                pthread_mutex_unlock(&(cb_current->mutex));
+                repeat--;
             }
         }
     }
