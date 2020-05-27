@@ -35,14 +35,6 @@
 #include <sys/mman.h>
 #include <getopt.h>
 
-#define BUFFER_FILE "/dev/shm/fshare_frame_buf"
-#define BUF_OFFSET 300
-#define BUF_SIZE 1786156
-#define FRAME_HEADER_SIZE 22
-
-#define MILLIS_10 10000
-#define MILLIS_25 25000
-
 #define RESOLUTION_NONE 0
 #define RESOLUTION_LOW  360
 #define RESOLUTION_HIGH 1080
