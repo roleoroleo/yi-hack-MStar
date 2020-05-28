@@ -44,9 +44,13 @@ BUILD_DIR=$BASE_DIR/build
 OUT_DIR=$BASE_DIR/out
 
 echo "Cleaning sysroot ..."
-rm -r $SYSROOT_DIR/yi_*
+for CAMERA_NAME in "${!CAMERAS[@]}"; do
+    rm -rf $SYSROOT_DIR/$CAMERA_NAME
+done
+echo "Cleaning build dir ..."
+rm -rf $BUILD_DIR
 echo "Cleaning out dir ..."
-rm -r $OUT_DIR/yi_*
+rm -rf $OUT_DIR
 
 echo "Cleaning src/*/_install folders ..."
 
@@ -55,7 +59,7 @@ SRC_DIR=$(get_script_dir)/../src
 for SUB_DIR in $SRC_DIR/* ; do
     if [ -d ${SUB_DIR} ]; then # Will not run if no directories are available
         echo -n "Cleaning $(basename \"$SUB_DIR\") ..."
-        rm -r $SUB_DIR/_install
+        rm -rf $SUB_DIR/_install
         echo "done!"
     fi
 done
