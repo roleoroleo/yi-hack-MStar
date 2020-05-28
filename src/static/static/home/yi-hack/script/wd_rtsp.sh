@@ -54,6 +54,16 @@ check_rtsp()
     fi
 }
 
+check_rmm()
+{
+#  echo "$(date +'%Y-%m-%d %H:%M:%S') - Checking rmm process..." >> $LOG_FILE
+    PS=`ps | grep rmm | grep -v grep | grep -c ^`
+
+    if [ $PS -eq 0 ]; then
+        reboot
+    fi
+}
+
 if [[ $(get_config RTSP) == "no" ]] ; then
     exit
 fi
@@ -79,6 +89,7 @@ echo "$(date +'%Y-%m-%d %H:%M:%S') - Starting RTSP watchdog..." >> $LOG_FILE
 while true
 do
     check_rtsp
+    check_rmm
     if [ $COUNTER -eq 0 ]; then
         sleep $INTERVAL
     fi
