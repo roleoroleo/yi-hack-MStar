@@ -58,8 +58,20 @@ SRC_DIR=$(get_script_dir)/../src
 
 for SUB_DIR in $SRC_DIR/* ; do
     if [ -d ${SUB_DIR} ]; then # Will not run if no directories are available
-        echo -n "Cleaning $(basename \"$SUB_DIR\") ..."
+        echo -n "Cleaning _install in $(basename \"$SUB_DIR\") ..."
         rm -rf $SUB_DIR/_install
+        echo "done!"
+    fi
+done
+
+echo ""
+
+for SUB_DIR in $SRC_DIR/* ; do
+    if [ -d ${SUB_DIR} ]; then # Will not run if no directories are available
+        echo -n "Cleaning $(basename \"$SUB_DIR\") ..."
+        cd $SUB_DIR
+        MOD_DIR=$(basename $SUB_DIR)
+        ./cleanup.$MOD_DIR
         echo "done!"
     fi
 done
