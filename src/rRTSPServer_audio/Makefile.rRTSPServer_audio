@@ -70,8 +70,6 @@ livemedia:
 	$(CPLUSPLUS_COMPILER) -c $(CPLUSPLUS_FLAGS) -o $@ $<
 
 rRTSPServer_OBJS	= src/rRTSPServer.$(OBJ) \
-				src/ByteStreamCBMemorySource.$(OBJ) src/H264VideoCBMemoryServerMediaSubsession.$(OBJ) \
-				src/CBMemoryServerMediaSubsession.$(OBJ) \
 				src/WAVAudioFifoSource.$(OBJ) src/WAVAudioFifoServerMediaSubsession.$(OBJ)
 
 rRTSPServer$(EXE):	$(rRTSPServer_OBJS) $(LOCAL_LIBS)

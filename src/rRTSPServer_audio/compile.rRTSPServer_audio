@@ -30,3 +30,5 @@ cp ./rRTSPServer ../_install/bin/rRTSPServer_audio || exit 1
 arm-linux-gnueabihf-strip ../_install/bin/* || exit 1
 
 cd ../_install/bin/
+ln -s rRTSPServer_audio rRTSPServer_audio_h
+ln -s rRTSPServer_audio  rRTSPServer_audio_l

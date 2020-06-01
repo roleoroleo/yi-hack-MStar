@@ -19,12 +19,13 @@ start_buffer()
     ./cloud &
     IDX=`hexdump -n 16 /dev/fshare_frame_buf | awk 'NR==1{print $8}'`
     N=0
-    while [ "$IDX" -eq "0000" ] && [ $N -lt 50 ]; do
+    while [ "$IDX" -eq "0000" ] && [ $N -lt 60 ]; do
         IDX=`hexdump -n 16 /dev/fshare_frame_buf | awk 'NR==1{print $8}'`
         N=$(($N+1))
         sleep 0.2
     done
     killall cloud
+    ipc_cmd -x
 }
 
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/lib:/home/yi-hack/lib:/tmp/sd/yi-hack/lib
@@ -71,6 +72,10 @@ fi
 case $(get_config RTSP_PORT) in
     ''|*[!0-9]*) RTSP_PORT=554 ;;
     *) RTSP_PORT=$(get_config RTSP_PORT) ;;
+esac
+case $(get_config RTSP_SUB_PORT) in
+    ''|*[!0-9]*) RTSP_SUB_PORT=8554 ;;
+    *) RTSP_SUB_PORT=$(get_config RTSP_SUB_PORT) ;;
 esac
 case $(get_config ONVIF_PORT) in
     ''|*[!0-9]*) ONVIF_PORT=80 ;;
@@ -164,6 +169,10 @@ if [[ $RTSP_PORT != "554" ]] ; then
     D_RTSP_PORT=:$RTSP_PORT
 fi
 
+if [[ $RTSP_SUB_PORT != "554" ]] ; then
+    D_RTSP_SUB_PORT=:$RTSP_SUB_PORT
+fi
+
 if [[ $HTTPD_PORT != "80" ]] ; then
     D_HTTPD_PORT=:$HTTPD_PORT
 fi
@@ -174,23 +183,32 @@ fi
 
 if [[ $(get_config RTSP) == "yes" ]] ; then
     if [[ $(get_config RTSP_AUDIO) == "none" ]] ; then
-        RRTSP_RES=$(get_config RTSP_STREAM) RRTSP_AUDIO=$(get_config RTSP_AUDIO) RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD rRTSPServer &
-    else
-        RRTSP_RES=$(get_config RTSP_STREAM) RRTSP_AUDIO=$(get_config RTSP_AUDIO) RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD rRTSPServer_audio &
+        RTSP_L_EXE="rRTSPServer_l"
+        RTSP_H_EXE="rRTSPServer_h"
+    elif [[ $(get_config RTSP_AUDIO) == "low" ]] ; then
+        RTSP_L_EXE="rRTSPServer_audio_l"
+        RTSP_H_EXE="rRTSPServer_h"
+    elif [[ $(get_config RTSP_AUDIO) == "high" ]] ; then
+        RTSP_L_EXE="rRTSPServer_l"
+        RTSP_H_EXE="rRTSPServer_audio_h"
     fi
 
+    if [[ $(get_config RTSP_STREAM) == "low" ]]; then
+        h264grabber_l -r low | RRTSP_RES=1 RRTSP_PORT=$RTSP_SUB_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD $RTSP_L_EXE &
+        ONVIF_PROFILE_1="--name Profile_1 --width 640 --height 360 --url rtsp://%s$D_RTSP_SUB_PORT/ch0_1.h264 --snapurl http://%s$D_HTTPD_PORT/cgi-bin/snapshot.sh?res=low$WATERMARK --type H264"
+    fi
     if [[ $(get_config RTSP_STREAM) == "high" ]]; then
+        h264grabber_h -r high | RRTSP_RES=0 RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD $RTSP_H_EXE &
         ONVIF_PROFILE_0="--name Profile_0 --width 1920 --height 1080 --url rtsp://%s$D_RTSP_PORT/ch0_0.h264 --snapurl http://%s$D_HTTPD_PORT/cgi-bin/snapshot.sh?res=high$WATERMARK --type H264"
     fi
-    if [[ $(get_config RTSP_STREAM) == "low" ]]; then
-        ONVIF_PROFILE_1="--name Profile_1 --width 640 --height 360 --url rtsp://%s$D_RTSP_PORT/ch0_1.h264 --snapurl http://%s$D_HTTPD_PORT/cgi-bin/snapshot.sh?res=low$WATERMARK --type H264"
-    fi
     if [[ $(get_config RTSP_STREAM) == "both" ]]; then
+        h264grabber_l -r low | RRTSP_RES=1 RRTSP_PORT=$RTSP_SUB_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD $RTSP_L_EXE &
+        h264grabber_h -r high | RRTSP_RES=0 RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD $RTSP_H_EXE &
+        if [[ $(get_config ONVIF_PROFILE) == "low" ]] || [[ $(get_config ONVIF_PROFILE) == "both" ]] ; then
+            ONVIF_PROFILE_1="--name Profile_1 --width 640 --height 360 --url rtsp://%s$D_RTSP_SUB_PORT/ch0_1.h264 --snapurl http://%s$D_HTTPD_PORT/cgi-bin/snapshot.sh?res=low$WATERMARK --type H264"
+        fi
         if [[ $(get_config ONVIF_PROFILE) == "high" ]] || [[ $(get_config ONVIF_PROFILE) == "both" ]] ; then
             ONVIF_PROFILE_0="--name Profile_0 --width 1920 --height 1080 --url rtsp://%s$D_RTSP_PORT/ch0_0.h264 --snapurl http://%s$D_HTTPD_PORT/cgi-bin/snapshot.sh?res=high$WATERMARK --type H264"
-        fi
-        if [[ $(get_config ONVIF_PROFILE) == "low" ]] || [[ $(get_config ONVIF_PROFILE) == "both" ]] ; then
-            ONVIF_PROFILE_1="--name Profile_1 --width 640 --height 360 --url rtsp://%s$D_RTSP_PORT/ch0_1.h264 --snapurl http://%s$D_HTTPD_PORT/cgi-bin/snapshot.sh?res=low$WATERMARK --type H264"
         fi
     fi
     $YI_HACK_PREFIX/script/wd_rtsp.sh &
