@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 diff -uar -X exception live/liveMedia/H264or5VideoStreamFramer.cpp live_new/liveMedia/H264or5VideoStreamFramer.cpp
 --- live/liveMedia/H264or5VideoStreamFramer.cpp	2020-05-01 19:14:12.648014433 +0000
 +++ live_new/liveMedia/H264or5VideoStreamFramer.cpp	2020-05-01 18:57:28.768767197 +0000
@@ -65,10 +64,6 @@ diff -uar -X exception live/liveMedia/WAVAudioFileSource.cpp live_new/liveMedia/
 diff -uar -X exception live/rRTSPServer.cpp live_new/rRTSPServer.cpp
 --- live/rRTSPServer.cpp	2020-05-01 19:14:12.652014418 +0000
 +++ live_new/rRTSPServer.cpp	2020-05-01 18:51:51.974002312 +0000
-=======
---- live/rRTSPServer.cpp	2020-04-03 19:00:31.222242542 +0000
-+++ live_new/rRTSPServer.cpp	2020-04-03 18:59:22.065449478 +0000
->>>>>>> + Add patch that adds audio substreams to the RTSP sessions
 @@ -103,13 +103,17 @@
    {
      char const* streamName = "ch0_0.h264";
@@ -107,31 +102,3 @@ diff -uar -X exception live/rRTSPServer.cpp live_new/rRTSPServer.cpp
      sms_low->addSubsession(H264VideoFileServerMediaSubsession
  		       ::createNew(*env, inputFileName, reuseFirstSource));
      rtspServer->addServerMediaSession(sms_low);
-<<<<<<< HEAD
-=======
---- live/liveMedia/WAVAudioFileSource.cpp	2020-02-11 21:42:45.000000000 +0000
-+++ live_new/liveMedia/WAVAudioFileSource.cpp	2020-04-03 19:03:24.259725094 +0000
-@@ -115,7 +115,7 @@
-   // http://www.ringthis.com/dev/wave_format.htm
-   // http://www.lightlink.com/tjweber/StripWav/Canon.html
-   // http://www.onicos.com/staff/iz/formats/wav.html
--
-+#if 0
-   Boolean success = False; // until we learn otherwise
-   do {
-     // RIFF Chunk:
-@@ -204,6 +204,13 @@
-     fBitsPerSample = 0;
-     return;
-   }
-+#else
-+  fWAVHeaderSize = 0;
-+  fBitsPerSample = 16;
-+  fSamplingFrequency = 16000;
-+  fNumChannels = 1;
-+  fAudioFormat = (unsigned char)WA_PCM;
-+#endif
- 
-   fPlayTimePerSample = 1e6/(double)fSamplingFrequency;
- 
->>>>>>> + Add patch that adds audio substreams to the RTSP sessions
