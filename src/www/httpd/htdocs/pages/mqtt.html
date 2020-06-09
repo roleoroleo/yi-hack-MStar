@@ -152,16 +152,34 @@
                     <tr class="row">
                         <td>QoS</td>
                         <td>
-                            <input class="u-full-width" type="text" placeholder="yicam" data-key="MQTT_QOS"/>
+                            <input class="u-full-width" type="text" placeholder="1" data-key="MQTT_QOS"/>
                             <span class="switch-description">
                                 The Quality of Service (QoS) level is an agreement between the sender of a message and the receiver of a message that defines the guarantee of delivery for a specific message.
                             </span>
                         </td>
                     </tr>
                     <tr class="row">
-                        <td>Retain</td>
+                        <td>Retain for motion messages</td>
                         <td>
-                            <input class="u-full-width" type="text" placeholder="yicam" data-key="MQTT_RETAIN"/>
+                            <input class="u-full-width" type="text" placeholder="1" data-key="MQTT_RETAIN_MOTION"/>
+                            <span class="switch-description">
+                                A retained message is a normal MQTT message with the retained flag set to true. The broker stores the last retained message and the corresponding QoS for that topic. (1 = enabled, 0 = disabled)
+                            </span>
+                        </td>
+                    </tr>
+                    <tr class="row">
+                        <td>Retain for video list messages</td>
+                        <td>
+                            <input class="u-full-width" type="text" placeholder="1" data-key="MQTT_RETAIN_MOTION_FILES"/>
+                            <span class="switch-description">
+                                A retained message is a normal MQTT message with the retained flag set to true. The broker stores the last retained message and the corresponding QoS for that topic. (1 = enabled, 0 = disabled)
+                            </span>
+                        </td>
+                    </tr>
+                    <tr class="row">
+                        <td>Retain for baby crying messages</td>
+                        <td>
+                            <input class="u-full-width" type="text" placeholder="1" data-key="MQTT_RETAIN_BABY_CRYING"/>
                             <span class="switch-description">
                                 A retained message is a normal MQTT message with the retained flag set to true. The broker stores the last retained message and the corresponding QoS for that topic. (1 = enabled, 0 = disabled)
                             </span>

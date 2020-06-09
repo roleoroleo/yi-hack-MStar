@@ -5,7 +5,31 @@ APP.status = (function ($) {
     var timeoutVar;
 
     function init() {
+        updateLinks();
         updateStatusPage();
+    }
+
+    function updateLinks() {
+        $.ajax({
+            type: "GET",
+            url: 'cgi-bin/links.sh',
+            dataType: "json",
+            success: function(data) {
+                for (let key in data) {
+                    if (key == "low_res_snapshot" || key == "high_res_snapshot") {
+                        var aTag = $('<a>', {href: data[key]});
+                        aTag.text(data[key]);
+                        $('#td_' + key).text('').append(aTag);
+                    } else {
+                        $('#td_' + key).text(data[key]);
+                        $('#tr_' + key).show();
+                    }
+                }
+            },
+            error: function(response) {
+                console.log('error', response);
+            }
+        });
     }
 
     function updateStatusPage() {

@@ -8,6 +8,8 @@
 !/stock_firmware/h201c/.gitkeep
 /stock_firmware/y25/*
 !/stock_firmware/y25/.gitkeep
+/stock_firmware/y23/*
+!/stock_firmware/y23/.gitkeep
 
 /sysroot/*
 !/sysroot/.gitkeep

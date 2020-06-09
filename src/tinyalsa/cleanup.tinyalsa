@@ -1,0 +1,12 @@
+#!/bin/bash
+
+SCRIPT_DIR=$(cd `dirname $0` && pwd)
+cd $SCRIPT_DIR
+
+cd tinyalsa-1.0.0
+
+make clean
+
+cd ..
+
+rm -f v1.0.0.tar.gz
