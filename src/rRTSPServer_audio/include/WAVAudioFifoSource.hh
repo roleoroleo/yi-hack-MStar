@@ -27,14 +27,11 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 #include "AudioInputDevice.hh"
 #endif
 
-typedef enum {
-  WA_PCM = 0x01,
-  WA_PCMA = 0x06,
-  WA_PCMU = 0x07,
-  WA_IMA_ADPCM = 0x11,
-  WA_UNKNOWN
-} WAV_AUDIO_FORMAT;
-
+#define  WA_PCM 0x01
+#define  WA_PCMA 0x06
+#define  WA_PCMU 0x07
+#define  WA_IMA_ADPCM 0x11
+#define  WA_UNKNOWN 0x12
 
 class WAVAudioFifoSource: public AudioInputDevice {
 public:

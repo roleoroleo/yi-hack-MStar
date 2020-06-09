@@ -23,6 +23,10 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 #include "liveMedia.hh"
 #include "BasicUsageEnvironment.hh"
 #include "WAVAudioFifoServerMediaSubsession.hh"
+#include "WAVAudioFifoSource.hh"
+#include "StreamReplicator.hh"
+#include "YiNoiseReduction.hh"
+#include "DummySink.hh"
 
 UsageEnvironment* env;
 
@@ -35,6 +39,45 @@ Boolean reuseFirstSource = True;
 // (e.g., to reduce network bandwidth),
 // change the following "False" to "True":
 Boolean iFramesOnly = False;
+
+StreamReplicator* startReplicatorStream(const char* inputAudioFileName, Boolean convertToULaw, unsigned int nr_level) {
+    // Create a single WAVAudioFifo source that will be replicated for mutliple streams
+    WAVAudioFifoSource* wavSource = WAVAudioFifoSource::createNew(*env, inputAudioFileName);
+    if (wavSource == NULL) {
+        *env << "Failed to create Fifo Source \n";
+    }
+    printf("wavSource = %p\n", wavSource);
+    // Optionally enable the noise reduction filter
+    FramedSource* intermediateSource;
+    if (nr_level > 0) {
+        intermediateSource = YiNoiseReduction::createNew(*env, wavSource, nr_level);
+    } else {
+        intermediateSource = wavSource;
+    }
+
+    // Optionally convert to uLaw pcm
+    FramedSource* resultSource;
+    if (convertToULaw) {
+        resultSource = uLawFromPCMAudioSource::createNew(*env, intermediateSource, 1/*little-endian*/);
+    } else {
+        resultSource = EndianSwap16::createNew(*env, intermediateSource);
+    }
+
+    // Create and start the replicator that will be given to each subsession
+    StreamReplicator* replicator = StreamReplicator::createNew(*env, resultSource);
+
+    // Begin by creating an input stream from our replicator:
+    FramedSource* source = replicator->createStreamReplica();
+
+    // Then create a 'dummy sink' object to receive thie replica stream:
+    MediaSink* sink = DummySink::createNew(*env, "dummy");
+
+    // Now, start playing, feeding the sink object from the source:
+    sink->startPlaying(*source, NULL, NULL);
+
+    return replicator;
+}
+
 
 static void announceStream(RTSPServer* rtspServer, ServerMediaSession* sms,
                                 char const* streamName, char const* inputFileName, int audio) {
@@ -57,6 +100,7 @@ int main(int argc, char** argv) {
     int nm;
     char user[65];
     char pwd[65];
+    int nr_level = 0;
 
     Boolean convertToULaw = True;
     char const* inputAudioFileName = "/tmp/audio_fifo";
@@ -86,8 +130,14 @@ int main(int argc, char** argv) {
         strcpy(pwd, str);
     }
 
+    str = getenv("NR_LEVEL");
+    if (str && sscanf (str, "%i", &nm) == 1 && nm >= 0 && nm <= 30) {
+        nr_level = nm;
+    }
+
     // If fifo doesn't exist, disable audio
     if (stat (inputAudioFileName, &stat_buffer) != 0) {
+        *env << "Audio fifo does not exist, disabling audio.n";
         audio = 0;
     }
 
@@ -104,6 +154,9 @@ int main(int argc, char** argv) {
         // Repeat the above with each <username>, <password> that you wish to allow
         // access to the server.
     }
+
+    // Create and start the replicator that will be given to each subsession
+    StreamReplicator* replicator = startReplicatorStream(inputAudioFileName, convertToULaw, nr_level);
 
     // Create the RTSP server:
     RTSPServer* rtspServer = RTSPServer::createNew(*env, port, authDB);
@@ -124,7 +177,7 @@ int main(int argc, char** argv) {
     if (res == 0)
     {
         char const* streamName = "ch0_0.h264";
-        char const* inputFileName = "stdin";
+        char const* inputFileName = "/tmp/h264_high";
 
         // First, make sure that the RTPSinks' buffers will be large enough to handle the huge size of DV frames (as big as 288000).
         OutPacketBuffer::maxSize = 300000;
@@ -136,7 +189,7 @@ int main(int argc, char** argv) {
                                 ::createNew(*env, inputFileName, reuseFirstSource));
         if (audio == 1) {
             sms_high->addSubsession(WAVAudioFifoServerMediaSubsession
-                                ::createNew(*env, inputAudioFileName, reuseFirstSource, convertToULaw));
+                                   ::createNew(*env, replicator, reuseFirstSource, convertToULaw));
         }
         rtspServer->addServerMediaSession(sms_high);
 
@@ -144,10 +197,10 @@ int main(int argc, char** argv) {
     }
 
     // A H.264 video elementary stream:
-    if (res == 1)
+    if (res == 0)
     {
         char const* streamName = "ch0_1.h264";
-        char const* inputFileName = "stdin";
+        char const* inputFileName = "/tmp/h264_low";
 
         // First, make sure that the RTPSinks' buffers will be large enough to handle the huge size of DV frames (as big as 288000).
         OutPacketBuffer::maxSize = 300000;
@@ -159,11 +212,29 @@ int main(int argc, char** argv) {
                                 ::createNew(*env, inputFileName, reuseFirstSource));
         if (audio == 1) {
             sms_low->addSubsession(WAVAudioFifoServerMediaSubsession
-                                ::createNew(*env, inputAudioFileName, reuseFirstSource, convertToULaw));
+                                ::createNew(*env, replicator, reuseFirstSource, convertToULaw));
         }
         rtspServer->addServerMediaSession(sms_low);
 
         announceStream(rtspServer, sms_low, streamName, inputFileName, audio);
+    }
+
+    // A PCM audio elementary stream:
+    if (audio)
+    {
+        char const* streamName = "ch0_2.h264";
+
+        // First, make sure that the RTPSinks' buffers will be large enough to handle the huge size of DV frames (as big as 288000).
+        OutPacketBuffer::maxSize = 300000;
+
+        ServerMediaSession* sms_audio
+            = ServerMediaSession::createNew(*env, streamName, streamName,
+                                              descriptionString);
+        sms_audio->addSubsession(WAVAudioFifoServerMediaSubsession
+                                   ::createNew(*env, replicator, reuseFirstSource, convertToULaw));
+        rtspServer->addServerMediaSession(sms_audio);
+
+        announceStream(rtspServer, sms_audio, streamName, inputAudioFileName, audio);
     }
 
     // Also, attempt to create a HTTP server for RTSP-over-HTTP tunneling.
