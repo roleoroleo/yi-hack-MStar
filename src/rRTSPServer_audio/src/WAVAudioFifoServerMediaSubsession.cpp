@@ -97,20 +97,19 @@ FramedSource* WAVAudioFifoServerMediaSubsession
 ::createNewStreamSource(unsigned /*clientSessionId*/, unsigned& estBitrate) {
   FramedSource* resultSource = NULL;
   WAVAudioFifoSource* originalSource = NULL;
+  FramedFilter* previousSource = (FramedFilter*)fReplicator->inputSource();
 
-  // The amount of filters depends on wheter noise reduction is enabled
-  FramedFilter* filterSource1 = (FramedFilter*)fReplicator->inputSource();
-  // Source of endian-swap or uLaw filter
-  FramedFilter* filterSource2 = (FramedFilter*)filterSource1->inputSource();
-  // Source of noise reduction filter
-  FramedFilter* filterSource3 = (FramedFilter*)filterSource2->inputSource();
-
-  if (((WAVAudioFifoSource*)(filterSource2))->bitsPerSample() != 0) {
-      originalSource = (WAVAudioFifoSource*)(filterSource2);
-  } else {
-      originalSource = (WAVAudioFifoSource*)(filterSource3);
+  // Iterate back into the filter chain until a source is found that 
+  // has a sample frequency and expected to be a WAVAudioFifoSource.
+  for (int x = 0; x < 10; x++) {
+    if (((WAVAudioFifoSource*)(previousSource))->bitsPerSample() != 0) {
+      printf("WAVAudioFifoSource found at x = %d\n", x);
+      originalSource = (WAVAudioFifoSource*)(previousSource);
+      break; 
+    }
+    previousSource = (FramedFilter*)previousSource->inputSource();
   }
-  
+
   printf("fReplicator->inputSource() = %p\n", originalSource);
   resultSource = fReplicator->createStreamReplica();
   if (resultSource == NULL) {
