@@ -29,7 +29,6 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 #include "../../../dummylib/YiAudioLibFuncs.h"
 
 #define ALSA_BUF_SIZE 512
-#define ALSA_SAMPLING_FREQ 8000
 
 class YiNoiseReduction: public FramedFilter {
 public:

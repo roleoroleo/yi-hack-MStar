@@ -19,6 +19,7 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 // Implementation
 
 #include "YiNoiseReduction.hh"
+#include "WAVAudioFifoSource.hh"
 
 // Level defines the ammount of noise reduction. On YiHome1080 6FUS is was set to 30.
 YiNoiseReduction*
@@ -38,7 +39,8 @@ YiNoiseReduction::YiNoiseReduction(UsageEnvironment& env, FramedSource* inputSou
   // Setup audio processing struct
   apStruct.point_number = 256; // Magic
   apStruct.channels = 1; // Mono
-  apStruct.rate = ALSA_SAMPLING_FREQ;
+  apStruct.rate = ((WAVAudioFifoSource*)(inputSource))->samplingFrequency();
+  printf("Sampling freq input source: %d Hz\n", apStruct.rate);
 
   // Initialize noise reduction.
   int res = IaaApc_Init((char* const)apBuf, &apStruct);
