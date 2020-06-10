@@ -177,7 +177,7 @@ int main(int argc, char** argv) {
     if (res == 0)
     {
         char const* streamName = "ch0_0.h264";
-        char const* inputFileName = "/tmp/h264_high";
+        char const* inputFileName = "/tmp/h264_high_fifo";
 
         // First, make sure that the RTPSinks' buffers will be large enough to handle the huge size of DV frames (as big as 288000).
         OutPacketBuffer::maxSize = 300000;
@@ -200,7 +200,7 @@ int main(int argc, char** argv) {
     if (res == 0)
     {
         char const* streamName = "ch0_1.h264";
-        char const* inputFileName = "/tmp/h264_low";
+        char const* inputFileName = "/tmp/h264_low_fifo";
 
         // First, make sure that the RTPSinks' buffers will be large enough to handle the huge size of DV frames (as big as 288000).
         OutPacketBuffer::maxSize = 300000;
