@@ -103,14 +103,17 @@ FramedSource* WAVAudioFifoServerMediaSubsession
   // has a sample frequency and expected to be a WAVAudioFifoSource.
   for (int x = 0; x < 10; x++) {
     if (((WAVAudioFifoSource*)(previousSource))->bitsPerSample() != 0) {
+#ifdef DEBUG
       printf("WAVAudioFifoSource found at x = %d\n", x);
+#endif
       originalSource = (WAVAudioFifoSource*)(previousSource);
       break; 
     }
     previousSource = (FramedFilter*)previousSource->inputSource();
   }
-
+#ifdef DEBUG
   printf("fReplicator->inputSource() = %p\n", originalSource);
+#endif
   resultSource = fReplicator->createStreamReplica();
   if (resultSource == NULL) {
     printf("Failed to create stream replica\n");
@@ -124,7 +127,9 @@ FramedSource* WAVAudioFifoServerMediaSubsession
     fConvertToULaw = True;
     fNumChannels = originalSource->numChannels();
     unsigned bitsPerSecond = fSamplingFrequency*fBitsPerSample*fNumChannels;
+#ifdef DEBUG    
     printf("Original source FMT: %d bps: %d freq: %d\n", fAudioFormat, fBitsPerSample, fSamplingFrequency);
+#endif
     fFileDuration = ~0;//(float)((8.0*originalSource->numPCMBytes())/(fSamplingFrequency*fNumChannels*fBitsPerSample));
 
     estBitrate = (bitsPerSecond+500)/1000; // kbps
@@ -192,7 +197,9 @@ RTPSink* WAVAudioFifoServerMediaSubsession
     } else { //unknown format
       break;
     }
+#ifdef DEBUG
     printf("Create SimpleRTPSink: %s, freq: %d, channels %d\n", mimeType, fSamplingFrequency, fNumChannels);
+#endif
     return SimpleRTPSink::createNew(envir(), rtpGroupsock,
 				    payloadFormatCode, fSamplingFrequency,
 				    "audio", mimeType, fNumChannels);

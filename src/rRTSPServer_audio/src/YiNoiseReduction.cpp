@@ -40,8 +40,9 @@ YiNoiseReduction::YiNoiseReduction(UsageEnvironment& env, FramedSource* inputSou
   apStruct.point_number = 256; // Magic
   apStruct.channels = 1; // Mono
   apStruct.rate = ((WAVAudioFifoSource*)(inputSource))->samplingFrequency();
+#ifdef DEBUG  
   printf("Sampling freq input source: %d Hz\n", apStruct.rate);
-
+#endif
   // Initialize noise reduction.
   int res = IaaApc_Init((char* const)apBuf, &apStruct);
   if (res != 0) {
@@ -62,7 +63,7 @@ YiNoiseReduction::YiNoiseReduction(UsageEnvironment& env, FramedSource* inputSou
     printf("Failed setting level for noise reduction\n");
     return;
   }
-  printf("Noise reduction level: %d\n", level);
+  printf("Noise reduction enabled, level: %d\n", level);
 }
 
 YiNoiseReduction::~YiNoiseReduction() {
@@ -108,5 +109,4 @@ void YiNoiseReduction::afterGettingFrame1(unsigned frameSize, unsigned numTrunca
   fDurationInMicroseconds = durationInMicroseconds;
   afterGetting(this);
 }
-
 
