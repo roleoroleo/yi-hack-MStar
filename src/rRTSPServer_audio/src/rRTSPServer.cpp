@@ -46,7 +46,7 @@ StreamReplicator* startReplicatorStream(const char* inputAudioFileName, Boolean 
     if (wavSource == NULL) {
         *env << "Failed to create Fifo Source \n";
     }
-    printf("wavSource = %p\n", wavSource);
+
     // Optionally enable the noise reduction filter
     FramedSource* intermediateSource;
     if (nr_level > 0) {
