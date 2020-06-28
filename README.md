@@ -1,3 +1,7 @@
+<p align="center">
+	<img height="200" src="https://user-images.githubusercontent.com/39277388/85948999-59034780-b954-11ea-8fb3-c4c88727cf5b.png">
+</p>
+
 # Custom firmware for Yi camera based on MStar platform
 
 This firmware is completely based on the work done by TheCrypt0
