@@ -5,6 +5,8 @@ cd $SCRIPT_DIR
 
 cd mosquitto || exit 1
 
+export CXX=g++
+
 make clean
 make -j$(nproc) \
     CROSS_COMPILE=arm-linux-gnueabihf- \
