@@ -16,14 +16,10 @@ APP.status = (function ($) {
             dataType: "json",
             success: function(data) {
                 for (let key in data) {
-                    if (key == "low_res_snapshot" || key == "high_res_snapshot") {
-                        var aTag = $('<a>', {href: data[key]});
-                        aTag.text(data[key]);
-                        $('#td_' + key).text('').append(aTag);
-                    } else {
-                        $('#td_' + key).text(data[key]);
-                        $('#tr_' + key).show();
-                    }
+                    var aTag = $('<a>', {href: data[key]});
+                    aTag.text(data[key]);
+                    $('#td_' + key).text('').append(aTag);
+                    $('#tr_' + key).show();
                 }
             },
             error: function(response) {
