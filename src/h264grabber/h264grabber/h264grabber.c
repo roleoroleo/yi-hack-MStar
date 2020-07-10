@@ -33,6 +33,8 @@
 #define RESOLUTION_LOW 360
 #define RESOLUTION_HIGH 1080
 
+//#define REPEAT 1
+
 unsigned char SPS[] = { 0x00, 0x00, 0x00, 0x01, 0x67 };
 
 unsigned char SEI_F0[] = { 0x00, 0x00, 0x00, 0x01, 0x06, 0xF0 };
@@ -113,6 +115,23 @@ unsigned int rmm_virt2phys(unsigned int inAddr) {
     return outAddr;
 }
 
+long long current_timestamp() {
+    struct timeval te; 
+    gettimeofday(&te, NULL); // get current time
+    long long milliseconds = te.tv_sec*1000LL + te.tv_usec/1000; // calculate milliseconds
+
+    return milliseconds;
+}
+
+void fillCheck(unsigned char *check, int checkSize, unsigned char *buf, int bufSize)
+{
+    int i;
+
+    for (i=0; i<checkSize; i++) {
+        check[i] = buf[bufSize/checkSize*i];
+    }
+}
+
 void print_usage(char *progname)
 {
     fprintf(stderr, "\nUsage: %s [-r RES] [-d]\n\n", progname);
@@ -124,14 +143,6 @@ void print_usage(char *progname)
     fprintf(stderr, "\t\tenable debug\n");
     fprintf(stderr, "\t-h, --help\n");
     fprintf(stderr, "\t\tprint this help\n");
-}
-
-long long current_timestamp() {
-    struct timeval te; 
-    gettimeofday(&te, NULL); // get current time
-    long long milliseconds = te.tv_sec*1000LL + te.tv_usec/1000; // calculate milliseconds
-
-    return milliseconds;
 }
 
 int main(int argc, char **argv)
@@ -148,6 +159,7 @@ int main(int argc, char **argv)
     unsigned int ivAddr, ipAddr;
     unsigned int size;
     unsigned char *addr;
+    unsigned char check1[64], check2[64];
     char filLenFile[1024];
     char timeStampFile[1024];
     unsigned char buffer[262144];
@@ -306,14 +318,19 @@ int main(int argc, char **argv)
             if (time == oldTime) {
                 usleep(8000);
                 continue;
-            } else if (time - oldTime <= 75000 ) {
+            } else if (time - oldTime <= 75000) {
                 repeat = 1;
-            } else if (time - oldTime > 75000 ) {
+            } else if ((time - oldTime > 75000) && (time - oldTime <= 125000)) {
                 fprintf(stderr, "frame lost: %u\n", time - oldTime);
+#ifdef REPEAT
                 repeat = 2;
-            } else if (time - oldTime > 125000 ) {
+#else
+                repeat = 1;
+#endif
+            } else if (time - oldTime > 125000) {
                 // If time - oldTime > 125000 (125 ms) assume sync lost
-                if (debug) fprintf(stderr, "sync lost: %u - %u\n", time, oldTime);
+                fprintf(stderr, "sync lost: %u - %u\n", time, oldTime);
+                repeat = 1;
                 break;
             }
 
@@ -325,7 +342,18 @@ int main(int argc, char **argv)
             if (debug) fprintf(stderr, "time: %u - len: %d\n", time, len);
             if (debug) fprintf(stderr, "milliseconds: %lld\n", current_timestamp());
 
+            if (debug) fprintf(stderr, "copy buffer: len %d\n", len);
             memcpy(buffer, addr, len);
+            memset(check1, '\0', sizeof(check1));
+            fillCheck(check2, sizeof(check2), buffer, len);
+
+            while (memcmp(check1, check2, sizeof(check1)) != 0) {
+                usleep(1000);
+                if (debug) fprintf(stderr, "copy again buffer: len %d\n", len);
+                memcpy(buffer, addr, len);
+                memcpy(check1, check2, sizeof(check1));
+                fillCheck(check2, sizeof(check2), buffer, len);
+            }
             oldTime = time;
 
             while (repeat > 0) {
