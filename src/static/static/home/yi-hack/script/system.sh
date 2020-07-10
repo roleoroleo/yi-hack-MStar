@@ -240,6 +240,10 @@ if [[ $FREE_SPACE != "0" ]] ; then
     /usr/sbin/crond -c /var/spool/cron/crontabs/
 fi
 
+if [[ $(get_config FTP_UPLOAD) == "yes" ]] ; then
+    /home/yi-hack/script/ftppush.sh start &
+fi
+
 if [ -f "/tmp/sd/yi-hack/startup.sh" ]; then
     /tmp/sd/yi-hack/startup.sh
 fi
