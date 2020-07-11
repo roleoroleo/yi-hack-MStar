@@ -56,7 +56,7 @@ Apart from RTSP, snapshot and ONVIF, all the features are copied from the TheCry
   - RTSP server - allows a RTSP stream of the video (high and/or low resolution) but without audio.
     - rtsp://IP-CAM/ch0_0.h264             (high res)
     - rtsp://IP-CAM:8554/ch0_1.h264        (low res)
-  - ONVIF server (with support for h264 stream, snapshot, ptz and presets - standardized interfaces for IP cameras.
+  - ONVIF server (with support for h264 stream, snapshot, ptz, presets and WS-Discovery) - standardized interfaces for IP cameras.
   - Snapshot service - allows to get a jpg with a web request.
   Gets the latest yuv image from the kernel buffer and converts it to jpg.
     - http://IP-CAM:8080/cgi-bin/snapshot.sh?res=low        (select resolution: low or high)
@@ -66,6 +66,7 @@ Apart from RTSP, snapshot and ONVIF, all the features are copied from the TheCry
   - SSH server - dropbear.
   - Telnet server - busybox.
   - FTP server.
+  - FTP push: export mp4 video to an FTP server (thanks to @Catfriend1).
   - Authentication for HTTP, RTSP and ONVIF server.
   - Proxychains-ng - Disabled by default. Useful if the camera is region locked.
   - Original watermark image removed.
@@ -80,7 +81,8 @@ Apart from RTSP, snapshot and ONVIF, all the features are copied from the TheCry
   - Management of motion detect events and videos through a web page.
   - PTZ support through a web page.
   - The possibility to disable all the cloud features.
-  - Online firmware upgrade
+  - Online firmware upgrade.
+  - Load/save/reset configuration.
 
 ## Performance
 
