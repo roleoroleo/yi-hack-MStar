@@ -48,8 +48,12 @@ APP.eventsdir = (function ($) {
                 loadingStatusElem.fadeOut(500);
 
                 $.each(response, function (key, state) {
-                    if(key=="FREE_SPACE")
+                    if(key=="FREE_SPACE"  || key=="FTP_HOST" || key=="FTP_USERNAME")
                         $('input[type="text"][data-key="' + key +'"]').prop('value', state);
+                    else if(key=="FTP_PASSWORD")
+                        $('input[type="password"][data-key="' + key +'"]').prop('value', state);
+                    else
+                        $('input[type="checkbox"][data-key="' + key +'"]').prop('checked', state === 'yes');
                 });
             },
             error: function(response) {
@@ -67,7 +71,14 @@ APP.eventsdir = (function ($) {
 
         saveStatusElem.text("Saving...");
 
+        $('.configs-switch input[type="checkbox"]').each(function () {
+            configs[$(this).attr('data-key')] = $(this).prop('checked') ? 'yes' : 'no';
+        });
+
         configs["FREE_SPACE"] = $('input[type="text"][data-key="FREE_SPACE"]').prop('value');
+        configs["FTP_HOST"] = $('input[type="text"][data-key="FTP_HOST"]').prop("value");
+        configs["FTP_USERNAME"] = $('input[type="text"][data-key="FTP_USERNAME"]').prop("value");
+        configs["FTP_PASSWORD"] = $('input[type="password"][data-key="FTP_PASSWORD"]').prop("value");
 
         $.ajax({
             type: "POST",
