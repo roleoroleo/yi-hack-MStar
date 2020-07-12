@@ -110,7 +110,7 @@ diff -Naur tinyalsa-1.0.0.ori/src/pcm.c tinyalsa-1.0.0/src/pcm.c
  #define SNDRV_PCM_HW_PARAMS_NO_PERIOD_WAKEUP (1<<2)
  
 +#define CONVERT_TO_MONO
-+#define CONVERT_TO_8KHZ
++//#define CONVERT_TO_8KHZ
 +#ifdef CONVERT_TO_8KHZ
 +#define CONVERT_TO_MONO
 +#endif

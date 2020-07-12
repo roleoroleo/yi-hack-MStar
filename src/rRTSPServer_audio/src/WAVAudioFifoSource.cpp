@@ -127,7 +127,7 @@ WAVAudioFifoSource::WAVAudioFifoSource(UsageEnvironment& env, FILE* fid)
   // Header vaules: 8 Khz, 16 bit,  mono
   fWAVHeaderSize = 0;
   fBitsPerSample = 16;
-  fSamplingFrequency = 8000;
+  fSamplingFrequency = 16000;
   fNumChannels = 1;
   fAudioFormat = (unsigned char)WA_PCM;
 
@@ -141,6 +141,9 @@ WAVAudioFifoSource::WAVAudioFifoSource(UsageEnvironment& env, FILE* fid)
   unsigned desiredSamplesPerFrame = (unsigned)(0.02*fSamplingFrequency);
   unsigned samplesPerFrame = desiredSamplesPerFrame < maxSamplesPerFrame ? desiredSamplesPerFrame : maxSamplesPerFrame;
   fPreferredFrameSize = (samplesPerFrame*fNumChannels*fBitsPerSample)/8;
+
+  // Yi Mstar noise reduction requires a framesize of 512
+  fPreferredFrameSize = 512;
 
   fFidIsSeekable = FileIsSeekable(fFid);
   // Now that we've finished reading the WAV header, all future reads (of audio samples) from the file will be asynchronous:
