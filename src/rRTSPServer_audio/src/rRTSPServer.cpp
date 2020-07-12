@@ -174,7 +174,7 @@ int main(int argc, char** argv) {
     // "ServerMediaSubsession" objects for each audio/video substream.
 
     // A H.264 video elementary stream:
-    if (res == 0)
+    if ((res == 0) || (res == 2))
     {
         char const* streamName = "ch0_0.h264";
         char const* inputFileName = "/tmp/h264_high_fifo";
@@ -197,7 +197,7 @@ int main(int argc, char** argv) {
     }
 
     // A H.264 video elementary stream:
-    if (res == 0)
+    if ((res == 1) || (res == 2))
     {
         char const* streamName = "ch0_1.h264";
         char const* inputFileName = "/tmp/h264_low_fifo";

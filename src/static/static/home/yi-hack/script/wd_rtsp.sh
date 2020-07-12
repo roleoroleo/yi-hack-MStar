@@ -20,13 +20,22 @@ get_config()
 
 restart_rtsp()
 {
-    if [[ "$1" == "low" ]]; then
-        if [[ $(get_config RTSP_STREAM) == "low" ]] || [[ $(get_config RTSP_STREAM) == "both" ]]; then
-            h264grabber_l -r low | RRTSP_RES=1 RRTSP_PORT=$RTSP_SUB_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD $RTSP_L_EXE &
+    if [[ $(get_config RTSP) == "yes" ]] ; then
+        if [[ $(get_config RTSP_STREAM) == "low" ]]; then
+            h264grabber_l -r low -f &
+            sleep 1
+            NR_LEVEL=25 RRTSP_RES=1 RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD $RTSP_EXE &
         fi
-    elif [[ "$1" == "high" ]]; then
-        if [[ $(get_config RTSP_STREAM) == "high" ]] || [[ $(get_config RTSP_STREAM) == "both" ]]; then
-            h264grabber_h -r high | RRTSP_RES=0 RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD $RTSP_H_EXE &
+        if [[ $(get_config RTSP_STREAM) == "high" ]]; then
+            h264grabber_h -r high -f &
+            sleep 1
+            NR_LEVEL=25 RRTSP_RES=0 RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD $RTSP_EXE &
+        fi
+        if [[ $(get_config RTSP_STREAM) == "both" ]]; then
+            h264grabber_l -r low -f &
+            h264grabber_h -r high -f &
+            sleep 1
+            NR_LEVEL=25 RRTSP_RES=2 RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD $RTSP_EXE &
         fi
     fi
 }
@@ -34,63 +43,64 @@ restart_rtsp()
 check_rtsp()
 {
 #  echo "$(date +'%Y-%m-%d %H:%M:%S') - Checking RTSP process..." >> $LOG_FILE
-    SOCKET_L=`netstat -an 2>&1 | grep ":$RTSP_SUB_PORT " | grep ESTABLISHED | grep -c ^`
+    SOCKET=`netstat -an 2>&1 | grep ":$RTSP_PORT " | grep ESTABLISHED | grep -c ^`
     CPU_1_L=`top -b -n 2 -d 1 | grep h264grabber_l | grep -v grep | tail -n 1 | awk '{print $8}'`
-    CPU_2_L=`top -b -n 2 -d 1 | grep $RTSP_L_EXE | grep -v grep | tail -n 1 | awk '{print $8}'`
-
-    SOCKET_H=`netstat -an 2>&1 | grep ":$RTSP_PORT " | grep ESTABLISHED | grep -c ^`
     CPU_1_H=`top -b -n 2 -d 1 | grep h264grabber_h | grep -v grep | tail -n 1 | awk '{print $8}'`
-    CPU_2_H=`top -b -n 2 -d 1 | grep $RTSP_H_EXE | grep -v grep | tail -n 1 | awk '{print $8}'`
+    CPU_2=`top -b -n 2 -d 1 | grep $RTSP_EXE | grep -v grep | tail -n 1 | awk '{print $8}'`
 
-    if [ $SOCKET_L -eq 0 ]; then
-        if [ "$CPU_1_L" == "" ] || [ "$CPU_2_L" == "" ]; then
-            echo "$(date +'%Y-%m-%d %H:%M:%S') - No running processes for low res, restarting..." >> $LOG_FILE
-            killall -q $RTSP_L_EXE
-            killall -q h264grabber_l
-            sleep 1
-            restart_rtsp "low"
+    if [ $SOCKET -eq 0 ]; then
+        if [[ $(get_config RTSP_STREAM) == "low" ]] || [[ $(get_config RTSP_STREAM) == "both" ]]; then
+            if [ "$CPU_1_L" == "" ] || [ "$CPU_2" == "" ]; then
+                echo "$(date +'%Y-%m-%d %H:%M:%S') - No running processes for low res, restarting..." >> $LOG_FILE
+                killall -q $RTSP_EXE
+                killall -q h264grabber_l
+                killall -q h264grabber_h
+                sleep 1
+                restart_rtsp
+            fi
+            COUNTER_L=0
         fi
-        COUNTER_L=0
+        if [[ $(get_config RTSP_STREAM) == "high" ]] || [[ $(get_config RTSP_STREAM) == "both" ]]; then
+            if [ "$CPU_1_H" == "" ] || [ "$CPU_2" == "" ]; then
+                echo "$(date +'%Y-%m-%d %H:%M:%S') - No running processes for high res, restarting..." >> $LOG_FILE
+                killall -q $RTSP_EXE
+                killall -q h264grabber_l
+                killall -q h264grabber_h
+                sleep 1
+                restart_rtsp
+            fi
+            COUNTER_H=0
+        fi
     fi
-    if [ $SOCKET_L -gt 0 ]; then
-        if [ "$CPU_1_L" == "0.0" ] && [ "$CPU_2_L" == "0.0" ]; then
+    if [ $SOCKET -gt 0 ]; then
+        if [ "$CPU_1_L" == "0.0" ] && [ "$CPU_2" == "0.0" ]; then
             COUNTER_L=$((COUNTER_L+1))
             echo "$(date +'%Y-%m-%d %H:%M:%S') - Detected possible locked process for low res ($COUNTER_L)" >> $LOG_FILE
             if [ $COUNTER_L -ge $COUNTER_LIMIT ]; then
-                echo "$(date +'%Y-%m-%d %H:%M:%S') - Restarting processes for low res" >> $LOG_FILE
-                killall -q $RTSP_L_EXE
+                echo "$(date +'%Y-%m-%d %H:%M:%S') - Restarting processes" >> $LOG_FILE
+                killall -q $RTSP_EXE
                 killall -q h264grabber_l
+                killall -q h264grabber_h
                 sleep 1
-                restart_rtsp "low"
+                restart_rtsp
                 COUNTER_L=0
             fi
         else
             COUNTER_L=0
         fi
-    fi
 
-    if [ $SOCKET_H -eq 0 ]; then
-        if [ "$CPU_1_H" == "" ] || [ "$CPU_2_H" == "" ]; then
-            echo "$(date +'%Y-%m-%d %H:%M:%S') - No running processes for high res, restarting..." >> $LOG_FILE
-            killall -q $RTSPS_H_EXE
-            killall -q h264grabber_h
-            sleep 1
-            restart_rtsp "high"
-        fi
-        COUNTER_H=0
-    fi
-    if [ $SOCKET_H -gt 0 ]; then
-        if [ "$CPU_1_H" == "0.0" ] && [ "$CPU_2_H" == "0.0" ]; then
+        if [ "$CPU_1_H" == "0.0" ] && [ "$CPU_2" == "0.0" ]; then
             COUNTER_H=$((COUNTER_H+1))
             echo "$(date +'%Y-%m-%d %H:%M:%S') - Detected possible locked process for high res ($COUNTER_H)" >> $LOG_FILE
             if [ $COUNTER_H -ge $COUNTER_LIMIT ]; then
-                echo "$(date +'%Y-%m-%d %H:%M:%S') - Restarting processes for high res" >> $LOG_FILE
-                killall -q $RTSPS_H_EXE
+                echo "$(date +'%Y-%m-%d %H:%M:%S') - Restarting processes" >> $LOG_FILE
+                killall -q $RTSP_EXE
+                killall -q h264grabber_l
                 killall -q h264grabber_h
                 sleep 1
-                restart_rtsp "high"
+                restart_rtsp
                 COUNTER_H=0
-           fi
+            fi
         else
             COUNTER_H=0
         fi
@@ -120,20 +130,11 @@ case $(get_config RTSP_PORT) in
     ''|*[!0-9]*) RTSP_PORT=554 ;;
     *) RTSP_PORT=$(get_config RTSP_PORT) ;;
 esac
-case $(get_config RTSP_SUB_PORT) in
-    ''|*[!0-9]*) RTSP_SUB_PORT=8554 ;;
-    *) RTSP_SUB_PORT=$(get_config RTSP_SUB_PORT) ;;
-esac
 
-if [[ $(get_config RTSP_AUDIO) == "none" ]] ; then
-    RTSP_L_EXE="rRTSPServer_l"
-    RTSP_H_EXE="rRTSPServer_h"
-elif [[ $(get_config RTSP_AUDIO) == "low" ]] ; then
-    RTSP_L_EXE="rRTSPServer_audio_l"
-    RTSP_H_EXE="rRTSPServer_h"
-elif [[ $(get_config RTSP_AUDIO) == "high" ]] ; then
-    RTSP_L_EXE="rRTSPServer_l"
-    RTSP_H_EXE="rRTSPServer_audio_h"
+if [[ $(get_config RTSP_AUDIO) == "yes" ]] ; then
+    RTSP_EXE="rRTSPServer_audio"
+else
+    RTSP_EXE="rRTSPServer"
 fi
 
 echo "$(date +'%Y-%m-%d %H:%M:%S') - Starting RTSP watchdog..." >> $LOG_FILE

@@ -93,17 +93,13 @@
                     <tr class="row">
                         <td>RTSP Audio</td>
                         <td>
-                            <div class="standard-select">
-                                <select data-key="RTSP_AUDIO" id="RTSP_AUDIO">
-                                    <option value="high">High</option>
-                                    <option value="low">Low</option>
-                                    <option value="none">None</option>
-                                </select>
-                                <br/>
-                                <span class="strong">WARNING: this is an experimental feature.</span>
-                            </div>
+                            <label class="switch small">
+                                <input type="checkbox" data-key="RTSP_AUDIO"/>
+                                <span class="slider round"></span>
+                                <span class="switch-text"></span>
+                            </label>
                             <span class="switch-description">
-                                Select the stream to enable audio for (both is not allowed).
+                                Enable/disable audio for RTSP stream.
                                 <br/>
                                 <span class="strong">WARNING: this is an experimental feature.</span>
                             </span>
@@ -294,15 +290,6 @@
                             <input class="u-full-width" type="text" placeholder="" data-key="RTSP_PORT" id="RTSP_PORT"/>
                             <span class="switch-description">
                                 TCP port used by RTSP Server (default 554).
-                            </span>
-                        </td>
-                    </tr>
-                    <tr class="row">
-                        <td>RTSP Sub Port</td>
-                        <td>
-                            <input class="u-full-width" type="text" placeholder="" data-key="RTSP_SUB_PORT" id="RTSP1_PORT"/>
-                            <span class="switch-description">
-                                TCP port used by RTSP Server sub stream (default 8554).
                             </span>
                         </td>
                     </tr>
