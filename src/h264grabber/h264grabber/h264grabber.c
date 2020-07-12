@@ -29,9 +29,13 @@
 #include <dirent.h>
 #include <getopt.h>
 #include <sys/time.h>
+#include <signal.h>
 
 #define RESOLUTION_LOW 360
 #define RESOLUTION_HIGH 1080
+
+#define FIFO_NAME_LOW "/tmp/h264_low_fifo"
+#define FIFO_NAME_HIGH "/tmp/h264_high_fifo"
 
 //#define REPEAT 1
 
@@ -132,11 +136,18 @@ void fillCheck(unsigned char *check, int checkSize, unsigned char *buf, int bufS
     }
 }
 
+void sigpipe_handler(int unused)
+{
+    // Do nothing
+}
+
 void print_usage(char *progname)
 {
     fprintf(stderr, "\nUsage: %s [-r RES] [-d]\n\n", progname);
     fprintf(stderr, "\t-r RES, --resolution RES\n");
     fprintf(stderr, "\t\tset resolution: LOW or HIGH (default HIGH)\n");
+    fprintf(stderr, "\t-f, --fifo\n");
+    fprintf(stderr, "\t\tenable fifo output\n");
     fprintf(stderr, "\t-s, --ssf0\n");
     fprintf(stderr, "\t\tskip SEI F0\n");
     fprintf(stderr, "\t-d, --debug\n");
@@ -148,13 +159,14 @@ void print_usage(char *progname)
 int main(int argc, char **argv)
 {
     int res = RESOLUTION_HIGH;
+    int fifo = 0;
     int ssf0 = 0;
     int debug = 0;
 
     int c;
     int repeat;
     const char memDevice[] = "/dev/mem";
-    FILE *fPtr, *fLen, *fTime;
+    FILE *fPtr, *fLen, *fTime, *fOut;
     int fMem;
     unsigned int ivAddr, ipAddr;
     unsigned int size;
@@ -166,12 +178,14 @@ int main(int argc, char **argv)
     int len;
     unsigned int time, oldTime = 0;
     int stream_started = 0;
+    mode_t mode = 0755;
 
     while (1) {
         static struct option long_options[] =
         {
             {"resolution",  required_argument, 0, 'r'},
-            {"ssf0",  required_argument, 0, 's'},
+            {"fifo",  no_argument, 0, 'f'},
+            {"ssf0",  no_argument, 0, 's'},
             {"debug",  no_argument, 0, 'd'},
             {"help",  no_argument, 0, 'h'},
             {0, 0, 0, 0}
@@ -179,7 +193,7 @@ int main(int argc, char **argv)
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        c = getopt_long (argc, argv, "r:sdh",
+        c = getopt_long (argc, argv, "r:fsdh",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -193,6 +207,11 @@ int main(int argc, char **argv)
             } else if (strcasecmp("high", optarg) == 0) {
                 res = RESOLUTION_HIGH;
             }
+            break;
+
+        case 'f':
+            fprintf (stderr, "using fifo as output\n");
+            fifo = 1;
             break;
 
         case 's':
@@ -263,10 +282,39 @@ int main(int argc, char **argv)
         sprintf(timeStampFile, "/proc/mstar/OMX/VMFE0/ENCODER_INFO/OBUF_nTimeStamp");
     }
 
-    char stdoutbuf[262144];
+    if (fifo == 0) {
+        char stdoutbuf[262144];
 
-    if (setvbuf(stdout, stdoutbuf, _IOFBF, sizeof(stdoutbuf)) != 0) {
-        fprintf(stderr, "Error setting stdout buffer\n");
+        if (setvbuf(stdout, stdoutbuf, _IOFBF, sizeof(stdoutbuf)) != 0) {
+            fprintf(stderr, "Error setting stdout buffer\n");
+        }
+        fOut = stdout;
+    } else {
+        sigaction(SIGPIPE, &(struct sigaction){sigpipe_handler}, NULL);
+
+        if (res == RESOLUTION_LOW) {
+            unlink(FIFO_NAME_LOW);
+            if (mkfifo(FIFO_NAME_LOW, mode) < 0) {
+                fprintf(stderr, "mkfifo failed for file %s\n", FIFO_NAME_LOW);
+                return -1;
+            }
+            fOut = fopen(FIFO_NAME_LOW, "w");
+            if (fOut == NULL) {
+                fprintf(stderr, "Error opening fifo %s\n", FIFO_NAME_LOW);
+                return -1;
+            }
+        } else if (res == RESOLUTION_HIGH) {
+            unlink(FIFO_NAME_HIGH);
+            if (mkfifo(FIFO_NAME_HIGH, mode) < 0) {
+                fprintf(stderr, "mkfifo failed for file %s\n", FIFO_NAME_HIGH);
+                return -1;
+            }
+            fOut = fopen(FIFO_NAME_HIGH, "w");
+            if (fOut == NULL) {
+                fprintf(stderr, "Error opening fifo %s\n", FIFO_NAME_HIGH);
+                return -1;
+            }
+        }
     }
 
     while (1) {
@@ -299,12 +347,12 @@ int main(int argc, char **argv)
             if (memcmp(SPS, buffer, sizeof(SPS)) == 0) {
                 if (debug) fprintf(stderr, "time: %u - len: %d\n", time, len);
                 if (ssf0) {
-                    fwrite(buffer, 1, 24, stdout);
-                    fwrite(buffer + 76, 1, len - 76, stdout);
+                    fwrite(buffer, 1, 24, fOut);
+                    fwrite(buffer + 76, 1, len - 76, fOut);
                 } else {
-                    fwrite(buffer, 1, len, stdout);
+                    fwrite(buffer, 1, len, fOut);
                 }
-                fflush(stdout);
+                fflush(fOut);
                 stream_started = 1;
             }
         }
@@ -359,19 +407,29 @@ int main(int argc, char **argv)
             while (repeat > 0) {
                 if (ssf0) {
                     if (memcmp(SEI_F0, buffer, sizeof(SEI_F0)) == 0) {
-                        fwrite(buffer + 52, 1, len - 52, stdout);
+                        fwrite(buffer + 52, 1, len - 52, fOut);
                     } else if (memcmp(SPS, buffer, sizeof(SPS)) == 0) {
-                        fwrite(buffer, 1, 24, stdout);
-                        fwrite(buffer + 76, 1, len - 76, stdout);
+                        fwrite(buffer, 1, 24, fOut);
+                        fwrite(buffer + 76, 1, len - 76, fOut);
                     } else {
-                        fwrite(buffer, 1, len, stdout);
+                        fwrite(buffer, 1, len, fOut);
                     }
                 } else {
-                    fwrite(buffer, 1, len, stdout);
+                    fwrite(buffer, 1, len, fOut);
                 }
-                fflush(stdout);
+                fflush(fOut);
                 repeat--;
             }
+        }
+    }
+
+    if (fifo == 1) {
+        if (res == RESOLUTION_LOW) {
+            fclose(fOut);
+            unlink(FIFO_NAME_LOW);
+        } else if (res == RESOLUTION_HIGH) {
+            fclose(fOut);
+            unlink(FIFO_NAME_HIGH);
         }
     }
 
