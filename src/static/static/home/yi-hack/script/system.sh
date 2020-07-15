@@ -73,6 +73,16 @@ if [[ x$(get_config USERNAME) != "x" ]] ; then
     echo "/:$USERNAME:$PASSWORD" > /tmp/httpd.conf
 fi
 
+PASSWORD_MD5='$1$$qRPK7m23GJusamGpoGLby/'
+if [[ x$(get_config SSH_PASSWORD) != "x" ]] ; then
+    SSH_PASSWORD=$(get_config SSH_PASSWORD)
+    PASSWORD_MD5="$(echo "${SSH_PASSWORD}" | mkpasswd --method=MD5 --stdin)"
+fi
+CUR_PASSWORD_MD5=$(awk -F":" '$1 != "" { print $2 } ' /etc/passwd)
+if [[ x$CUR_PASSWORD_MD5 != x$PASSWORD_MD5 ]] ; then
+    sed -i 's|^\(root:\)[^:]*:|root:'${PASSWORD_MD5}':|g' "/etc/passwd"
+fi
+
 case $(get_config RTSP_PORT) in
     ''|*[!0-9]*) RTSP_PORT=554 ;;
     *) RTSP_PORT=$(get_config RTSP_PORT) ;;

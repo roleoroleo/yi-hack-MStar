@@ -29,7 +29,7 @@ APP.configurations = (function ($) {
                         $('input[type="text"][data-key="' + key +'"]').prop('value', state);
                     else if(key=="RTSP_STREAM" || key=="ONVIF_PROFILE")
                         $('select[data-key="' + key +'"]').prop('value', state);
-                    else if(key=="PASSWORD")
+                    else if(key=="PASSWORD" || key=="SSH_PASSWORD")
                         $('input[type="password"][data-key="' + key +'"]').prop('value', state);
                     else
                         $('input[type="checkbox"][data-key="' + key +'"]').prop('checked', state === 'yes');
@@ -71,6 +71,7 @@ APP.configurations = (function ($) {
         configs["ONVIF_PROFILE"] = $('select[data-key="ONVIF_PROFILE"]').prop('value');
         configs["USERNAME"] = $('input[type="text"][data-key="USERNAME"]').prop('value');
         configs["PASSWORD"] = $('input[type="password"][data-key="PASSWORD"]').prop('value');
+        configs["SSH_PASSWORD"] = $('input[type="password"][data-key="SSH_PASSWORD"]').prop('value');
 
         $.ajax({
             type: "POST",
