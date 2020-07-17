@@ -53,6 +53,7 @@ Additionally:
 
 ## Table of Contents
 
+- [Contributing](#contributing-and-bug-reports)
 - [Features](#features)
 - [Performance](#performance)
 - [Supported cameras](#supported-cameras)
@@ -62,6 +63,9 @@ Additionally:
 - [Acknowledgments](#acknowledgments)
 - [Donation](#donation)
 - [Disclaimer](#disclaimer)
+
+## Contributing and Bug Reports
+See [CONTRIBUTING](CONTRIBUTING.md)
 
 ## Features
 This firmware contains the following features.
