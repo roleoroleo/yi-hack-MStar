@@ -312,7 +312,7 @@ select::-ms-expand {
 /* Custom Select */
 .standard-select {
 	position: relative;
-	width: 20em;
+	width: 10em;
 	height: 3em;
 	line-height: 3;
 	background: #12b6ea;
