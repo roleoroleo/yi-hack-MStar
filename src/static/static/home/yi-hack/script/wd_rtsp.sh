@@ -24,18 +24,18 @@ restart_rtsp()
         if [[ $(get_config RTSP_STREAM) == "low" ]]; then
             h264grabber_l -r low -f &
             sleep 1
-            NR_LEVEL=25 RRTSP_RES=1 RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD $RTSP_EXE &
+            NR_LEVEL=$NR_LEVEL RRTSP_RES=1 RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD $RTSP_EXE &
         fi
         if [[ $(get_config RTSP_STREAM) == "high" ]]; then
             h264grabber_h -r high -f &
             sleep 1
-            NR_LEVEL=25 RRTSP_RES=0 RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD $RTSP_EXE &
+            NR_LEVEL=$NR_LEVEL RRTSP_RES=0 RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD $RTSP_EXE &
         fi
         if [[ $(get_config RTSP_STREAM) == "both" ]]; then
             h264grabber_l -r low -f &
             h264grabber_h -r high -f &
             sleep 1
-            NR_LEVEL=25 RRTSP_RES=2 RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD $RTSP_EXE &
+            NR_LEVEL=$NR_LEVEL RRTSP_RES=2 RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD $RTSP_EXE &
         fi
     fi
 }
@@ -131,11 +131,13 @@ case $(get_config RTSP_PORT) in
     *) RTSP_PORT=$(get_config RTSP_PORT) ;;
 esac
 
-if [[ $(get_config RTSP_AUDIO) == "yes" ]] ; then
-    RTSP_EXE="rRTSPServer_audio"
-else
+if [[ $(get_config RTSP_AUDIO) == "no" ]] || [[ $(get_config RTSP_AUDIO) == "none" ]] ; then
     RTSP_EXE="rRTSPServer"
+else
+    RTSP_EXE="rRTSPServer_audio"
 fi
+
+NR_LEVEL=$(get_config RTSP_AUDIO_NR_LEVEL)
 
 echo "$(date +'%Y-%m-%d %H:%M:%S') - Starting RTSP watchdog..." >> $LOG_FILE
 
