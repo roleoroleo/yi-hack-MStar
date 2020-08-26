@@ -74,10 +74,14 @@ APP.configurations = (function ($) {
         configs["PASSWORD"] = $('input[type="password"][data-key="PASSWORD"]').prop('value');
         configs["SSH_PASSWORD"] = $('input[type="password"][data-key="SSH_PASSWORD"]').prop('value');
 
+        var configData = JSON.stringify(configs);
+        var escapedConfigData = configData.replace(/\\/g,  "\\")
+                                          .replace(/\\"/g, '\\"');
+
         $.ajax({
             type: "POST",
             url: 'cgi-bin/set_configs.sh?conf=system',
-            data: JSON.stringify(configs),
+            data: escapedConfigData,
             dataType: "json",
             success: function(response) {
                 saveStatusElem.text("Saved");
