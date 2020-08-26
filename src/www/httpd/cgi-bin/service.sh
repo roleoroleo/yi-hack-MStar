@@ -132,6 +132,9 @@ if [ "$ACTION" == "start" ] ; then
         start_ftpd $PARAM1
     elif [ "$NAME" == "mqtt" ]; then
         mqttv4 >/dev/null &
+    elif [ "$NAME" == "mp4record" ]; then
+        cd /home/app
+        ./mp4record >/dev/null &
     fi
 elif [ "$ACTION" == "stop" ] ; then
     if [ "$NAME" == "rtsp" ]; then
@@ -142,6 +145,8 @@ elif [ "$ACTION" == "stop" ] ; then
         stop_ftpd $PARAM1
     elif [ "$NAME" == "mqtt" ]; then
         killall mqttv4
+    elif [ "$NAME" == "mp4record" ]; then
+        killall mp4record
     fi
 fi
 
