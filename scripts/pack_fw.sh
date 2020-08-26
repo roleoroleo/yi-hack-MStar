@@ -149,8 +149,12 @@ for AUDIO_FILE in $TMP_DIR/home/app/audio_file/us/$AUDIO_EXTENSION ; do
     rm -f $TMP_DIR/home/app/audio_file/simplecn/$AUDIO_NAME
 
     # Create links to the us version
-    ln -s ../us/$AUDIO_NAME $TMP_DIR/home/app/audio_file/jp/$AUDIO_NAME
-    ln -s ../us/$AUDIO_NAME $TMP_DIR/home/app/audio_file/simplecn/$AUDIO_NAME
+    if [ -d $TMP_DIR/home/app/audio_file/jp ] ; then
+        ln -s ../us/$AUDIO_NAME $TMP_DIR/home/app/audio_file/jp/$AUDIO_NAME
+    fi
+    if [ -d $TMP_DIR/home/app/audio_file/simplecn ] ; then
+        ln -s ../us/$AUDIO_NAME $TMP_DIR/home/app/audio_file/simplecn/$AUDIO_NAME
+    fi
 done
 printf "done!\n"
 
