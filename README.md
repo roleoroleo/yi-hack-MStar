@@ -111,6 +111,8 @@ Currently this project supports only the following cameras:
 | **Yi 1080p Home 9FUS** | 4.2.0* | y25 | - |
 | **Yi 1080p Home 6FUS** | 2.1.0* | y23 | - |
 | **Yi 1080p Home 6FCN** | unknown | y203c | - |
+| **Yi 1080p Home 4FCN** | unknown | y23 | connects to wifi and :8080 setup pages works |
+
 
 This firmware completely overwrite the original firmware.
 So, USE AT YOUR OWN RISK.
