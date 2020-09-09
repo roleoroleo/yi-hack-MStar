@@ -109,6 +109,19 @@
                         </td>
                     </tr>
                     <tr class="row">
+                        <td>Birth and will messages</td>
+                        <td>
+                            <label for="topic_motion">Birth Topic Suffix</label>
+                            <input class="u-full-width" type="text" placeholder="" id="topic_birth" data-key="TOPIC_BIRTH"/>
+                            <label for="motion_start_msg">Birth Message</label>
+                            <input class="u-full-width" type="text" placeholder="" id="birth_msg" data-key="BIRTH_MSG"/>
+                            <label for="topic_motion">Will Topic Suffix</label>
+                            <input class="u-full-width" type="text" placeholder="" id="topic_will" data-key="TOPIC_WILL"/>
+                            <label for="motion_start_msg">Will Message</label>
+                            <input class="u-full-width" type="text" placeholder="" id="will_msg" data-key="WILL_MSG"/>
+                        </td>
+                    </tr>
+                    <tr class="row">
                         <td>Motion </td>
                         <td>
                             <label for="topic_motion">Topic Suffix</label>
@@ -155,6 +168,24 @@
                             <input class="u-full-width" type="text" placeholder="1" data-key="MQTT_QOS"/>
                             <span class="switch-description">
                                 The Quality of Service (QoS) level is an agreement between the sender of a message and the receiver of a message that defines the guarantee of delivery for a specific message.
+                            </span>
+                        </td>
+                    </tr>
+                    <tr class="row">
+                        <td>Retain for birth messages</td>
+                        <td>
+                            <input class="u-full-width" type="text" placeholder="1" data-key="MQTT_RETAIN_BIRTH"/>
+                            <span class="switch-description">
+                                A retained message is a normal MQTT message with the retained flag set to true. The broker stores the last retained message and the corresponding QoS for that topic. (1 = enabled, 0 = disabled)
+                            </span>
+                        </td>
+                    </tr>
+                    <tr class="row">
+                        <td>Retain for will messages</td>
+                        <td>
+                            <input class="u-full-width" type="text" placeholder="1" data-key="MQTT_RETAIN_WILL"/>
+                            <span class="switch-description">
+                                A retained message is a normal MQTT message with the retained flag set to true. The broker stores the last retained message and the corresponding QoS for that topic. (1 = enabled, 0 = disabled)
                             </span>
                         </td>
                     </tr>
