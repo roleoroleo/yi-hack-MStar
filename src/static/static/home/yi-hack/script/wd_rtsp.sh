@@ -48,29 +48,27 @@ check_rtsp()
     CPU_1_H=`top -b -n 2 -d 1 | grep h264grabber_h | grep -v grep | tail -n 1 | awk '{print $8}'`
     CPU_2=`top -b -n 2 -d 1 | grep $RTSP_EXE | grep -v grep | tail -n 1 | awk '{print $8}'`
 
-    if [ $SOCKET -eq 0 ]; then
-        if [[ $(get_config RTSP_STREAM) == "low" ]] || [[ $(get_config RTSP_STREAM) == "both" ]]; then
-            if [ "$CPU_1_L" == "" ] || [ "$CPU_2" == "" ]; then
-                echo "$(date +'%Y-%m-%d %H:%M:%S') - No running processes for low res, restarting..." >> $LOG_FILE
-                killall -q $RTSP_EXE
-                killall -q h264grabber_l
-                killall -q h264grabber_h
-                sleep 1
-                restart_rtsp
-            fi
-            COUNTER_L=0
+    if [[ $(get_config RTSP_STREAM) == "low" ]] || [[ $(get_config RTSP_STREAM) == "both" ]]; then
+        if [ "$CPU_1_L" == "" ] || [ "$CPU_2" == "" ]; then
+            echo "$(date +'%Y-%m-%d %H:%M:%S') - No running processes for low res, restarting..." >> $LOG_FILE
+            killall -q $RTSP_EXE
+            killall -q h264grabber_l
+            killall -q h264grabber_h
+            sleep 1
+            restart_rtsp
         fi
-        if [[ $(get_config RTSP_STREAM) == "high" ]] || [[ $(get_config RTSP_STREAM) == "both" ]]; then
-            if [ "$CPU_1_H" == "" ] || [ "$CPU_2" == "" ]; then
-                echo "$(date +'%Y-%m-%d %H:%M:%S') - No running processes for high res, restarting..." >> $LOG_FILE
-                killall -q $RTSP_EXE
-                killall -q h264grabber_l
-                killall -q h264grabber_h
-                sleep 1
-                restart_rtsp
-            fi
-            COUNTER_H=0
+        COUNTER_L=0
+    fi
+    if [[ $(get_config RTSP_STREAM) == "high" ]] || [[ $(get_config RTSP_STREAM) == "both" ]]; then
+        if [ "$CPU_1_H" == "" ] || [ "$CPU_2" == "" ]; then
+            echo "$(date +'%Y-%m-%d %H:%M:%S') - No running processes for high res, restarting..." >> $LOG_FILE
+            killall -q $RTSP_EXE
+            killall -q h264grabber_l
+            killall -q h264grabber_h
+            sleep 1
+            restart_rtsp
         fi
+        COUNTER_H=0
     fi
     if [ $SOCKET -gt 0 ]; then
         if [ "$CPU_1_L" == "0.0" ] && [ "$CPU_2" == "0.0" ]; then
