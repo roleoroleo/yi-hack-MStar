@@ -37,6 +37,10 @@ init_config()
         D_RTSP_PORT=:$RTSP_PORT
     fi
 
+    if [[ $ONVIF_PORT != "80" ]] ; then
+        D_ONVIF_PORT=:$ONVIF_PORT
+    fi
+
     if [[ $HTTPD_PORT != "80" ]] ; then
         D_HTTPD_PORT=:$HTTPD_PORT
     fi
@@ -71,15 +75,25 @@ start_onvif()
     fi
 
     if [[ $MODEL_SUFFIX == "h201c" ]] || [[ $MODEL_SUFFIX == "h305r" ]] ; then
-        onvif_srvd --pid_file /var/run/onvif_srvd.pid --model "Yi Hack" --manufacturer "Yi" --ifs wlan0 --port $ONVIF_PORT --scope onvif://www.onvif.org/Profile/S $ONVIF_PROFILE_0 $ONVIF_PROFILE_1 $ONVIF_USERPWD --ptz --move_left "/home/yi-hack/bin/ipc_cmd -m left" --move_right "/home/yi-hack/bin/ipc_cmd -m right" --move_up "/home/yi-hack/bin/ipc_cmd -m up" --move_down "/home/yi-hack/bin/ipc_cmd -m down" --move_stop "/home/yi-hack/bin/ipc_cmd -m stop" --move_preset "/home/yi-hack/bin/ipc_cmd -p"
+        onvif_srvd --pid_file /var/run/onvif_srvd.pid --model "Yi Hack" --manufacturer "Yi" --firmware_ver "$YI_HACK_VER" --hardware_id $HW_ID --serial_num $SERIAL_NUMBER --ifs wlan0 --port $ONVIF_PORT --scope onvif://www.onvif.org/Profile/S $ONVIF_PROFILE_0 $ONVIF_PROFILE_1 $ONVIF_USERPWD --ptz --move_left "/home/yi-hack/bin/ipc_cmd -m left" --move_right "/home/yi-hack/bin/ipc_cmd -m right" --move_up "/home/yi-hack/bin/ipc_cmd -m up" --move_down "/home/yi-hack/bin/ipc_cmd -m down" --move_stop "/home/yi-hack/bin/ipc_cmd -m stop" --move_preset "/home/yi-hack/bin/ipc_cmd -p"
     else
-        onvif_srvd --pid_file /var/run/onvif_srvd.pid --model "Yi Hack" --manufacturer "Yi" --ifs wlan0 --port $ONVIF_PORT --scope onvif://www.onvif.org/Profile/S $ONVIF_PROFILE_0 $ONVIF_PROFILE_1 $ONVIF_USERPWD
+        onvif_srvd --pid_file /var/run/onvif_srvd.pid --model "Yi Hack" --manufacturer "Yi" --firmware_ver "$YI_HACK_VER" --hardware_id $HW_ID --serial_num $SERIAL_NUMBER --ifs wlan0 --port $ONVIF_PORT --scope onvif://www.onvif.org/Profile/S $ONVIF_PROFILE_0 $ONVIF_PROFILE_1 $ONVIF_USERPWD
     fi
 }
 
 stop_onvif()
 {
     killall onvif_srvd
+}
+
+start_wsdd()
+{
+    wsdd --pid_file /var/run/wsdd.pid --if_name wlan0 --type tdn:NetworkVideoTransmitter --xaddr http://%s$D_ONVIF_PORT --scope "onvif://www.onvif.org/name/Unknown onvif://www.onvif.org/Profile/Streaming"
+}
+
+stop_wsdd()
+{
+    killall wsdd
 }
 
 start_ftpd()
@@ -128,6 +142,8 @@ if [ "$ACTION" == "start" ] ; then
         start_rtsp $PARAM1
     elif [ "$NAME" == "onvif" ]; then
         start_onvif $PARAM1 $PARAM2
+    elif [ "$NAME" == "wsdd" ]; then
+        start_wsdd
     elif [ "$NAME" == "ftpd" ]; then
         start_ftpd $PARAM1
     elif [ "$NAME" == "mqtt" ]; then
@@ -138,9 +154,11 @@ if [ "$ACTION" == "start" ] ; then
     fi
 elif [ "$ACTION" == "stop" ] ; then
     if [ "$NAME" == "rtsp" ]; then
-        stop_rtsp $PARAM1
+        stop_rtsp
     elif [ "$NAME" == "onvif" ]; then
-        stop_onvif $PARAM1
+        stop_onvif
+    elif [ "$NAME" == "wsdd" ]; then
+        stop_wsdd
     elif [ "$NAME" == "ftpd" ]; then
         stop_ftpd $PARAM1
     elif [ "$NAME" == "mqtt" ]; then
