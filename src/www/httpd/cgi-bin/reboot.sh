@@ -11,5 +11,7 @@ sync
 sync
 # Kill httpd otherwise reboot command truncates the TCP session
 killall httpd
+# Kill mqtt to drop mqtt connection asap
+killall mqttv4
 sleep 1
 reboot -f
