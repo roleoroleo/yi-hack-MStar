@@ -347,3 +347,7 @@ select {
 .standard-select:hover::after {
 	color: #12b6ea;
 }
+
+#wlan_strength {
+    vertical-align: middle;
+}
