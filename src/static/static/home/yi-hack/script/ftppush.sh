@@ -78,6 +78,10 @@ lbasename ()
 	echo "${1}" | sed "s/.*\///"
 }
 
+lparentdir ()
+{
+echo "${1}" | xargs -I{} dirname {}| grep -o '[^/]*$'
+}
 
 logAdd ()
 {
@@ -119,11 +123,13 @@ uploadToFtp ()
 	# Consts.
 	FTP_HOST="$(get_config FTP_HOST)"
 	FTP_DIR="$(get_config FTP_DIR)"
+	FTP_DIR_TREE="$(get_config FTP_DIR_TREE)"
 	FTP_USERNAME="$(get_config FTP_USERNAME)"
 	FTP_PASSWORD="$(get_config FTP_PASSWORD)"
 	#
 	# Variables.
 	UTF_FULLFN="${2}"
+	FTP_DIR_HOUR="$(lparentdir ${UTF_FULLFN})"
 	#
 	if [ "${SKIP_UPLOAD_TO_FTP}" = "1" ]; then
 		logAdd "[INFO] uploadToFtp skipped due to SKIP_UPLOAD_TO_FTP == 1."
@@ -136,14 +142,29 @@ uploadToFtp ()
 		FTP_DIR="${FTP_DIR}/"
 	fi
 	#
+	if [ "${FTP_DIR_TREE}" == "yes" ] ; then
+		if [ ! -z "${FTP_DIR_HOUR}" ]; then
+			# Create hour directory on FTP server
+			echo -e "USER ${FTP_USERNAME}\r\nPASS ${FTP_PASSWORD}\r\nmkd ${FTP_DIR}/${FTP_DIR_HOUR}\r\nquit\r\n" | nc -w 5 ${FTP_HOST} 21 | grep "${FTP_DIR_HOUR}"
+			FTP_DIR_HOUR="${FTP_DIR_HOUR}/"
+		fi
+	fi
+	#
 	if [ ! -f "${UTF_FULLFN}" ]; then
 		echo "[ERROR] uploadToFtp: File not found."
 		return 1
 	fi
 	#
-	if ( ! ftpput -u "${FTP_USERNAME}" -p "${FTP_PASSWORD}" "${FTP_HOST}" "/${FTP_DIR}$(lbasename "${UTF_FULLFN}")" "${UTF_FULLFN}" ); then
-		echo "[ERROR] uploadToFtp: ftpput FAILED."
-		return 1
+	if [ "${FTP_DIR_TREE}" == "yes" ] ; then
+		if ( ! ftpput -u "${FTP_USERNAME}" -p "${FTP_PASSWORD}" "${FTP_HOST}" "/${FTP_DIR}${FTP_DIR_HOUR}$(lbasename "${UTF_FULLFN}")" "${UTF_FULLFN}" ); then
+			echo "[ERROR] uploadToFtp: ftpput FAILED."
+			return 1
+		fi
+	else
+		if ( ! ftpput -u "${FTP_USERNAME}" -p "${FTP_PASSWORD}" "${FTP_HOST}" "/${FTP_DIR}$(lbasename "${UTF_FULLFN}")" "${UTF_FULLFN}" ); then
+			echo "[ERROR] uploadToFtp: ftpput FAILED."
+			return 1
+		fi
 	fi
 	#
 	# Return SUCCESS.
