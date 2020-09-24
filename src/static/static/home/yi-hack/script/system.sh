@@ -8,9 +8,6 @@ YI_PREFIX="/home/app"
 YI_HACK_VER=$(cat /home/yi-hack/version)
 MODEL_SUFFIX=$(cat /home/yi-hack/model_suffix)
 
-SERIAL_NUMBER=$(dd status=none bs=1 count=20 skip=661 if=/tmp/mmap.info)
-HW_ID=$(dd status=none bs=1 count=4 skip=661 if=/tmp/mmap.info)
-
 get_config()
 {
     key=$1
@@ -39,6 +36,7 @@ ulimit -s 1024
 
 # Remove core files, if any
 rm -f $YI_HACK_PREFIX/bin/core
+rm -f $YI_HACK_PREFIX/www/cgi-bin/core
 rm -f $YI_PREFIX/core
 
 if [ ! -L /home/yi-hack-v4 ]; then
@@ -226,6 +224,9 @@ if [[ $(get_config RTSP) == "yes" ]] ; then
     fi
     $YI_HACK_PREFIX/script/wd_rtsp.sh &
 fi
+
+SERIAL_NUMBER=$(dd status=none bs=1 count=20 skip=661 if=/tmp/mmap.info)
+HW_ID=$(dd status=none bs=1 count=4 skip=661 if=/tmp/mmap.info)
 
 if [[ $(get_config ONVIF) == "yes" ]] ; then
     if [[ $MODEL_SUFFIX == "h201c" ]] || [[ $MODEL_SUFFIX == "h305r" ]] ; then
