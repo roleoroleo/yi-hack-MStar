@@ -88,6 +88,10 @@ Apart from RTSP, snapshot and ONVIF, all the features are copied from the TheCry
   - Online firmware upgrade.
   - Load/save/reset configuration.
 
+- ADDITIONAL FEATURES
+  - Google Drive synchronization - https://github.com/roleoroleo/yi-hack-MStar.gdrive
+  - rsync synchronization thanks to @hetzbh - https://github.com/hetzbh/yi-cams-backup
+
 ## Performance
 
 The performance of the cam is not so good (CPU, RAM, etc...).
