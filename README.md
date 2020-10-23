@@ -125,6 +125,17 @@ So, USE AT YOUR OWN RISK.
 
 **Do not try to force the fw loading renaming the files**
 
+
+## Is my cam supported
+
+If you want to know if your cam is supported, please check the serial number (first 4 letters) and the firmware version.
+If both numbers appear in the same row in the table above, your cam is supported.
+If not, check the other projects related to Yi cams:
+- https://github.com/TheCrypt0/yi-hack-v4 and previous
+- https://github.com/roleoroleo/yi-hack-Allwinner
+- https://github.com/roleoroleo/yi-hack-Allwinner-v2
+
+
 ## Getting Started
 1. Check that you have a correct Xiaomi Yi camera.
 
