@@ -42,6 +42,7 @@ Additionally:
 - [Features](#features)
 - [Performance](#performance)
 - [Supported cameras](#supported-cameras)
+- [Is my cam supported?](#is-my-cam-supported)
 - [Getting started](#getting-started)
 - [Build your own firmware](#build-your-own-firmware)
 - [Unbricking](#unbricking)
@@ -126,7 +127,7 @@ So, USE AT YOUR OWN RISK.
 **Do not try to force the fw loading renaming the files**
 
 
-## Is my cam supported
+## Is my cam supported?
 
 If you want to know if your cam is supported, please check the serial number (first 4 letters) and the firmware version.
 If both numbers appear in the same row in the table above, your cam is supported.
