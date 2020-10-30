@@ -43,7 +43,7 @@ APP.status = (function ($) {
 
                 $('#uptime').text(String.format("%t", parseInt(data.uptime)));
                 $('#memory').text("" + data.free_memory + "/" + data.total_memory + " KB");
-                wifiStrength = parseInt((parseInt(data.wlan_strength) * 100) / 70);
+                wifiStrength = parseInt(data.wlan_strength);
                 if (wifiStrength >= 80) {
                     $('#wlan_strength').attr("src","images/wlan_strong_signal.png")
                     $('#wlan_strength_percent').text(" " + wifiStrength.toString() + " %")
