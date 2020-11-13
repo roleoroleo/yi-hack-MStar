@@ -22,7 +22,6 @@ export PATH=$PATH:/home/base/tools:/home/yi-hack/bin:/home/yi-hack/sbin:/home/yi
 # Script Configuration.
 FOLDER_TO_WATCH="/tmp/sd/record"
 FOLDER_MINDEPTH="1"
-FILE_DELETE_AFTER_UPLOAD="1"
 FILE_WATCH_PATTERN="*.mp4"
 SKIP_UPLOAD_TO_FTP="0"
 SLEEP_CYCLE_SECONDS="45"
@@ -38,6 +37,9 @@ LOG_MAX_LINES="200"
 # -----------------------------------------------------
 checkFiles ()
 {
+	#
+	FTP_FILE_DELETE_AFTER_UPLOAD="$(get_config FTP_FILE_DELETE_AFTER_UPLOAD)"
+	#
 	logAdd "[INFO] checkFiles"
 	#
 	# Search for new files.
@@ -58,7 +60,7 @@ checkFiles ()
 			continue
 		fi
 		logAdd "[INFO] checkFiles: uploadToFtp SUCCEEDED - [${file}]."
-		if [ "${FILE_DELETE_AFTER_UPLOAD}" = "1" ]; then
+		if [ "${FTP_FILE_DELETE_AFTER_UPLOAD}" == "yes" ]; then
 			rm -f "${file}"
 		fi
 		#
@@ -78,10 +80,12 @@ lbasename ()
 	echo "${1}" | sed "s/.*\///"
 }
 
+
 lparentdir ()
 {
-echo "${1}" | xargs -I{} dirname {}| grep -o '[^/]*$'
+	echo "${1}" | xargs -I{} dirname {}| grep -o '[^/]*$'
 }
+
 
 logAdd ()
 {
@@ -142,7 +146,7 @@ uploadToFtp ()
 		FTP_DIR="${FTP_DIR}/"
 	fi
 	#
-	if [ "${FTP_DIR_TREE}" == "yes" ] ; then
+	if [ "${FTP_DIR_TREE}" == "yes" ]; then
 		if [ ! -z "${FTP_DIR_HOUR}" ]; then
 			# Create hour directory on FTP server
 			echo -e "USER ${FTP_USERNAME}\r\nPASS ${FTP_PASSWORD}\r\nmkd ${FTP_DIR}/${FTP_DIR_HOUR}\r\nquit\r\n" | nc -w 5 ${FTP_HOST} 21 | grep "${FTP_DIR_HOUR}"
@@ -155,14 +159,14 @@ uploadToFtp ()
 		return 1
 	fi
 	#
-	if [ "${FTP_DIR_TREE}" == "yes" ] ; then
-		if ( ! ftpput -u "${FTP_USERNAME}" -p "${FTP_PASSWORD}" "${FTP_HOST}" "/${FTP_DIR}${FTP_DIR_HOUR}$(lbasename "${UTF_FULLFN}")" "${UTF_FULLFN}" ); then
-			echo "[ERROR] uploadToFtp: ftpput FAILED."
+	if [ "${FTP_DIR_TREE}" == "yes" ]; then
+		if ( ! ftpput -u "${FTP_USERNAME}" -p "${FTP_PASSWORD}" "${FTP_HOST}" "${FTP_DIR}${FTP_DIR_HOUR}$(lbasename "${UTF_FULLFN}")" "${UTF_FULLFN}" ); then
+			logAdd "[ERROR] uploadToFtp: ftpput FAILED."
 			return 1
 		fi
 	else
-		if ( ! ftpput -u "${FTP_USERNAME}" -p "${FTP_PASSWORD}" "${FTP_HOST}" "/${FTP_DIR}$(lbasename "${UTF_FULLFN}")" "${UTF_FULLFN}" ); then
-			echo "[ERROR] uploadToFtp: ftpput FAILED."
+		if ( ! ftpput -u "${FTP_USERNAME}" -p "${FTP_PASSWORD}" "${FTP_HOST}" "${FTP_DIR}$(lbasename "${UTF_FULLFN}")" "${UTF_FULLFN}" ); then
+			logAdd "[ERROR] uploadToFtp: ftpput FAILED."
 			return 1
 		fi
 	fi
