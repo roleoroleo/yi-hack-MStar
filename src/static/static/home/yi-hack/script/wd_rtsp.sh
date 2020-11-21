@@ -111,7 +111,8 @@ check_rmm()
     PS=`ps | grep rmm | grep -v grep | grep -c ^`
 
     if [ $PS -eq 0 ]; then
-        reboot
+        sync
+        reboot -f
     fi
 }
 
