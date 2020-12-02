@@ -1,0 +1,218 @@
+builtin.lo: builtin.c \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/stdc-predef.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/sys/time.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/features.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/sys/cdefs.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/wordsize.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/gnu/stubs.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/gnu/stubs-hard.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/types.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/typesizes.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/time.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/time.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/sys/select.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/select.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/sigset.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/stdlib.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/lib/gcc/arm-linux-gnueabihf/4.8.3/include/stddef.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/waitflags.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/waitstatus.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/endian.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/endian.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/byteswap.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/byteswap-16.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/xlocale.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/sys/types.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/sys/sysmacros.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/pthreadtypes.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/alloca.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/stdlib-bsearch.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/stdlib-float.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/assert.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/ctype.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/lib/gcc/arm-linux-gnueabihf/4.8.3/include-fixed/limits.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/lib/gcc/arm-linux-gnueabihf/4.8.3/include-fixed/syslimits.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/limits.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/posix1_lim.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/local_lim.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/linux/limits.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/posix2_lim.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/xopen_lim.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/stdio_lim.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/math.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/huge_val.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/huge_valf.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/huge_vall.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/inf.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/nan.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/mathdef.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/mathcalls.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/mathinline.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/string.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/string.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/string2.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/timex.h \
+ builtin.h jq.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/stdio.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/libio.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/_G_config.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/wchar.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/lib/gcc/arm-linux-gnueabihf/4.8.3/include/stdarg.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/sys_errlist.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/stdio.h \
+ jv.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/lib/gcc/arm-linux-gnueabihf/4.8.3/include/stdint.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/stdint.h \
+ /opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/wchar.h \
+ bytecode.h jv.h opcode_list.h compile.h locfile.h jq_parser.h linker.h \
+ jv_unicode.h libm.h
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/stdc-predef.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/sys/time.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/features.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/sys/cdefs.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/wordsize.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/gnu/stubs.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/gnu/stubs-hard.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/types.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/typesizes.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/time.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/time.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/sys/select.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/select.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/sigset.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/stdlib.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/lib/gcc/arm-linux-gnueabihf/4.8.3/include/stddef.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/waitflags.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/waitstatus.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/endian.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/endian.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/byteswap.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/byteswap-16.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/xlocale.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/sys/types.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/sys/sysmacros.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/pthreadtypes.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/alloca.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/stdlib-bsearch.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/stdlib-float.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/assert.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/ctype.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/lib/gcc/arm-linux-gnueabihf/4.8.3/include-fixed/limits.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/lib/gcc/arm-linux-gnueabihf/4.8.3/include-fixed/syslimits.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/limits.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/posix1_lim.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/local_lim.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/linux/limits.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/posix2_lim.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/xopen_lim.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/stdio_lim.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/math.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/huge_val.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/huge_valf.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/huge_vall.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/inf.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/nan.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/mathdef.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/mathcalls.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/mathinline.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/string.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/string.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/string2.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/timex.h:
+
+builtin.h:
+
+jq.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/stdio.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/libio.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/_G_config.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/wchar.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/lib/gcc/arm-linux-gnueabihf/4.8.3/include/stdarg.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/sys_errlist.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/stdio.h:
+
+jv.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/lib/gcc/arm-linux-gnueabihf/4.8.3/include/stdint.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/stdint.h:
+
+/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include/bits/wchar.h:
+
+bytecode.h:
+
+jv.h:
+
+opcode_list.h:
+
+compile.h:
+
+locfile.h:
+
+jq_parser.h:
+
+linker.h:
+
+jv_unicode.h:
+
+libm.h:

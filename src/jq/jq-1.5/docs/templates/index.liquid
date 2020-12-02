@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+  {% include "shared/head" %}
+  <body id="{{slug}}">
+    {% include "shared/header" %}	
+    
+    <div class="container">
+      <div class="row">
+        <div class="hero-unit">
+          <img src="{{root}}/jq.png" style="width: 400px; height: 220px; float: left; margin-right: 60px">
+          <div id="blurb">
+            {{blurb | markdownify}}
+
+            <div class="btn-group" style="float:right">
+              <a class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="#">
+                Download jq-{{jq_version}}
+                <span class="caret"></span>
+              </a>
+              <ul class="dropdown-menu">
+                <li><a href="{{root}}/download/linux64/jq">Linux (64-bit)</a></li>
+                <li><a href="{{root}}/download/osx64/jq">OS X (64-bit)</a></li>
+                <li><a href="{{root}}/download/solaris11-64/jq">Solaris (64-bit)</a></li>
+                <li><a href="{{root}}/download/win64/jq.exe">Windows (64-bit)</a></li>
+                <li><a href="{{root}}/download/">Other platforms, older versions, and source</a></li>
+              </ul>
+            </div>
+
+            <div class="btn-group" style="float:right">
+              <a class="btn btn-primary" href="https://jqplay.org">
+                Try online at jqplay.org!
+              </a>
+            </div>
+
+          </div>
+          <div style="clear:both;"></div>
+        </div>
+      </div>
+        
+      <div class="row" id="multiblurb">
+	<div class="span4">{{body1 | markdownify}}</div>
+        <div class="span4">{{body2 | markdownify}}</div>
+	<div class="span4">{{body3 | markdownify}}</div>        
+      </div>
+      <div class="row" style="text-align:center; margin-top: 30px">
+        {{tail | markdownify}}
+      </div>
+      <div class="row">
+        <h2>News</h2>
+        <div id="news">
+          <ul>
+            {% for item in news %}
+            <li><span class="date">{{ item.date | date: '%m %B %Y' }}</span>{{item.body | markdownify}}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+    {% include "shared/footer" %}    
+  </body>
+</html>
