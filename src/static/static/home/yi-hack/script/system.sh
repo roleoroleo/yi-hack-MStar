@@ -50,12 +50,16 @@ if [ -f $YI_HACK_PREFIX/.fw_upgrade_in_progress ]; then
     cp -f /tmp/sd/.fw_upgrade/*.conf $YI_HACK_PREFIX/etc/
     chmod 0644 $YI_HACK_PREFIX/etc/*.conf
     if [ -f /tmp/sd/.fw_upgrade/hostname ]; then
-        cp -f /tmp/sd/.fw_upgrade/hostname /etc/
-        chmod 0644 /etc/hostname
+        cp -f /tmp/sd/.fw_upgrade/hostname $YI_HACK_PREFIX/etc/
+        chmod 0644 $YI_HACK_PREFIX/etc/hostname
     fi
     if [ -f /tmp/sd/.fw_upgrade/TZ ]; then
-        cp -f /tmp/sd/.fw_upgrade/TZ /etc/
-        chmod 0644 /etc/TZ
+        cp -f /tmp/sd/.fw_upgrade/TZ $YI_HACK_PREFIX/etc/
+        chmod 0644 $YI_HACK_PREFIX/etc/TZ
+    fi
+    if [ -f /tmp/sd/.fw_upgrade/passwd ]; then
+        cp -f /tmp/sd/.fw_upgrade/passwd $YI_HACK_PREFIX/etc/
+        chmod 0644 $YI_HACK_PREFIX/etc/passwd
     fi
     rm $YI_HACK_PREFIX/.fw_upgrade_in_progress
 fi
@@ -76,9 +80,9 @@ if [[ x$(get_config SSH_PASSWORD) != "x" ]] ; then
     SSH_PASSWORD=$(get_config SSH_PASSWORD)
     PASSWORD_MD5="$(echo "${SSH_PASSWORD}" | mkpasswd --method=MD5 --stdin)"
 fi
-CUR_PASSWORD_MD5=$(awk -F":" '$1 != "" { print $2 } ' /etc/passwd)
+CUR_PASSWORD_MD5=$(awk -F":" '$1 != "" { print $2 } ' $YI_HACK_PREFIX/etc/passwd)
 if [[ x$CUR_PASSWORD_MD5 != x$PASSWORD_MD5 ]] ; then
-    sed -i 's|^\(root:\)[^:]*:|root:'${PASSWORD_MD5}':|g' "/etc/passwd"
+    sed -i 's|^\(root:\)[^:]*:|root:'${PASSWORD_MD5}':|g' "$YI_HACK_PREFIX/etc/passwd"
 fi
 
 case $(get_config RTSP_PORT) in

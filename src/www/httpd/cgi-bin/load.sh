@@ -70,12 +70,16 @@ if [ $RES -eq 0 ]; then
         mv -f *.conf /home/yi-hack/etc/
         chmod 0644 /home/yi-hack/etc/*.conf
         if [ -f TZ ]; then
-            mv -f TZ /etc/
-            chmod 0644 /etc/TZ
+            mv -f TZ /home/yi-hack/etc/
+            chmod 0644 /home/yi-hack/etc/TZ
         fi
         if [ -f hostname ]; then
-            mv -f hostname /etc/
-            chmod 0644 /etc/hostname
+            mv -f hostname /home/yi-hack/etc/
+            chmod 0644 /home/yi-hack/etc/hostname
+        fi
+        if [ -f passwd ]; then
+            mv -f passwd /home/yi-hack/etc/
+            chmod 0644 /home/yi-hack/etc/passwd
         fi
         RES=0
     else

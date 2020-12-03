@@ -2,8 +2,9 @@
 
 cd /home/yi-hack/etc
 
-rm -f /etc/hostname
-rm -f /etc/TZ
+rm -f hostname
+rm -f TZ
+rm -f passwd
 
 rm camera.conf
 rm mqttv4.conf

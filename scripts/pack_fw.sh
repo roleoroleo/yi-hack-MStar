@@ -166,12 +166,14 @@ echo "done!"
 
 # Removing back.bin file
 echo -n ">>> Removing back.bin file... "
-rm -f $TMP_DIR/rootfs/etc/back.bin
+if [ ! -L $TMP_DIR/rootfs/etc/back.bin ]; then
+    rm -f $TMP_DIR/rootfs/etc/back.bin
+fi
 echo "done!"
 
 # adding defaults
 echo -n ">>> Adding defaults... "
-7za a $TMP_DIR/home/yi-hack/etc/defaults.7z $TMP_DIR/home/yi-hack/etc/*.conf > /dev/null
+7za a $TMP_DIR/home/yi-hack/etc/defaults.7z $TMP_DIR/home/yi-hack/etc/*.conf $TMP_DIR/home/yi-hack/etc/hostname $TMP_DIR/home/yi-hack/etc/passwd > /dev/null
 echo "done!"
 
 # insert the version file

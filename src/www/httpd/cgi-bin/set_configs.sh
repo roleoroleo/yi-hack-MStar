@@ -58,13 +58,13 @@ for S in $PARAMS ; do
             else
                 hostname yi-hack
             fi
-            hostname > /etc/hostname
+            hostname > $YI_HACK_PREFIX/etc/hostname
         else
             hostname $VALUE
-            echo "$VALUE" > /etc/hostname
+            echo "$VALUE" > $YI_HACK_PREFIX/etc/hostname
         fi
     elif [ "$KEY" == "TIMEZONE" ] ; then
-        echo $VALUE > /etc/TZ
+        echo $VALUE > $YI_HACK_PREFIX/etc/TZ
     else
         VALUE=$(echo "$VALUE" | sedencode)
         sed -i "s/^\(${KEY}\s*=\s*\).*$/\1${VALUE}/" $CONF_FILE
