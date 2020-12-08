@@ -27,6 +27,7 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 #include "StreamReplicator.hh"
 #include "YiNoiseReduction.hh"
 #include "DummySink.hh"
+#include "aLawAudioFilter.hh"
 
 UsageEnvironment* env;
 
@@ -40,7 +41,7 @@ Boolean reuseFirstSource = True;
 // change the following "False" to "True":
 Boolean iFramesOnly = False;
 
-StreamReplicator* startReplicatorStream(const char* inputAudioFileName, Boolean convertToULaw, unsigned int nr_level) {
+StreamReplicator* startReplicatorStream(const char* inputAudioFileName, int convertToxLaw, unsigned int nr_level) {
     // Create a single WAVAudioFifo source that will be replicated for mutliple streams
     WAVAudioFifoSource* wavSource = WAVAudioFifoSource::createNew(*env, inputAudioFileName);
     if (wavSource == NULL) {
@@ -55,9 +56,11 @@ StreamReplicator* startReplicatorStream(const char* inputAudioFileName, Boolean 
         intermediateSource = wavSource;
     }
 
-    // Optionally convert to uLaw pcm
+    // Optionally convert to uLaw or aLaw pcm
     FramedSource* resultSource;
-    if (convertToULaw) {
+    if (convertToxLaw == WA_PCMA) {
+        resultSource = aLawFromPCMAudioSource::createNew(*env, intermediateSource, 1/*little-endian*/);
+    } else if (convertToxLaw == WA_PCMU) {
         resultSource = uLawFromPCMAudioSource::createNew(*env, intermediateSource, 1/*little-endian*/);
     } else {
         resultSource = EndianSwap16::createNew(*env, intermediateSource);
@@ -102,7 +105,7 @@ int main(int argc, char** argv) {
     char pwd[65];
     int nr_level = 0;
 
-    Boolean convertToULaw = True;
+    int convertToxLaw = WA_PCMU;
     char const* inputAudioFileName = "/tmp/audio_fifo";
     struct stat stat_buffer;
 
@@ -110,6 +113,20 @@ int main(int argc, char** argv) {
     if (str && sscanf (str, "%i", &nm) == 1 && nm >= 0) {
         if ((nm >= 0) && (nm <=2)) {
             res = nm;
+        }
+    }
+
+    str = getenv("RRTSP_AUDIO");
+    if (str != NULL) {
+        if (strcasecmp("alaw", str) == 0) {
+            audio = 1;
+            convertToxLaw = WA_PCMA;
+        } else if (strcasecmp("ulaw", str) == 0) {
+            audio = 1;
+            convertToxLaw = WA_PCMU;
+        } else if (strcasecmp("pcm", str) == 0) {
+            audio = 1;
+            convertToxLaw = WA_PCM;
         }
     }
 
@@ -155,15 +172,15 @@ int main(int argc, char** argv) {
         // access to the server.
     }
 
-    // Create and start the replicator that will be given to each subsession
-    StreamReplicator* replicator = startReplicatorStream(inputAudioFileName, convertToULaw, nr_level);
-
     // Create the RTSP server:
     RTSPServer* rtspServer = RTSPServer::createNew(*env, port, authDB);
     if (rtspServer == NULL) {
         *env << "Failed to create RTSP server: " << env->getResultMsg() << "\n";
         exit(1);
     }
+
+    // Create and start the replicator that will be given to each subsession
+    StreamReplicator* replicator = startReplicatorStream(inputAudioFileName, convertToxLaw, nr_level);
 
     char const* descriptionString
         = "Session streamed by \"rRTSPServer\"";
@@ -189,7 +206,7 @@ int main(int argc, char** argv) {
                                 ::createNew(*env, inputFileName, reuseFirstSource));
         if (audio == 1) {
             sms_high->addSubsession(WAVAudioFifoServerMediaSubsession
-                                   ::createNew(*env, replicator, reuseFirstSource, convertToULaw));
+                                   ::createNew(*env, replicator, reuseFirstSource, convertToxLaw));
         }
         rtspServer->addServerMediaSession(sms_high);
 
@@ -212,7 +229,7 @@ int main(int argc, char** argv) {
                                 ::createNew(*env, inputFileName, reuseFirstSource));
         if (audio == 1) {
             sms_low->addSubsession(WAVAudioFifoServerMediaSubsession
-                                ::createNew(*env, replicator, reuseFirstSource, convertToULaw));
+                                ::createNew(*env, replicator, reuseFirstSource, convertToxLaw));
         }
         rtspServer->addServerMediaSession(sms_low);
 
@@ -231,7 +248,7 @@ int main(int argc, char** argv) {
             = ServerMediaSession::createNew(*env, streamName, streamName,
                                               descriptionString);
         sms_audio->addSubsession(WAVAudioFifoServerMediaSubsession
-                                   ::createNew(*env, replicator, reuseFirstSource, convertToULaw));
+                                   ::createNew(*env, replicator, reuseFirstSource, convertToxLaw));
         rtspServer->addServerMediaSession(sms_audio);
 
         announceStream(rtspServer, sms_audio, streamName, inputAudioFileName, audio);

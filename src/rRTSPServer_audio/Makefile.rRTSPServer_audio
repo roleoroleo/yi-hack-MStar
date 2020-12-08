@@ -71,6 +71,7 @@ livemedia:
 
 rRTSPServer_OBJS	= src/rRTSPServer.$(OBJ) \
 				src/WAVAudioFifoSource.$(OBJ) src/WAVAudioFifoServerMediaSubsession.$(OBJ) \
+				src/aLawAudioFilter.$(OBJ) \
 				src/YiNoiseReduction.$(OBJ) src/DummySink.$(OBJ)
 
 rRTSPServer$(EXE):	$(rRTSPServer_OBJS) $(LOCAL_LIBS)
