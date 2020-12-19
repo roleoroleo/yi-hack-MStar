@@ -62,6 +62,15 @@ Apart from RTSP, snapshot and ONVIF, all the features are copied from the TheCry
     - rtsp://IP-CAM/ch0_0.h264             (high res)
     - rtsp://IP-CAM:8554/ch0_1.h264        (low res)
   - ONVIF server (with support for h264 stream, snapshot, ptz, presets and WS-Discovery) - standardized interfaces for IP cameras.
+    ONVIF compatible devices/software:
+    - Onvif Device Manager
+    - Hikvision
+    - Qnap Surveillance Station
+    - Xiongmai based DVR
+    - Home Assistant
+    - Onvifer (Android app)
+    Not compatible devices/software:
+    - Synology Surveillance Station
   - Snapshot service - allows to get a jpg with a web request.
   Gets the latest yuv image from the kernel buffer and converts it to jpg.
     - http://IP-CAM:8080/cgi-bin/snapshot.sh?res=low        (select resolution: low or high)
