@@ -73,7 +73,15 @@ int parse_message(char *msg, ssize_t len)
         if (debug) fprintf(stderr, "%02x ", msg[i]);
     if (debug) fprintf(stderr, "\n");
 
-    if((len >= sizeof(IPC_MOTION_START) - 1) && (memcmp(msg, IPC_MOTION_START, sizeof(IPC_MOTION_START) - 1)==0))
+    if((len >= sizeof(IPC_AI_HUMAN_DETECTION_START) - 1) && (memcmp(msg, IPC_AI_HUMAN_DETECTION_START, sizeof(IPC_AI_HUMAN_DETECTION_START) - 1)==0))
+    {
+        strcpy(fwd_msg, "AI_HUMAN_DETECTION_START");
+    }
+    else if((len >= sizeof(IPC_AI_HUMAN_DETECTION_STOP) - 1) && (memcmp(msg, IPC_AI_HUMAN_DETECTION_STOP, sizeof(IPC_AI_HUMAN_DETECTION_STOP) - 1)==0))
+    {
+        strcpy(fwd_msg, "AI_HUMAN_DETECTION_STOP");
+    }
+    else if((len >= sizeof(IPC_MOTION_START) - 1) && (memcmp(msg, IPC_MOTION_START, sizeof(IPC_MOTION_START) - 1)==0))
     {
         strcpy(fwd_msg, "MOTION_START");
     }
@@ -85,9 +93,9 @@ int parse_message(char *msg, ssize_t len)
     {
         strcpy(fwd_msg, "BABY_CRYING");
     }
-    else if((len >= sizeof(IPC_BABY_CRYING_2) - 1) && (memcmp(msg, IPC_BABY_CRYING_2, sizeof(IPC_BABY_CRYING_2) - 1)==0))
+    else if((len >= sizeof(IPC_SOUND_DETECTION) - 1) && (memcmp(msg, IPC_SOUND_DETECTION, sizeof(IPC_SOUND_DETECTION) - 1)==0))
     {
-        strcpy(fwd_msg, "BABY_CRYING");
+        strcpy(fwd_msg, "SOUND_DETECTION");
     }
 
     if (fwd_msg[0] == '\0') return 0;
