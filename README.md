@@ -156,7 +156,7 @@ If not, check the other projects related to Yi cams:
 
 3. Get the correct firmware files for your camera from the releases section (https://github.com/roleoroleo/yi-hack-6FUS_4.5.0/releases).
 
-4. Save both files (for example home_y203c and sys_y203c) on root path of microSD card.
+4. Decompress it and save both files (for example home_y203c and sys_y203c) on root path of microSD card.
 
 5. Remove power to the camera, insert the microSD card, turn the power back ON.
 
