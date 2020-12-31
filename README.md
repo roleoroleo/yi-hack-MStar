@@ -70,8 +70,8 @@ Apart from RTSP, snapshot and ONVIF, all the features are copied from the TheCry
     - Xiongmai based DVR
     - Home Assistant
     - Onvifer (Android app)
- 
-    Not compatible devices/software:
+  
+    Beta testing devices/software:
     - Synology Surveillance Station
   - Snapshot service - allows to get a jpg with a web request.
   Gets the latest yuv image from the kernel buffer and converts it to jpg.
