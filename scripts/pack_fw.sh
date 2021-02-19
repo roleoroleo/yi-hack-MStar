@@ -210,7 +210,12 @@ echo "done!"
 #find $TMP_DIR/home/yi-hack/* -maxdepth 0 -type f -not -name 'yi-hack.7z' -exec rm {} +
 #echo "done!"
 
-# home 
+# strip rootfs content
+export STRIP=/opt/yi/arm-linux-gnueabihf-4.8.3-201404/bin/arm-linux-gnueabihf-strip
+$STRIP $TMP_DIR/rootfs/ext/bin/iwconfig
+$STRIP $TMP_DIR/rootfs/lib/arm-linux-gnueabihf/*.so
+
+# home
 pack_image "home" $CAMERA_ID $TMP_DIR $OUT_DIR
 mv $OUT_DIR/home_$CAMERA_ID.jffs2 $OUT_DIR/home_$CAMERA_ID
 
