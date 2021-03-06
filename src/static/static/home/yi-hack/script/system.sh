@@ -173,6 +173,7 @@ ipc_multiplexer &
 sleep 1
 if [[ $(get_config MQTT) == "yes" ]] ; then
     mqttv4 &
+    mqtt-config &
 fi
 
 sleep 5
