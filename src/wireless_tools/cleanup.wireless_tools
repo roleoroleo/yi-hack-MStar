@@ -1,0 +1,13 @@
+#!/bin/bash
+
+SCRIPT_DIR=$(cd `dirname $0` && pwd)
+cd $SCRIPT_DIR
+
+cd wireless_tools.29
+
+make clean
+
+cd ..
+
+rm -rf wireless_tools.29
+rm -f wireless_tools.29.tar.gz

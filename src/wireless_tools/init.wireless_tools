@@ -1,0 +1,19 @@
+#!/bin/bash
+
+ARCHIVE=wireless_tools.29.tar.gz
+SCRIPT_DIR=$(cd `dirname $0` && pwd)
+cd $SCRIPT_DIR
+
+rm -rf ./_install
+rm -rf ./wireless_tools.29
+
+if [ ! -f $ARCHIVE ]; then
+    wget  https://hewlettpackard.github.io/wireless-tools/$ARCHIVE
+fi
+tar zxvf $ARCHIVE
+
+sed -i 's/CC = gcc/#CC = gcc/g' ./wireless_tools.29/Makefile
+sed -i 's/AR = ar/#AR = ar/g' ./wireless_tools.29/Makefile
+sed -i 's/RANLIB = ranlib/#RANLIB = ranlib/g' ./wireless_tools.29/Makefile
+
+cd wireless_tools.29 || exit 1
