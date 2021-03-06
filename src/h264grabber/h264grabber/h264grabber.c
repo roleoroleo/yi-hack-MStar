@@ -37,11 +37,28 @@
 #define FIFO_NAME_LOW "/tmp/h264_low_fifo"
 #define FIFO_NAME_HIGH "/tmp/h264_high_fifo"
 
+#define SIZEOF_SPS 16
+#define SIZEOF_PPS 8
+#define OFFSET_IDR 76
+
 //#define REPEAT 1
+#define SPS_TIMING_INFO 1
 
-unsigned char SPS[] = { 0x00, 0x00, 0x00, 0x01, 0x67 };
-
-unsigned char SEI_F0[] = { 0x00, 0x00, 0x00, 0x01, 0x06, 0xF0 };
+unsigned char SPS[]              = { 0x00, 0x00, 0x00, 0x01, 0x67 };
+unsigned char SPS_1920X1080[]    = { 0x00, 0x00, 0x00, 0x01, 0x67, 0x4D, 0x40, 0x28,
+                                     0x95, 0xA0, 0x1E, 0x00, 0x89, 0xA6, 0xC0, 0x40 };
+unsigned char SPS_1920X1080_TI[] = { 0x00, 0x00, 0x00, 0x01, 0x67, 0x4D, 0x40, 0x28,
+                                     0x95, 0xA0, 0x1E, 0x00, 0x89, 0xA6, 0xC8, 0x00,
+                                     0x00, 0x0F, 0xA0, 0x00, 0x02, 0x71, 0x04, 0x20 };
+unsigned char SPS_640X360[]      = { 0x00, 0x00, 0x00, 0x01, 0x67, 0x4D, 0x40, 0x1E,
+                                     0x95, 0xA0, 0x28, 0x0B, 0xFE, 0x59, 0xB0, 0x10 };
+unsigned char SPS_640X360_TI[]   = { 0x00, 0x00, 0x00, 0x01, 0x67, 0x4D, 0x40, 0x1E,
+                                     0x95, 0xA0, 0x28, 0x0B, 0xFE, 0x59, 0xB2, 0x00,
+                                     0x00, 0x03, 0x03, 0xE8, 0x00, 0x00, 0x9C, 0x41,
+                                     0x08 };
+unsigned char SEI_F0[]           = { 0x00, 0x00, 0x00, 0x01, 0x06, 0xF0 };
+unsigned char SEI_F0_02[]        = { 0x00, 0x00, 0x00, 0x01, 0x06, 0xF0, 0x02 };
+unsigned char SEI_F0_2C[]        = { 0x00, 0x00, 0x00, 0x01, 0x06, 0xF0, 0x2C };
 
 // Returns the 1st process id corresponding to pname
 int pidof(const char *pname)
@@ -347,10 +364,34 @@ int main(int argc, char **argv)
             if (memcmp(SPS, buffer, sizeof(SPS)) == 0) {
                 if (debug) fprintf(stderr, "time: %u - len: %d\n", time, len);
                 if (ssf0) {
-                    fwrite(buffer, 1, 24, fOut);
-                    fwrite(buffer + 76, 1, len - 76, fOut);
+#ifdef SPS_TIMING_INFO
+                    if (memcmp(SPS_1920X1080, buffer, sizeof(SPS_1920X1080)) == 0) {
+                        fwrite(SPS_1920X1080_TI, 1, sizeof(SPS_1920X1080_TI), fOut);
+                        fwrite(buffer + sizeof(SPS_1920X1080), 1, SIZEOF_PPS, fOut);
+                        fwrite(buffer + OFFSET_IDR, 1, len - OFFSET_IDR, fOut);
+                    } else if (memcmp(SPS_640X360, buffer, sizeof(SPS_640X360)) == 0) {
+                        fwrite(SPS_640X360_TI, 1, sizeof(SPS_640X360_TI), fOut);
+                        fwrite(buffer + sizeof(SPS_640X360), 1, SIZEOF_PPS, fOut);
+                        fwrite(buffer + OFFSET_IDR, 1, len - OFFSET_IDR, fOut);
+                    }
+#else
+                    fwrite(buffer, 1, SIZEOF_SPS + SIZEOF_PPS, fOut);
+                    fwrite(buffer + OFFSET_IDR, 1, len - OFFSET_IDR, fOut);
+#endif
                 } else {
+#ifdef SPS_TIMING_INFO
+                    if (memcmp(SPS_1920X1080, buffer, sizeof(SPS_1920X1080)) == 0) {
+                        if (debug) fprintf(stderr, "frame is SPS\n");
+                        fwrite(SPS_1920X1080_TI, 1, sizeof(SPS_1920X1080_TI), fOut);
+                        fwrite(buffer + sizeof(SPS_1920X1080), 1, len - sizeof(SPS_1920X1080), fOut);
+                    } else if (memcmp(SPS_640X360, buffer, sizeof(SPS_640X360)) == 0) {
+                        if (debug) fprintf(stderr, "frame is SPS\n");
+                        fwrite(SPS_640X360_TI, 1, sizeof(SPS_640X360_TI), fOut);
+                        fwrite(buffer + sizeof(SPS_640X360), 1, len - sizeof(SPS_640X360), fOut);
+                    }
+#else
                     fwrite(buffer, 1, len, fOut);
+#endif
                 }
                 fflush(fOut);
                 stream_started = 1;
@@ -361,7 +402,7 @@ int main(int argc, char **argv)
             fTime = fopen(timeStampFile, "r");
             fscanf(fTime, "%u", &time);
             fclose(fTime);
-            if (debug) fprintf(stderr, "time: %u\n", time);
+//            if (debug) fprintf(stderr, "time: %u\n", time);
 
             if (time == oldTime) {
                 usleep(8000);
@@ -406,16 +447,46 @@ int main(int argc, char **argv)
 
             while (repeat > 0) {
                 if (ssf0) {
-                    if (memcmp(SEI_F0, buffer, sizeof(SEI_F0)) == 0) {
+                    if (memcmp(SEI_F0_02, buffer, sizeof(SEI_F0_02)) == 0) {
+                        fwrite(buffer + 62, 1, len - 62, fOut);
+                    } else if (memcmp(SEI_F0_2C, buffer, sizeof(SEI_F0_2C)) == 0) {
                         fwrite(buffer + 52, 1, len - 52, fOut);
                     } else if (memcmp(SPS, buffer, sizeof(SPS)) == 0) {
+#ifdef SPS_TIMING_INFO
+                        if (memcmp(SPS_1920X1080, buffer, sizeof(SPS_1920X1080)) == 0) {
+                            if (debug) fprintf(stderr, "frame is SPS\n");
+                            fwrite(SPS_1920X1080_TI, 1, sizeof(SPS_1920X1080_TI), fOut);
+                            fwrite(buffer + sizeof(SPS_1920X1080), 1, SIZEOF_PPS, fOut);
+                            fwrite(buffer + OFFSET_IDR, 1, len - OFFSET_IDR, fOut);
+                        } else if (memcmp(SPS_640X360, buffer, sizeof(SPS_640X360)) == 0) {
+                            if (debug) fprintf(stderr, "frame is SPS\n");
+                            fwrite(SPS_640X360_TI, 1, sizeof(SPS_640X360_TI), fOut);
+                            fwrite(buffer + sizeof(SPS_640X360), 1, SIZEOF_PPS, fOut);
+                            fwrite(buffer + OFFSET_IDR, 1, len - OFFSET_IDR, fOut);
+                        }
+#else
                         fwrite(buffer, 1, 24, fOut);
                         fwrite(buffer + 76, 1, len - 76, fOut);
+#endif
                     } else {
                         fwrite(buffer, 1, len, fOut);
                     }
                 } else {
+#ifdef SPS_TIMING_INFO
+                    if (memcmp(SPS_1920X1080, buffer, sizeof(SPS_1920X1080)) == 0) {
+                        if (debug) fprintf(stderr, "frame is SPS\n");
+                        fwrite(SPS_1920X1080_TI, 1, sizeof(SPS_1920X1080_TI), fOut);
+                        fwrite(buffer + sizeof(SPS_1920X1080), 1, len - sizeof(SPS_1920X1080), fOut);
+                    } else if (memcmp(SPS_640X360, buffer, sizeof(SPS_640X360)) == 0) {
+                        if (debug) fprintf(stderr, "frame is SPS\n");
+                        fwrite(SPS_640X360_TI, 1, sizeof(SPS_640X360_TI), fOut);
+                        fwrite(buffer + sizeof(SPS_640X360), 1, len - sizeof(SPS_640X360), fOut);
+                    } else {
+                        fwrite(buffer, 1, len, fOut);
+                    }
+#else
                     fwrite(buffer, 1, len, fOut);
+#endif
                 }
                 fflush(fOut);
                 repeat--;
