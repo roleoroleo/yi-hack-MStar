@@ -213,7 +213,6 @@ echo "done!"
 # strip rootfs content
 export STRIP=/opt/yi/arm-linux-gnueabihf-4.8.3-201404/bin/arm-linux-gnueabihf-strip
 $STRIP $TMP_DIR/rootfs/ext/bin/iwconfig
-$STRIP $TMP_DIR/rootfs/lib/arm-linux-gnueabihf/*.so
 
 # home
 pack_image "home" $CAMERA_ID $TMP_DIR $OUT_DIR
