@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -e
-
 export CROSSPATH=/opt/yi/arm-linux-gnueabihf-4.8.3-201404/bin
 export PATH=${PATH}:${CROSSPATH}
 
