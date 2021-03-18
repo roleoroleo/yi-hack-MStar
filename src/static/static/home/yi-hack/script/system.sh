@@ -249,18 +249,14 @@ fi
 # Add crontab
 CRONTAB=$(get_config CRONTAB)
 FREE_SPACE=$(get_config FREE_SPACE)
-if [ ! -z "$CRONTAB" ] || [ "$FREE_SPACE" != "0" ] ; then
-    mkdir -p /var/spool/cron/crontabs/
-
-    if [ ! -z "$CRONTAB" ]; then
-        echo "$CRONTAB" > /var/spool/cron/crontabs/root
-    fi
-    if [ "$FREE_SPACE" != "0" ]; then
-        echo "0 * * * * /home/yi-hack/script/clean_records.sh $FREE_SPACE" >> /var/spool/cron/crontabs/root
-    fi
-
-    /usr/sbin/crond -c /var/spool/cron/crontabs/
+mkdir -p /var/spool/cron/crontabs/
+if [ ! -z "$CRONTAB" ]; then
+    echo "$CRONTAB" > /var/spool/cron/crontabs/root
 fi
+if [ "$FREE_SPACE" != "0" ]; then
+    echo "0 * * * * /home/yi-hack/script/clean_records.sh $FREE_SPACE" >> /var/spool/cron/crontabs/root
+fi
+/usr/sbin/crond -c /var/spool/cron/crontabs/
 
 if [[ $(get_config FTP_UPLOAD) == "yes" ]] ; then
     /home/yi-hack/script/ftppush.sh start &
