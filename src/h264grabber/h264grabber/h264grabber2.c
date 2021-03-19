@@ -289,7 +289,7 @@ int main(int argc, char **argv) {
         }
     }
 
-    setpriority(PRIO_PROCESS, 0, -20);
+    setpriority(PRIO_PROCESS, 0, -10);
 
     sps_addr = SPS_1920X1080;
     sps_len = sizeof(SPS_1920X1080);
