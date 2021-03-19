@@ -1,6 +1,6 @@
 diff -Naur tinyalsa-1.0.0.ori/include/tinyalsa/pcm.h tinyalsa-1.0.0/include/tinyalsa/pcm.h
 --- tinyalsa-1.0.0.ori/include/tinyalsa/pcm.h	2016-10-02 04:37:39.000000000 +0200
-+++ tinyalsa-1.0.0/include/tinyalsa/pcm.h	2020-05-20 08:46:50.694744081 +0200
++++ tinyalsa-1.0.0/include/tinyalsa/pcm.h	2021-03-19 14:42:12.901718483 +0100
 @@ -218,6 +218,7 @@
                       unsigned int flags, struct pcm_config *config);
  int pcm_close(struct pcm *pcm);
@@ -21,7 +21,7 @@ diff -Naur tinyalsa-1.0.0.ori/include/tinyalsa/pcm.h tinyalsa-1.0.0/include/tiny
  #endif
 diff -Naur tinyalsa-1.0.0.ori/include/tinyalsa/wave.h tinyalsa-1.0.0/include/tinyalsa/wave.h
 --- tinyalsa-1.0.0.ori/include/tinyalsa/wave.h	1970-01-01 01:00:00.000000000 +0100
-+++ tinyalsa-1.0.0/include/tinyalsa/wave.h	2020-05-20 08:46:50.694744081 +0200
++++ tinyalsa-1.0.0/include/tinyalsa/wave.h	2021-03-19 14:42:12.901718483 +0100
 @@ -0,0 +1,31 @@
 +#ifndef WAVE_H
 +#define WAVE_H
@@ -56,7 +56,7 @@ diff -Naur tinyalsa-1.0.0.ori/include/tinyalsa/wave.h tinyalsa-1.0.0/include/tin
 +#endif
 diff -Naur tinyalsa-1.0.0.ori/Makefile tinyalsa-1.0.0/Makefile
 --- tinyalsa-1.0.0.ori/Makefile	2016-10-02 04:37:39.000000000 +0200
-+++ tinyalsa-1.0.0/Makefile	2020-05-20 08:46:50.694744081 +0200
++++ tinyalsa-1.0.0/Makefile	2021-03-19 14:42:12.901718483 +0100
 @@ -10,13 +10,13 @@
  all:
  	$(MAKE) -C src
@@ -82,8 +82,17 @@ diff -Naur tinyalsa-1.0.0.ori/Makefile tinyalsa-1.0.0/Makefile
  
 diff -Naur tinyalsa-1.0.0.ori/src/pcm.c tinyalsa-1.0.0/src/pcm.c
 --- tinyalsa-1.0.0.ori/src/pcm.c	2016-10-02 04:37:39.000000000 +0200
-+++ tinyalsa-1.0.0/src/pcm.c	2020-05-20 08:47:50.330708297 +0200
-@@ -34,12 +34,16 @@
++++ tinyalsa-1.0.0/src/pcm.c	2021-03-19 14:46:00.741456522 +0100
+@@ -26,6 +26,8 @@
+ ** DAMAGE.
+ */
+ 
++#define _GNU_SOURCE
++
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <fcntl.h>
+@@ -34,12 +36,16 @@
  #include <errno.h>
  #include <unistd.h>
  #include <poll.h>
@@ -100,7 +109,7 @@ diff -Naur tinyalsa-1.0.0.ori/src/pcm.c tinyalsa-1.0.0/src/pcm.c
  
  #include <linux/ioctl.h>
  #define __force
-@@ -48,10 +52,18 @@
+@@ -48,10 +54,18 @@
  #include <sound/asound.h>
  
  #include <tinyalsa/asoundlib.h>
@@ -119,7 +128,7 @@ diff -Naur tinyalsa-1.0.0.ori/src/pcm.c tinyalsa-1.0.0/src/pcm.c
  static inline int param_is_mask(int p)
  {
      return (p >= SNDRV_PCM_HW_PARAM_FIRST_MASK) &&
-@@ -186,6 +198,11 @@
+@@ -186,6 +200,11 @@
      unsigned int subdevice;
  };
  
@@ -131,7 +140,7 @@ diff -Naur tinyalsa-1.0.0.ori/src/pcm.c tinyalsa-1.0.0/src/pcm.c
  /** Gets the buffer size of the PCM.
   * @param pcm A PCM handle.
   * @return The buffer size of the PCM.
-@@ -556,12 +573,15 @@
+@@ -556,12 +575,15 @@
              pcm->prepared = 0;
              pcm->running = 0;
              if (errno == EPIPE) {
@@ -143,22 +152,31 @@ diff -Naur tinyalsa-1.0.0.ori/src/pcm.c tinyalsa-1.0.0/src/pcm.c
              return oops(pcm, errno, "cannot read stream data");
          }
 +
-+	/* Write to fifo, ignore the result */
++        /* Write to fifo, ignore the result */
 +        pcm_write_snoop_fifo(pcm, data, count);
          return 0;
      }
  }
-@@ -764,6 +784,9 @@
+@@ -764,6 +786,9 @@
      pcm->running = 0;
      pcm->buffer_size = 0;
      pcm->fd = -1;
-+    
++
 +    if (snoop_fd > 0)
-+	    close(snoop_fd);
++        close(snoop_fd);
      free(pcm);
      return 0;
  }
-@@ -928,6 +951,16 @@
+@@ -903,7 +928,7 @@
+     pcm->boundary = sparams.boundary = pcm->buffer_size;
+ 
+     while (pcm->boundary * 2 <= INT_MAX - pcm->buffer_size)
+-		pcm->boundary *= 2;
++                pcm->boundary *= 2;
+ 
+     if (ioctl(pcm->fd, SNDRV_PCM_IOCTL_SW_PARAMS, &sparams)) {
+         oops(pcm, errno, "cannot set sw params");
+@@ -928,6 +953,16 @@
  #endif
  
      pcm->underruns = 0;
@@ -166,8 +184,8 @@ diff -Naur tinyalsa-1.0.0.ori/src/pcm.c tinyalsa-1.0.0/src/pcm.c
 +    if (pcm_create_snoop_fifo(pcm) != 0)
 +    {
 +            printf("Error creating fifo\n");  
-+	    oops(pcm, errno, "cannot create snoop fifo");
-+	    goto fail;
++            oops(pcm, errno, "cannot create snoop fifo");
++            goto fail;
 +    }
 +    /* Hopefully nobody uses this one */
 +    signal(SIGPIPE, SIG_IGN);
@@ -175,7 +193,25 @@ diff -Naur tinyalsa-1.0.0.ori/src/pcm.c tinyalsa-1.0.0/src/pcm.c
      return pcm;
  
  fail:
-@@ -1244,3 +1277,140 @@
+@@ -981,7 +1016,7 @@
+         return prepare_error;
+ 
+     if (pcm->flags & PCM_MMAP)
+-	    pcm_sync_ptr(pcm, 0);
++            pcm_sync_ptr(pcm, 0);
+ 
+     if (ioctl(pcm->fd, SNDRV_PCM_IOCTL_START) < 0)
+         return oops(pcm, errno, "cannot start channel");
+@@ -1162,7 +1197,7 @@
+         }
+ 
+         /* start the audio if we reach the threshold */
+-	    if (!pcm->running &&
++            if (!pcm->running &&
+             (pcm->buffer_size - avail) >= pcm->config.start_threshold) {
+             if (pcm_start(pcm) < 0) {
+                fprintf(stderr, "start error: hw 0x%x app 0x%x avail 0x%x\n",
+@@ -1244,3 +1279,145 @@
      return pcm->pcm_delay;
  }
  
@@ -232,7 +268,12 @@ diff -Naur tinyalsa-1.0.0.ori/src/pcm.c tinyalsa-1.0.0/src/pcm.c
 +
 +    if (fcntl(snoop_fd, F_SETFL, O_NONBLOCK) != 0) {
 +        oops(pcm, errno, "cannot set non-block to snoop fifo");
-+        return -1;	
++        return -1;
++    };
++
++    if (fcntl(snoop_fd, F_SETPIPE_SZ, 8192) != 8192) {
++        oops(pcm, errno, "cannot set non-block to snoop fifo");
++        return -1;
 +    };
 +#ifdef START_WAV_HEADER
 +    if (pcm_write_snoop_fifo_wavhdr(pcm) != 0) {
