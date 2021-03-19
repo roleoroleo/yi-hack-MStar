@@ -30,6 +30,7 @@
 #include <unistd.h>
 #include <sys/mman.h>
 #include <sys/time.h>
+#include <sys/resource.h>
 #include <getopt.h>
 #include <signal.h>
 
@@ -287,6 +288,8 @@ int main(int argc, char **argv) {
             return -1;
         }
     }
+
+    setpriority(PRIO_PROCESS, 0, -20);
 
     sps_addr = SPS_1920X1080;
     sps_len = sizeof(SPS_1920X1080);

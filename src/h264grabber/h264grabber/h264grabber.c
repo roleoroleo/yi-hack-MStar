@@ -29,6 +29,7 @@
 #include <dirent.h>
 #include <getopt.h>
 #include <sys/time.h>
+#include <sys/resource.h>
 #include <signal.h>
 
 #define RESOLUTION_LOW 360
@@ -255,6 +256,8 @@ int main(int argc, char **argv)
             return -1;
         }
     }
+
+    setpriority(PRIO_PROCESS, 0, -10);
 
     if (debug) fprintf(stderr, "Resolution: %d\n", res);
 
