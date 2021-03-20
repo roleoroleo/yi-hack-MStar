@@ -258,6 +258,11 @@ if [ "$FREE_SPACE" != "0" ]; then
 fi
 /usr/sbin/crond -c /var/spool/cron/crontabs/
 
+# Add MQTT Advertise
+if [ -f "$YI_HACK_PREFIX/script/mqtt_advertise/startup.sh" ]; then
+    $YI_HACK_PREFIX/script/mqtt_advertise/startup.sh
+fi
+
 if [[ $(get_config FTP_UPLOAD) == "yes" ]] ; then
     /home/yi-hack/script/ftppush.sh start &
 fi
