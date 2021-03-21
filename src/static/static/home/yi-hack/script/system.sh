@@ -141,6 +141,8 @@ else
         if [[ $(get_config REC_WITHOUT_CLOUD) == "yes" ]] ; then
             ./mp4record &
         fi
+
+        echo "127.0.0.1    api.eu.xiaoyi.com" >> /etc/hosts
     )
 fi
 
