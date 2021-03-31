@@ -101,16 +101,10 @@ esac
 if [[ $(get_config DISABLE_CLOUD) == "no" ]] ; then
     (
         cd /home/app
-        if [[ $(get_config RTSP_AUDIO) == "no" ]] || [[ $(get_config RTSP_AUDIO) == "none" ]] ; then
-            ./rmm &
-            sleep 4
-        else
-            OLD_LD_LIBRARY_PATH=$LD_LIBRARY_PATH
-            export LD_LIBRARY_PATH="/home/yi-hack/lib:/lib:/home/lib:/home/ms:/home/app/locallib"
-            ./rmm &
-            export LD_LIBRARY_PATH=$OLD_LD_LIBRARY_PATH
-            sleep 4
-        fi
+        LD_LIBRARY_PATH="/home/yi-hack/lib:/lib:/home/lib:/home/ms:/home/app/locallib" ./rmm &
+        sleep 4
+        dd if=/tmp/audio_fifo of=/dev/null bs=1 count=8192
+#        dd if=/dev/zero of=/tmp/audio_in_fifo bs=1 count=1024
         ./mp4record &
         ./cloud &
         ./p2p_tnp &
@@ -126,16 +120,10 @@ if [[ $(get_config DISABLE_CLOUD) == "no" ]] ; then
 else
     (
         cd /home/app
-        if [[ $(get_config RTSP_AUDIO) == "no" ]] || [[ $(get_config RTSP_AUDIO) == "none" ]] ; then
-            ./rmm &
-            sleep 4
-        else
-            OLD_LD_LIBRARY_PATH=$LD_LIBRARY_PATH
-            export LD_LIBRARY_PATH="/home/yi-hack/lib:/lib:/home/lib:/home/ms:/home/app/locallib"
-            ./rmm &
-            export LD_LIBRARY_PATH=$OLD_LD_LIBRARY_PATH
-            sleep 4
-        fi
+        LD_LIBRARY_PATH="/home/yi-hack/lib:/lib:/home/lib:/home/ms:/home/app/locallib" ./rmm &
+        sleep 4
+        dd if=/tmp/audio_fifo of=/dev/null bs=1 count=8192
+#        dd if=/dev/zero of=/tmp/audio_in_fifo bs=1 count=1024
         # Trick to start circular buffer filling
         start_buffer
         if [[ $(get_config REC_WITHOUT_CLOUD) == "yes" ]] ; then
