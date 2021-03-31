@@ -49,12 +49,9 @@ init_config()
     fi
 
     if [[ $(get_config RTSP) == "yes" ]] ; then
-        if [[ $(get_config RTSP_AUDIO) == "no" ]] || [[ $(get_config RTSP_AUDIO) == "none" ]]; then
-            RTSP_EXE="rRTSPServer"
+        RTSP_AUDIO_COMPRESSION=$(get_config RTSP_AUDIO)
+        if [[ "$RTSP_AUDIO_COMPRESSION" == "none" ]]; then
             RTSP_AUDIO_COMPRESSION="no"
-        else
-            RTSP_EXE="rRTSPServer_audio"
-            RTSP_AUDIO_COMPRESSION=$(get_config RTSP_AUDIO)
         fi
 
         NR_LEVEL=$(get_config RTSP_AUDIO_NR_LEVEL)
@@ -69,7 +66,7 @@ start_rtsp()
     if [ ! -z $2 ]; then
         RTSP_AUDIO_COMPRESSION=$2
     fi
-    NR_LEVEL=$NR_LEVEL RRTSP_RES=$RTSP_RES RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD RRTSP_AUDIO=$RTSP_AUDIO_COMPRESSION $RTSP_EXE >/dev/null &
+    NR_LEVEL=$NR_LEVEL RRTSP_RES=$RTSP_RES RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD RRTSP_AUDIO=$RTSP_AUDIO_COMPRESSION rRTSPServer >/dev/null &
     $YI_HACK_PREFIX/script/wd_rtsp.sh >/dev/null &
 }
 
@@ -77,7 +74,6 @@ stop_rtsp()
 {
     killall wd_rtsp.sh
     killall rRTSPServer
-    killall rRTSPServer_audio
 }
 
 start_onvif()

@@ -24,18 +24,18 @@ restart_rtsp()
         if [[ $(get_config RTSP_STREAM) == "low" ]]; then
             h264grabber_l -r low -f &
             sleep 1
-            NR_LEVEL=$NR_LEVEL RRTSP_RES=low RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD RRTSP_AUDIO=$RRTSP_AUDIO_COMPRESSION $RTSP_EXE &
+            NR_LEVEL=$NR_LEVEL RRTSP_RES=low RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD RRTSP_AUDIO=$RTSP_AUDIO_COMPRESSION rRTSPServer &
         fi
         if [[ $(get_config RTSP_STREAM) == "high" ]]; then
             h264grabber_h -r high -f &
             sleep 1
-            NR_LEVEL=$NR_LEVEL RRTSP_RES=high RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD RRTSP_AUDIO=$RRTSP_AUDIO_COMPRESSION $RTSP_EXE &
+            NR_LEVEL=$NR_LEVEL RRTSP_RES=high RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD RRTSP_AUDIO=$RTSP_AUDIO_COMPRESSION rRTSPServer &
         fi
         if [[ $(get_config RTSP_STREAM) == "both" ]]; then
             h264grabber_l -r low -f &
             h264grabber_h -r high -f &
             sleep 1
-            NR_LEVEL=$NR_LEVEL RRTSP_RES=both RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD RRTSP_AUDIO=$RRTSP_AUDIO_COMPRESSION $RTSP_EXE &
+            NR_LEVEL=$NR_LEVEL RRTSP_RES=both RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD RRTSP_AUDIO=$RTSP_AUDIO_COMPRESSION rRTSPServer &
         fi
     fi
 }
@@ -46,12 +46,12 @@ check_rtsp()
     SOCKET=`netstat -an 2>&1 | grep ":$RTSP_PORT " | grep ESTABLISHED | grep -c ^`
     CPU_1_L=`top -b -n 2 -d 1 | grep h264grabber_l | grep -v grep | tail -n 1 | awk '{print $8}'`
     CPU_1_H=`top -b -n 2 -d 1 | grep h264grabber_h | grep -v grep | tail -n 1 | awk '{print $8}'`
-    CPU_2=`top -b -n 2 -d 1 | grep $RTSP_EXE | grep -v grep | tail -n 1 | awk '{print $8}'`
+    CPU_2=`top -b -n 2 -d 1 | grep rRTSPServer | grep -v grep | tail -n 1 | awk '{print $8}'`
 
     if [[ $(get_config RTSP_STREAM) == "low" ]] || [[ $(get_config RTSP_STREAM) == "both" ]]; then
         if [ "$CPU_1_L" == "" ] || [ "$CPU_2" == "" ]; then
             echo "$(date +'%Y-%m-%d %H:%M:%S') - No running processes for low res, restarting..." >> $LOG_FILE
-            killall -q $RTSP_EXE
+            killall -q rRTSPServer
             killall -q h264grabber_l
             killall -q h264grabber_h
             sleep 1
@@ -62,7 +62,7 @@ check_rtsp()
     if [[ $(get_config RTSP_STREAM) == "high" ]] || [[ $(get_config RTSP_STREAM) == "both" ]]; then
         if [ "$CPU_1_H" == "" ] || [ "$CPU_2" == "" ]; then
             echo "$(date +'%Y-%m-%d %H:%M:%S') - No running processes for high res, restarting..." >> $LOG_FILE
-            killall -q $RTSP_EXE
+            killall -q rRTSPServer
             killall -q h264grabber_l
             killall -q h264grabber_h
             sleep 1
@@ -76,7 +76,7 @@ check_rtsp()
             echo "$(date +'%Y-%m-%d %H:%M:%S') - Detected possible locked process for low res ($COUNTER_L)" >> $LOG_FILE
             if [ $COUNTER_L -ge $COUNTER_LIMIT ]; then
                 echo "$(date +'%Y-%m-%d %H:%M:%S') - Restarting processes" >> $LOG_FILE
-                killall -q $RTSP_EXE
+                killall -q rRTSPServer
                 killall -q h264grabber_l
                 killall -q h264grabber_h
                 sleep 1
@@ -92,7 +92,7 @@ check_rtsp()
             echo "$(date +'%Y-%m-%d %H:%M:%S') - Detected possible locked process for high res ($COUNTER_H)" >> $LOG_FILE
             if [ $COUNTER_H -ge $COUNTER_LIMIT ]; then
                 echo "$(date +'%Y-%m-%d %H:%M:%S') - Restarting processes" >> $LOG_FILE
-                killall -q $RTSP_EXE
+                killall -q rRTSPServer
                 killall -q h264grabber_l
                 killall -q h264grabber_h
                 sleep 1
@@ -130,12 +130,9 @@ case $(get_config RTSP_PORT) in
     *) RTSP_PORT=$(get_config RTSP_PORT) ;;
 esac
 
-if [[ $(get_config RTSP_AUDIO) == "no" ]] || [[ $(get_config RTSP_AUDIO) == "none" ]] ; then
-    RTSP_EXE="rRTSPServer"
-    RRTSP_AUDIO_COMPRESSION="no"
-else
-    RTSP_EXE="rRTSPServer_audio"
-    RRTSP_AUDIO_COMPRESSION=$(get_config RTSP_AUDIO)
+RTSP_AUDIO_COMPRESSION=$(get_config RTSP_AUDIO)
+if [[ "$RTSP_AUDIO_COMPRESSION" == "none" ]] ; then
+    RTSP_AUDIO_COMPRESSION="no"
 fi
 
 NR_LEVEL=$(get_config RTSP_AUDIO_NR_LEVEL)
