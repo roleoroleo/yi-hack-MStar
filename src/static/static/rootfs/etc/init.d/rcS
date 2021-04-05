@@ -55,7 +55,7 @@ then
     (./init.sh &)
     cd /home
 else
-    echo "/home/app/init.sh isn't exist"
+    echo "/home/app/init.sh doesn't exist"
 fi
 
 sleep 10
