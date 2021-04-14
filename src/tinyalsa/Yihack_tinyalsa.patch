@@ -1,6 +1,6 @@
 diff -Naur tinyalsa-1.0.0.ori/include/tinyalsa/pcm.h tinyalsa-1.0.0/include/tinyalsa/pcm.h
 --- tinyalsa-1.0.0.ori/include/tinyalsa/pcm.h	2016-10-02 04:37:39.000000000 +0200
-+++ tinyalsa-1.0.0/include/tinyalsa/pcm.h	2021-03-28 14:41:35.038518769 +0200
++++ tinyalsa-1.0.0/include/tinyalsa/pcm.h	2021-03-28 15:47:03.883883076 +0200
 @@ -218,6 +218,7 @@
                       unsigned int flags, struct pcm_config *config);
  int pcm_close(struct pcm *pcm);
@@ -23,7 +23,7 @@ diff -Naur tinyalsa-1.0.0.ori/include/tinyalsa/pcm.h tinyalsa-1.0.0/include/tiny
  #endif
 diff -Naur tinyalsa-1.0.0.ori/include/tinyalsa/wave.h tinyalsa-1.0.0/include/tinyalsa/wave.h
 --- tinyalsa-1.0.0.ori/include/tinyalsa/wave.h	1970-01-01 01:00:00.000000000 +0100
-+++ tinyalsa-1.0.0/include/tinyalsa/wave.h	2021-03-28 14:41:35.038518769 +0200
++++ tinyalsa-1.0.0/include/tinyalsa/wave.h	2021-03-28 15:47:03.883883076 +0200
 @@ -0,0 +1,31 @@
 +#ifndef WAVE_H
 +#define WAVE_H
@@ -58,7 +58,7 @@ diff -Naur tinyalsa-1.0.0.ori/include/tinyalsa/wave.h tinyalsa-1.0.0/include/tin
 +#endif
 diff -Naur tinyalsa-1.0.0.ori/Makefile tinyalsa-1.0.0/Makefile
 --- tinyalsa-1.0.0.ori/Makefile	2016-10-02 04:37:39.000000000 +0200
-+++ tinyalsa-1.0.0/Makefile	2021-03-28 14:41:35.038518769 +0200
++++ tinyalsa-1.0.0/Makefile	2021-03-28 15:47:03.883883076 +0200
 @@ -10,13 +10,13 @@
  all:
  	$(MAKE) -C src
@@ -84,7 +84,7 @@ diff -Naur tinyalsa-1.0.0.ori/Makefile tinyalsa-1.0.0/Makefile
  
 diff -Naur tinyalsa-1.0.0.ori/src/pcm.c tinyalsa-1.0.0/src/pcm.c
 --- tinyalsa-1.0.0.ori/src/pcm.c	2016-10-02 04:37:39.000000000 +0200
-+++ tinyalsa-1.0.0/src/pcm.c	2021-03-28 15:46:29.391921878 +0200
++++ tinyalsa-1.0.0/src/pcm.c	2021-04-14 14:35:42.584936886 +0200
 @@ -26,6 +26,8 @@
  ** DAMAGE.
  */
@@ -143,17 +143,21 @@ diff -Naur tinyalsa-1.0.0.ori/src/pcm.c tinyalsa-1.0.0/src/pcm.c
  /** Gets the buffer size of the PCM.
   * @param pcm A PCM handle.
   * @return The buffer size of the PCM.
-@@ -562,6 +582,9 @@
+@@ -562,6 +582,13 @@
              }
              return oops(pcm, errno, "cannot read stream data");
          }
 +
-+        /* Write to fifo, ignore the result */
-+        pcm_write_snoop_fifo(pcm, data, count);
++        if (snoop_fd != 0) {
++            /* Write to fifo, ignore the result */
++            pcm_write_snoop_fifo(pcm, data, count);
++            return 0;
++        }
++
          return 0;
      }
  }
-@@ -764,6 +787,15 @@
+@@ -764,6 +791,15 @@
      pcm->running = 0;
      pcm->buffer_size = 0;
      pcm->fd = -1;
@@ -169,7 +173,7 @@ diff -Naur tinyalsa-1.0.0.ori/src/pcm.c tinyalsa-1.0.0/src/pcm.c
      free(pcm);
      return 0;
  }
-@@ -928,6 +960,25 @@
+@@ -928,6 +964,25 @@
  #endif
  
      pcm->underruns = 0;
@@ -195,7 +199,7 @@ diff -Naur tinyalsa-1.0.0.ori/src/pcm.c tinyalsa-1.0.0/src/pcm.c
      return pcm;
  
  fail:
-@@ -1244,3 +1295,249 @@
+@@ -1244,3 +1299,254 @@
      return pcm->pcm_delay;
  }
  
@@ -237,21 +241,26 @@ diff -Naur tinyalsa-1.0.0.ori/src/pcm.c tinyalsa-1.0.0/src/pcm.c
 +void* fifo_read_thread(void *data)
 +{
 +    struct pcm *ppcm = (struct pcm *) data;
-+    int ret;
++    int num;
 +
 +    pthread_detach(pthread_self());
 +
-+    // Read audio from fifo: 512 samples, 16 bits, mono = 1024 bytes
-+    // 512 samples @ 16 KHz = 32 ms
-+    uint8_t snoop_in_buffer[1024];
++    // Read audio from fifo: 1024 samples, 16 bits, mono = 2048 bytes
++    // 1024 samples @ 16 KHz = 64 ms
++    uint8_t snoop_in_buffer[2048];
 +
 +    while (1) {
 +        // Read from fifo
-+        ret = pcm_read_snoop_fifo(ppcm, snoop_in_buffer, 1024);
-+        if (ret == 0) {
++        num = pcm_read_snoop_fifo(ppcm, snoop_in_buffer, 2048);
++        if (num <= 0) {
 +            usleep(10000);
 +        } else {
-+            pcm_write(ppcm, snoop_in_buffer, ret);
++            if (num < 2048) {
++                memset(snoop_in_buffer + num, '\0', 2048 - num);
++                num = 2048;
++            }
++
++            pcm_write(ppcm, snoop_in_buffer, num);
 +        }
 +    }
 +
