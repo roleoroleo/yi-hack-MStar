@@ -225,7 +225,7 @@ void WAVAudioFifoSource::doReadFromFile() {
       if (numBytesRead > 0) {
         break;
       }
-      usleep(25000);
+      usleep(10000);
     }
 
     fFrameSize += numBytesRead;

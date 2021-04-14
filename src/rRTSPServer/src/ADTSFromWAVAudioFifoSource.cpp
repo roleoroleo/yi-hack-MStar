@@ -179,6 +179,8 @@ void ADTSFromWAVAudioFifoSource::doGetNextFrame() {
     int ErrorStatus;
 
     // Feed input buffer with 1 frame
+    // PCM 16 bit, 8KHz, mono = 2048 bytes to read per frame
+    // 1 aac frame every 128 ms
     numInSamples = fread((UCHAR *) fInputBuffer,
                 sizeof(INT_PCM),
                 fEncInfo.inputChannels * fEncInfo.frameLength,
