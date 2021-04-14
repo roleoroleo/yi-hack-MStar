@@ -66,6 +66,7 @@ start_rtsp()
     if [ ! -z $2 ]; then
         RTSP_AUDIO_COMPRESSION=$2
     fi
+
     NR_LEVEL=$NR_LEVEL RRTSP_RES=$RTSP_RES RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD RRTSP_AUDIO=$RTSP_AUDIO_COMPRESSION rRTSPServer >/dev/null &
     $YI_HACK_PREFIX/script/wd_rtsp.sh >/dev/null &
 }
