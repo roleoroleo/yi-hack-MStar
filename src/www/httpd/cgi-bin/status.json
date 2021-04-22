@@ -2,10 +2,16 @@
 
 printf "Content-type: application/json\r\n\r\n"
 
+NAME="yi-hack-mstar"
 HOSTNAME=$(cat /etc/hostname)
 FW_VERSION=$(cat /home/yi-hack/version)
 HOME_VERSION=$(cat /home/app/.appver)
 MODEL_SUFFIX=$(cat /home/yi-hack/model_suffix)
+if [ "$MODEL_SUFFIX" == "h201c" ] || [ "$MODEL_SUFFIX" == "h305r" ] || [ "$MODEL_SUFFIX" == "y30" ]; then
+    PTZ="yes"
+else
+    PTZ="no"
+fi
 SERIAL_NUMBER=$(dd status=none bs=1 count=20 skip=661 if=/tmp/mmap.info)
 LOCAL_TIME=$(date)
 UPTIME=$(cat /proc/uptime | cut -d ' ' -f1)
@@ -29,10 +35,12 @@ WLAN_STRENGTH=$(cat /proc/net/wireless | awk 'END { print $3 }' | sed 's/\.$//')
 # Yeah, it's pretty ugly.. but hey, it works.
 
 printf "{\n"
+printf "\"%s\":\"%s\",\n" "name"            "$NAME"
 printf "\"%s\":\"%s\",\n" "hostname"        "$HOSTNAME"
 printf "\"%s\":\"%s\",\n" "fw_version"      "$FW_VERSION"
 printf "\"%s\":\"%s\",\n" "home_version"    "$HOME_VERSION"
 printf "\"%s\":\"%s\",\n" "model_suffix"    "$MODEL_SUFFIX"
+printf "\"%s\":\"%s\",\n" "ptz"             "$PTZ"
 printf "\"%s\":\"%s\",\n" "serial_number"   "$SERIAL_NUMBER"
 printf "\"%s\":\"%s\",\n" "local_time"      "$LOCAL_TIME"
 printf "\"%s\":\"%s\",\n" "uptime"          "$UPTIME"
