@@ -2,6 +2,12 @@
 	<img height="200" src="https://user-images.githubusercontent.com/39277388/85948999-59034780-b954-11ea-8fb3-c4c88727cf5b.png">
 </p>
 
+<p align="center">
+	<a target="_blank" href="https://github.com/roleoroleo/yi-hack-MStar/releases">
+		<img src="https://img.shields.io/github/downloads/roleoroleo/yi-hack-MStar/total.svg" alt="Releases Downloads">
+	</a>
+</p>
+
 # Custom firmware for Yi camera based on MStar platform
 
 This firmware is completely based on the work done by TheCrypt0
