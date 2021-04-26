@@ -3,8 +3,8 @@
 </p>
 
 <p align="center">
-	<a target="_blank" href="https://github.com/alienatedsec/yi-hack-v5/releases">
-		<img src="https://img.shields.io/github/downloads/alienatedsec/yi-hack-v5/total.svg" alt="Releases Downloads">
+	<a target="_blank" href="https://github.com/roleoroleo/yi-hack-MStar/releases">
+		<img src="https://img.shields.io/github/downloads/roleoroleo/yi-hack-MStar/total.svg" alt="Releases Downloads">
 	</a>
 </p>
 
