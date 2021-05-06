@@ -267,6 +267,8 @@ unsigned int rmm_virt2phys(unsigned int inAddr) {
 void print_usage(char *progname)
 {
     fprintf(stderr, "\nUsage: %s [-r RES] [-d]\n\n", progname);
+    fprintf(stderr, "\t-m, --model MODEL\n");
+    fprintf(stderr, "\r\rset model: unused parameter\n");
     fprintf(stderr, "\t-r RES, --resolution RES\n");
     fprintf(stderr, "\t\tset resolution: LOW or HIGH (default HIGH)\n");
     fprintf(stderr, "\t-w, --watermark\n");
@@ -304,6 +306,7 @@ int main(int argc, char **argv)
     while (1) {
         static struct option long_options[] =
         {
+            {"model",     required_argument, 0, 'm'},
             {"resolution",  required_argument, 0, 'r'},
             {"watermark",  no_argument, 0, 'w'},
             {"debug",  no_argument, 0, 'd'},
@@ -313,7 +316,7 @@ int main(int argc, char **argv)
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        c = getopt_long (argc, argv, "r:wdh",
+        c = getopt_long (argc, argv, "m:r:wdh",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -321,6 +324,10 @@ int main(int argc, char **argv)
             break;
 
         switch (c) {
+        case 'm':
+            // Unused parameter
+            break;
+
         case 'r':
             if (strcasecmp("low", optarg) == 0) {
                 resolution = RESOLUTION_LOW;
