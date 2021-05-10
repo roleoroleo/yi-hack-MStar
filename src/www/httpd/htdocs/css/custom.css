@@ -1,5 +1,22 @@
+:root {
+	--background-color: #fff;
+	--text-color: #000;
+}
+
+[data-theme="dark"] {
+	--background-color: #3F3F3F;
+	--text-color: #fff;
+}
+
+html {
+	background-color: var(--background-color);
+	color: var(--text-color);
+}
+
 body {
-	padding-top: 80px
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	padding-top: 80px;
 }
 
 /* main navigation */
@@ -10,7 +27,7 @@ nav {
 	z-index: 10000;
 	background-color: #fff;
 	border-bottom: 1px solid #dcdcdc;
-	transition: top 0.2s ease-in-out;
+	transition: top .2s ease-in-out;
 }
 
 nav ul {
@@ -32,11 +49,11 @@ nav ul li a {
 	color: #757575;
 	font-size: 1.7rem;
 	text-decoration: none;
-	transition: 0.2s;
+	transition: .2s;
 }
 
 /* add caret for drop menu */
-nav ul > li a:not(:only-child):after { content: '\00a0\00a0▼'; font-size: 0.8rem; vertical-align: middle; }
+nav ul > li a:not(:only-child):after { content: '\00a0\00a0▼'; font-size: .8rem; vertical-align: middle; }
 
 /* sub menu */
 nav ul ul {
@@ -72,6 +89,20 @@ nav ul li.icon {
 	display: none
 }
 
+/* Styles for users who prefer dark mode at the OS level */
+@media (prefers-color-scheme: dark) {
+	/* defaults to dark theme */
+	body { 
+	  --text-color: #eee;
+	  --bkg-color: #121212;
+	}
+	/* Override dark mode with light mode styles if the user decides to swap */
+	body.light-theme {
+	  --text-color: #222;
+	  --bkg-color: #fff;
+	}
+}
+
 /* When the screen is less than 680 pixels wide, hide all list items, except for the first one ("Home"). Show the list item that contains the link to open and close the topnav (li.icon) */
 @media screen and (max-width:880px) {
 	nav ul li:not(:first-child) { display: none; }
@@ -105,7 +136,7 @@ nav ul li.icon {
 }
 
 .strong {
-    font-weight: bold
+    font-weight: 700
 }
 
 .italic {
@@ -150,7 +181,7 @@ table.ptz-table {
 }
 
 table.ptz-table tr td {
-    padding: 1px 1px 1px 1px;
+    padding: 1px;
     border: 0;
     text-align: center;
 }
@@ -208,6 +239,7 @@ li.nav-elem-right {
 	bottom: 0;
 	background-color: #ccc;
 	-webkit-transition: .4s;
+	-moz-transition: .4s;
 	transition: .4s;
 }
 
@@ -218,8 +250,9 @@ li.nav-elem-right {
 	width: 24px;
 	left: 4px;
 	bottom: 3px;
-	background-color: white;
+	background-color: #fff;
 	-webkit-transition: .4s;
+	-moz-transition: .4s;
 	transition: .4s;
 }
 
@@ -245,13 +278,11 @@ input:focus + .slider {
 
 input:checked + .slider:before {
 	-webkit-transform: translateX(18px);
-	-ms-transform: translateX(18px);
 	transform: translateX(18px);
 }
 
 .xs input:checked + .slider:before {
 	-webkit-transform: translateX(10px);
-	-ms-transform: translateX(10px);
 	transform: translateX(10px);
 }
 
@@ -294,7 +325,6 @@ input:checked + .slider:before {
 select {
 	-webkit-appearance: none;
 	-moz-appearance: none;
-	-ms-appearance: none;
 	appearance: none;
 	outline: 0;
 	box-shadow: none;
@@ -335,11 +365,11 @@ select {
 	right: 0;
 	padding: 0 1em;
 	background: #33c4f8;
-	color: white;
+	color: #fff;
 	cursor: pointer;
 	pointer-events: none;
 	-webkit-transition: .25s all ease;
-	-o-transition: .25s all ease;
+	-moz-transition: .25s all ease;
     transition: .25s all ease;
 }
 
@@ -350,4 +380,9 @@ select {
 
 #wlan_strength {
 	vertical-align: middle;
+}
+
+/* Icon Button */
+button.icon {
+	border: 0;
 }
