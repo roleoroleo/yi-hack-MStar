@@ -175,7 +175,9 @@ If not, check the other projects related to Yi cams:
 
 ## Home Assistant integration
 Are you using Home Assistant?
+
 Do you want to integrate your cam?
+
 Try this custom integration:
 https://github.com/roleoroleo/yi-hack_ha_integration
 
