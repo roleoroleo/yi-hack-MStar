@@ -9,7 +9,6 @@
 </p>
 
 # Custom firmware for Yi camera based on MStar platform
-
 This firmware is completely based on the work done by TheCrypt0
 https://github.com/TheCrypt0/yi-hack-v4
 It's a clone made for Yi cameras based on MStar platform.
@@ -18,38 +17,15 @@ It's a clone made for Yi cameras based on MStar platform.
 
 I have no time to support the project, so feel free to clone/fork this git and modify it as you want.
 
-## RTSP Server
-I wrote a daemon that reads the video stream directly from the kernel driver memory and sends it to an application based on live555.
-I was inspired by the following topic:
-- @andy2301 - [Ideas for the RSTP rtsp and rtsp2301](https://github.com/xmflsct/yi-hack-1080p/issues/5#issuecomment-294326131)
-
-The RTSP server code derives from live555 - http://www.live555.com/ and from the archive rtsp2303_srcbin_20170414-1630.zip posted in the link above.
-
-There is a known problem with ffmpeg, see https://github.com/roleoroleo/yi-hack-MStar/issues/36 for details.
-
-### RTSP audio support (many thanks to @PieVo for adding it):
-The datapath of the audio is as follows:
-Mic -> ADC -> Kernel sound driver -> TinyAlsa lib -> OMX ALSA plugin -> Camera application (rmm)
-
-To maintain audio support for the original Yi application, the audio should be cloned at one of the steps with the following in mind:
-- Kernel driver can be used by 1 "sink"
-- TinyAlsa can only openend by one "sink"
-- OMX libs are closed source and are not compatible with the "available" I1 SDK.
-
-Audio support is implemented by replacing the original TinyAlsa library with a version that copies the read audio frames to a pipe. This pipe is read by the RTSP server. The RTSP server uses a patched WAVFileSource to read the audio data from the pipe. (Since it tries to read the WAV header 2x I saw no (quick) other way than to hardcode the PCM format into the WAVFileSource code.)
-
-Additionally:
-- The OMX ALSA library reads audio in 16-bit 16000Hz stereo, one channel is just empty. To reduce streaming bandwidth the TinyAlsa replacement library converts the stereo data to mono.
-- To reduce streaming bandwidth even further, the 16-bit PCM data is converted to 8-bit uLaw and finally results in 128kbit/s.
-
 ## Table of Contents
-
 - [Contributing](#contributing-and-bug-reports)
 - [Features](#features)
+- [RTSP Server](#rtsp-server)
 - [Performance](#performance)
 - [Supported cameras](#supported-cameras)
 - [Is my cam supported?](#is-my-cam-supported)
 - [Getting started](#getting-started)
+- [Home Assistant integration](#home-assistant-integration)
 - [Build your own firmware](#build-your-own-firmware)
 - [Unbricking](#unbricking)
 - [Acknowledgments](#acknowledgments)
@@ -110,15 +86,37 @@ Apart from RTSP, snapshot and ONVIF, all the features are copied from the TheCry
   - Google Drive synchronization - https://github.com/roleoroleo/yi-hack-MStar.gdrive
   - rsync synchronization thanks to @hetzbh - https://github.com/hetzbh/yi-cams-backup
 
-## Performance
+## RTSP Server
+I wrote a daemon that reads the video stream directly from the kernel driver memory and sends it to an application based on live555.
+I was inspired by the following topic:
+- @andy2301 - [Ideas for the RSTP rtsp and rtsp2301](https://github.com/xmflsct/yi-hack-1080p/issues/5#issuecomment-294326131)
 
+The RTSP server code derives from live555 - http://www.live555.com/ and from the archive rtsp2303_srcbin_20170414-1630.zip posted in the link above.
+
+There is a known problem with ffmpeg, see https://github.com/roleoroleo/yi-hack-MStar/issues/36 for details.
+
+### RTSP audio support (many thanks to @PieVo for adding it)
+The datapath of the audio is as follows:
+Mic -> ADC -> Kernel sound driver -> TinyAlsa lib -> OMX ALSA plugin -> Camera application (rmm)
+
+To maintain audio support for the original Yi application, the audio should be cloned at one of the steps with the following in mind:
+- Kernel driver can be used by 1 "sink"
+- TinyAlsa can only openend by one "sink"
+- OMX libs are closed source and are not compatible with the "available" I1 SDK.
+
+Audio support is implemented by replacing the original TinyAlsa library with a version that copies the read audio frames to a pipe. This pipe is read by the RTSP server. The RTSP server uses a patched WAVFileSource to read the audio data from the pipe. (Since it tries to read the WAV header 2x I saw no (quick) other way than to hardcode the PCM format into the WAVFileSource code.)
+
+Additionally:
+- The OMX ALSA library reads audio in 16-bit 16000Hz stereo, one channel is just empty. To reduce streaming bandwidth the TinyAlsa replacement library converts the stereo data to mono.
+- To reduce streaming bandwidth even further, the 16-bit PCM data is converted to 8-bit uLaw and finally results in 128kbit/s.
+
+## Performance
 The performance of the cam is not so good (CPU, RAM, etc...).
 If you enable all the services you may have some problems.
 For example, enabling both rtsp streams is not recommended.
 Disable cloud is recommended to save resources.
 
 ## Supported cameras
-
 Currently this project supports only the following cameras:
 
 | Camera | Firmware | File prefix | Remarks |
@@ -146,7 +144,6 @@ So, USE AT YOUR OWN RISK.
 
 
 ## Is my cam supported?
-
 If you want to know if your cam is supported, please check the serial number (first 4 letters) and the firmware version.
 If both numbers appear in the same row in the table above, your cam is supported.
 If not, check the other projects related to Yi cams:
@@ -175,6 +172,14 @@ If not, check the other projects related to Yi cams:
 9. Go in the browser and access the web interface of the camera as a website (http://IP-CAM:8080). Find the IP address using your mobile app (Camera Settings --> Network Info --> IP Address). If the mobile app can't be paired, you may look for the IP on your router's portal (see connected devices).
 
 10. Done.
+
+## Home Assistant integration
+Are you using Home Assistant?
+
+Do you want to integrate your cam?
+
+Try this custom integration:
+https://github.com/roleoroleo/yi-hack_ha_integration
 
 ## Build your own firmware
 If you want to build your own firmware, clone this git and compile using a linux machine.
