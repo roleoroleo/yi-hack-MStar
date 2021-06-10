@@ -1,14 +1,19 @@
 :root {
-	--background-color: #fff;
-	--text-color: #000;
+	--background-color: #fff !important;
+	--text-color: #000 !important;
 }
 
 [data-theme="dark"] {
-	--background-color: #3F3F3F;
-	--text-color: #fff;
+	--background-color: #3F3F3F !important;
+	--text-color: #fff !important;
 }
 
-html {
+[data-theme="dark"] body {
+	background-color: var(--background-color);
+	color: var(--text-color);
+}
+
+[data-theme="dark"] nav {
 	background-color: var(--background-color);
 	color: var(--text-color);
 }
@@ -25,14 +30,14 @@ nav {
 	position: fixed;
 	width: 100%;
 	z-index: 10000;
-	background-color: #fff;
+	background-color: var(--background-color);
 	border-bottom: 1px solid #dcdcdc;
 	transition: top .2s ease-in-out;
 }
 
 nav ul {
 	margin: 0;
-	background-color: #fff;
+	background-color: var(--background-color);
 }
 
 nav ul li {
@@ -92,7 +97,7 @@ nav ul li.icon {
 /* Styles for users who prefer dark mode at the OS level */
 @media (prefers-color-scheme: dark) {
 	/* defaults to dark theme */
-	body { 
+	body {
 	  --text-color: #eee;
 	  --bkg-color: #121212;
 	}
@@ -191,7 +196,6 @@ table.padded-table tr td {
 }
 
 table.padded-table td:first-child {
-    color: rgba(0,0,0,0.7);
     width: 35%;
 }
 

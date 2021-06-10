@@ -178,7 +178,7 @@ String.prototype.format = function() {
 
 // Wait for document to load
 document.addEventListener("DOMContentLoaded", function(event) {
-    document.documentElement.setAttribute("data-theme", "light");
+    document.documentElement.setAttribute("data-theme", window.localStorage.getItem('data-theme') || "light");
 
     // Get our button switcher
     var themeSwitcher = document.getElementById("theme-switcher");
@@ -194,5 +194,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
       // Set our currenet theme to the new one
       document.documentElement.setAttribute("data-theme", switchToTheme);
+      window.localStorage.setItem('data-theme', switchToTheme);
     }
 });
