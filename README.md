@@ -169,7 +169,7 @@ If not, check the other projects related to Yi cams:
 
 8. Blue light should come ON indicating that your WiFi connection has been successful (if not disable using app).
 
-9. Go in the browser and access the web interface of the camera as a website (http://IP-CAM:8080). Find the IP address using your mobile app (Camera Settings --> Network Info --> IP Address). If the mobile app can't be paired, you may look for the IP on your router's portal (see connected devices).
+9. Go in the browser and access the web interface of the camera as a website (http://IP-CAM:8080) where IP-CAM is the IP address of your cam and you can find it using the mobile app (Camera Settings --> Network Info --> IP Address). If the mobile app can't be paired, you may look for the IP on your router's portal (see connected devices).
 
 10. Done.
 
