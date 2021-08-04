@@ -219,8 +219,8 @@ if [[ $(get_config RTSP) == "yes" ]] ; then
     $YI_HACK_PREFIX/script/wd_rtsp.sh &
 fi
 
-SERIAL_NUMBER=$(dd status=none bs=1 count=20 skip=661 if=/tmp/mmap.info)
-HW_ID=$(dd status=none bs=1 count=4 skip=661 if=/tmp/mmap.info)
+SERIAL_NUMBER=$(dd status=none bs=1 count=20 skip=661 if=/tmp/mmap.info | tr '\0' '0' | cut -c1-20)
+HW_ID=$(dd status=none bs=1 count=4 skip=661 if=/tmp/mmap.info | tr '\0' '0' | cut -c1-4)
 
 if [[ $(get_config ONVIF) == "yes" ]] ; then
     ONVIF_SRVD_CONF="/tmp/onvif_srvd.conf"
