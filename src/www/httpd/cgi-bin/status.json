@@ -31,6 +31,11 @@ GATEWAY=$(route -n | awk 'NR==3{print $2}')
 MAC_ADDR=$(ifconfig wlan0 | awk '/HWaddr/{print substr($5,1)}')
 WLAN_ESSID=$(LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/ms/ /ext/bin/iwconfig wlan0 | grep ESSID | cut -d\" -f2)
 WLAN_STRENGTH=$(cat /proc/net/wireless | awk 'END { print $3 }' | sed 's/\.$//')
+if [ -f /tmp/privacy ]; then
+    PRIVACY="on"
+else
+    PRIVACY="off"
+fi
 
 # Yeah, it's pretty ugly.. but hey, it works.
 
@@ -54,6 +59,7 @@ printf "\"%s\":\"%s\",\n" "netmask"         "$NETMASK"
 printf "\"%s\":\"%s\",\n" "gateway"         "$GATEWAY"
 printf "\"%s\":\"%s\",\n" "mac_addr"        "$MAC_ADDR"
 printf "\"%s\":\"%s\",\n" "wlan_essid"      "$WLAN_ESSID"
-printf "\"%s\":\"%s\" \n" "wlan_strength"   "$WLAN_STRENGTH"
+printf "\"%s\":\"%s\",\n" "wlan_strength"   "$WLAN_STRENGTH"
+printf "\"%s\":\"%s\" \n" "privacy"         "$PRIVACY"
 
 printf "}"
