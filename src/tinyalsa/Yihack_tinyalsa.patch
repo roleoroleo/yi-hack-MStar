@@ -1,6 +1,6 @@
 diff -Naur tinyalsa-1.0.0.ori/include/tinyalsa/pcm.h tinyalsa-1.0.0/include/tinyalsa/pcm.h
 --- tinyalsa-1.0.0.ori/include/tinyalsa/pcm.h	2016-10-02 04:37:39.000000000 +0200
-+++ tinyalsa-1.0.0/include/tinyalsa/pcm.h	2021-03-28 15:47:03.883883076 +0200
++++ tinyalsa-1.0.0/include/tinyalsa/pcm.h	2021-06-17 15:04:50.813600400 +0200
 @@ -218,6 +218,7 @@
                       unsigned int flags, struct pcm_config *config);
  int pcm_close(struct pcm *pcm);
@@ -23,7 +23,7 @@ diff -Naur tinyalsa-1.0.0.ori/include/tinyalsa/pcm.h tinyalsa-1.0.0/include/tiny
  #endif
 diff -Naur tinyalsa-1.0.0.ori/include/tinyalsa/wave.h tinyalsa-1.0.0/include/tinyalsa/wave.h
 --- tinyalsa-1.0.0.ori/include/tinyalsa/wave.h	1970-01-01 01:00:00.000000000 +0100
-+++ tinyalsa-1.0.0/include/tinyalsa/wave.h	2021-03-28 15:47:03.883883076 +0200
++++ tinyalsa-1.0.0/include/tinyalsa/wave.h	2021-06-17 15:04:50.813600400 +0200
 @@ -0,0 +1,31 @@
 +#ifndef WAVE_H
 +#define WAVE_H
@@ -58,7 +58,7 @@ diff -Naur tinyalsa-1.0.0.ori/include/tinyalsa/wave.h tinyalsa-1.0.0/include/tin
 +#endif
 diff -Naur tinyalsa-1.0.0.ori/Makefile tinyalsa-1.0.0/Makefile
 --- tinyalsa-1.0.0.ori/Makefile	2016-10-02 04:37:39.000000000 +0200
-+++ tinyalsa-1.0.0/Makefile	2021-03-28 15:47:03.883883076 +0200
++++ tinyalsa-1.0.0/Makefile	2021-06-17 15:04:50.813600400 +0200
 @@ -10,13 +10,13 @@
  all:
  	$(MAKE) -C src
@@ -84,7 +84,7 @@ diff -Naur tinyalsa-1.0.0.ori/Makefile tinyalsa-1.0.0/Makefile
  
 diff -Naur tinyalsa-1.0.0.ori/src/pcm.c tinyalsa-1.0.0/src/pcm.c
 --- tinyalsa-1.0.0.ori/src/pcm.c	2016-10-02 04:37:39.000000000 +0200
-+++ tinyalsa-1.0.0/src/pcm.c	2021-04-14 14:35:42.584936886 +0200
++++ tinyalsa-1.0.0/src/pcm.c	2021-06-28 21:28:48.394863222 +0200
 @@ -26,6 +26,8 @@
  ** DAMAGE.
  */
@@ -111,7 +111,7 @@ diff -Naur tinyalsa-1.0.0.ori/src/pcm.c tinyalsa-1.0.0/src/pcm.c
  
  #include <linux/ioctl.h>
  #define __force
-@@ -48,10 +54,18 @@
+@@ -48,10 +54,13 @@
  #include <sound/asound.h>
  
  #include <tinyalsa/asoundlib.h>
@@ -120,17 +120,12 @@ diff -Naur tinyalsa-1.0.0.ori/src/pcm.c tinyalsa-1.0.0/src/pcm.c
  #define PARAM_MAX SNDRV_PCM_HW_PARAM_LAST_INTERVAL
  #define SNDRV_PCM_HW_PARAMS_NO_PERIOD_WAKEUP (1<<2)
  
-+#define CONVERT_TO_MONO
-+//#define CONVERT_TO_8KHZ
-+#ifdef CONVERT_TO_8KHZ
-+#define CONVERT_TO_MONO
-+#endif
 +//#define START_WAV_HEADER
 +
  static inline int param_is_mask(int p)
  {
      return (p >= SNDRV_PCM_HW_PARAM_FIRST_MASK) &&
-@@ -186,6 +200,12 @@
+@@ -186,6 +195,14 @@
      unsigned int subdevice;
  };
  
@@ -139,11 +134,13 @@ diff -Naur tinyalsa-1.0.0.ori/src/pcm.c tinyalsa-1.0.0/src/pcm.c
 + */
 +int snoop_fd = 0;
 +int snoop_fd_in = 0;
++int convert_to_mono = 0;
++int convert_to_mono_8khz = 0;
 +
  /** Gets the buffer size of the PCM.
   * @param pcm A PCM handle.
   * @return The buffer size of the PCM.
-@@ -562,6 +582,13 @@
+@@ -562,6 +579,13 @@
              }
              return oops(pcm, errno, "cannot read stream data");
          }
@@ -157,7 +154,7 @@ diff -Naur tinyalsa-1.0.0.ori/src/pcm.c tinyalsa-1.0.0/src/pcm.c
          return 0;
      }
  }
-@@ -764,6 +791,15 @@
+@@ -764,6 +788,15 @@
      pcm->running = 0;
      pcm->buffer_size = 0;
      pcm->fd = -1;
@@ -173,33 +170,43 @@ diff -Naur tinyalsa-1.0.0.ori/src/pcm.c tinyalsa-1.0.0/src/pcm.c
      free(pcm);
      return 0;
  }
-@@ -928,6 +964,25 @@
+@@ -928,6 +961,35 @@
  #endif
  
      pcm->underruns = 0;
 +
 +    if (flags & PCM_IN) {
-+        if (pcm_create_snoop_fifo(pcm) != 0)
-+        {
-+            oops(pcm, errno, "cannot create snoop fifo");
-+            goto fail;
++        if (access("/tmp/audio_fifo_mono.requested", F_OK ) == 0 ) {
++            convert_to_mono = 1;
++        } else if (access("/tmp/audio_fifo_mono_8khz.requested", F_OK ) == 0 ) {
++            convert_to_mono = 1;
++            convert_to_mono_8khz = 1;
 +        }
-+        /* Hopefully nobody uses this one */
-+        signal(SIGPIPE, SIG_IGN);
++        if (access("/tmp/audio_fifo.requested", F_OK ) == 0 ) {
++            if (pcm_create_snoop_fifo(pcm) != 0)
++            {
++                oops(pcm, errno, "cannot create snoop fifo");
++                goto fail;
++            }
++            /* Hopefully nobody uses this one */
++            signal(SIGPIPE, SIG_IGN);
++        }
 +    } else {
-+        if (pcm_create_snoop_fifo_in(pcm) != 0)
-+        {
-+            oops(pcm, errno, "cannot create snoop fifo");
-+            goto fail;
++        if (access("/tmp/audio_in_fifo.requested", F_OK ) == 0 ) {
++            if (pcm_create_snoop_fifo_in(pcm) != 0)
++            {
++                oops(pcm, errno, "cannot create snoop fifo");
++                goto fail;
++            }
++            /* Hopefully nobody uses this one */
++            signal(SIGPIPE, SIG_IGN);
 +        }
-+        /* Hopefully nobody uses this one */
-+        signal(SIGPIPE, SIG_IGN);
 +    }
 +
      return pcm;
  
  fail:
-@@ -1244,3 +1299,254 @@
+@@ -1244,3 +1306,258 @@
      return pcm->pcm_delay;
  }
  
@@ -369,35 +376,39 @@ diff -Naur tinyalsa-1.0.0.ori/src/pcm.c tinyalsa-1.0.0/src/pcm.c
 +
 +int pcm_write_snoop_fifo(struct pcm *pcm, void *data, unsigned int bytes)
 +{
-+#ifdef CONVERT_TO_MONO
++    unsigned int bytes_to_write;
 +    int16_t mono_buf[2048]; /* rmm reads 512 frames per call, 2k to be sure */
 +    uint32_t *pcm_ptr = (uint32_t*)data;
 +    uint32_t i;
-+#endif
++    uint32_t frames = pcm_bytes_to_frames(pcm, bytes);
++    if (convert_to_mono_8khz) frames = frames / 2;
++    void *data_to_write = mono_buf;
 +
 +    if (snoop_fd <= 0) {
 +        oops(pcm, errno, "snoop fifo is not opened");
 +        return -1;
 +    }
 +
-+#ifdef CONVERT_TO_MONO
-+    for (i = 0; i < pcm_bytes_to_frames(pcm, bytes); i++) {
-+        mono_buf[i] = *pcm_ptr & 0xffff;
-+        //mono_buf[i] = cnt++;
-+        pcm_ptr++;
-+#ifdef CONVERT_TO_8KHZ
-+        pcm_ptr++;
-+#endif
++    if (convert_to_mono) {
++        for (i = 0; i < frames; i++) {
++            mono_buf[i] = *pcm_ptr & 0xffff;
++            pcm_ptr++;
++            if (convert_to_mono_8khz) {
++                pcm_ptr++;
++            }
++        }
 +    }
 +
-+#ifdef CONVERT_TO_8KHZ
-+    if (write(snoop_fd, mono_buf, bytes / 4) < 0) {
-+#else
-+    if (write(snoop_fd, mono_buf, bytes / 2) < 0) {
-+#endif
-+#else
-+    if (write(snoop_fd, data, bytes) < 0) {
-+#endif
++    if (convert_to_mono_8khz) {
++        bytes_to_write = bytes / 4;
++    } else if (convert_to_mono) {
++        bytes_to_write = bytes / 2;
++    } else {
++        bytes_to_write = bytes;
++        data_to_write = data;
++    }
++
++    if (write(snoop_fd, data_to_write, bytes_to_write) < 0) {
 +        if (errno == EAGAIN || errno == EWOULDBLOCK) {
 +            oops(pcm, errno, "Fifo full!\n");
 +            return -1;
@@ -430,16 +441,16 @@ diff -Naur tinyalsa-1.0.0.ori/src/pcm.c tinyalsa-1.0.0/src/pcm.c
 +    header.fmt_id = ID_FMT;
 +    header.fmt_sz = 16;
 +    header.audio_format = FORMAT_PCM;
-+#ifdef CONVERT_TO_MONO
-+    header.num_channels = 1;
-+#else
-+    header.num_channels = 2;
-+#endif
-+#ifdef CONVERT_TO_8KHZ
-+    header.sample_rate = 8000;
-+#else
-+    header.sample_rate = 16000;
-+#endif
++    if (convert_to_mono) {
++        header.num_channels = 1;
++    } else {
++        header.num_channels = 2;
++    }
++    if (convert_to_mono_8khz) {
++        header.sample_rate = 8000;
++    } else {
++        header.sample_rate = 16000;
++    }
 +    header.bits_per_sample = pcm_format_to_bits(PCM_FORMAT_S16_LE);
 +    header.byte_rate = (header.bits_per_sample / 8) * header.num_channels * header.sample_rate;
 +    header.block_align = header.num_channels * (header.bits_per_sample / 8);

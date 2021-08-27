@@ -128,7 +128,7 @@ WAVAudioFifoSource::WAVAudioFifoSource(UsageEnvironment& env, FILE* fid)
   // Header vaules: 8 Khz, 16 bit,  mono
   fWAVHeaderSize = 0;
   fBitsPerSample = 16;
-  fSamplingFrequency = 16000;
+  fSamplingFrequency = 8000;
   fNumChannels = 1;
   fAudioFormat = (unsigned char)WA_PCM;
 
