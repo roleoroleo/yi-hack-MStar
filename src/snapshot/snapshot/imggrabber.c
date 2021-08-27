@@ -361,6 +361,12 @@ int main(int argc, char **argv)
         }
     }
 
+    // Check if snapshot is disabled
+    if (access("/tmp/snapshot.disabled", F_OK ) == 0 ) {
+        fprintf(stderr, "Snapshot is disabled\n");
+        return 0;
+    }
+
     if (debug) fprintf(stderr, "Resolution: %d\n", resolution);
 
     if (resolution == RESOLUTION_LOW) {
