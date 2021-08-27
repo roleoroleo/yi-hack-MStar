@@ -98,11 +98,6 @@ APP.wifi = (function($) {
         } else {
             $('#input-container').hide();
         }
-//        if ($('#input-container').is(":visible")) {
-//            $('#input-container').hide();
-//        } else {
-//            $('#input-container').show();
-//        }
     }
 
     return {
