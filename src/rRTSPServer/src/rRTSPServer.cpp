@@ -325,15 +325,15 @@ int main(int argc, char** argv)
         nr_level = nm;
     }
 
+    // Begin by setting up our usage environment:
+    TaskScheduler* scheduler = BasicTaskScheduler::createNew();
+    env = BasicUsageEnvironment::createNew(*scheduler);
+
     // If fifo doesn't exist, disable audio
     if (stat (inputAudioFileName, &stat_buffer) != 0) {
         *env << "Audio fifo does not exist, disabling audio.n";
         audio = 0;
     }
-
-    // Begin by setting up our usage environment:
-    TaskScheduler* scheduler = BasicTaskScheduler::createNew();
-    env = BasicUsageEnvironment::createNew(*scheduler);
 
     UserAuthenticationDatabase* authDB = NULL;
 
