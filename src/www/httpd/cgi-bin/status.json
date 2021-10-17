@@ -7,7 +7,7 @@ HOSTNAME=$(cat /etc/hostname)
 FW_VERSION=$(cat /home/yi-hack/version)
 HOME_VERSION=$(cat /home/app/.appver)
 MODEL_SUFFIX=$(cat /home/yi-hack/model_suffix)
-if [ "$MODEL_SUFFIX" == "h201c" ] || [ "$MODEL_SUFFIX" == "h305r" ] || [ "$MODEL_SUFFIX" == "y30" ]; then
+if [ "$MODEL_SUFFIX" == "h201c" ] || [ "$MODEL_SUFFIX" == "h305r" ] || [ "$MODEL_SUFFIX" == "y30" ] || [ "$MODEL_SUFFIX" == "h307" ]; then
     PTZ="yes"
 else
     PTZ="no"

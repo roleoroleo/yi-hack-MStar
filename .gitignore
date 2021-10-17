@@ -14,6 +14,8 @@
 !/stock_firmware/y23/.gitkeep
 /stock_firmware/y30/*
 !/stock_firmware/y30/.gitkeep
+/stock_firmware/h307/*
+!/stock_firmware/h307/.gitkeep
 
 /sysroot/*
 !/sysroot/.gitkeep

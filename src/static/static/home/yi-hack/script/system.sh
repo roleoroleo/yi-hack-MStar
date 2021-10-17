@@ -268,7 +268,7 @@ if [[ $(get_config ONVIF) == "yes" ]] ; then
         echo "" >> $ONVIF_SRVD_CONF
     fi
 
-    if [[ $MODEL_SUFFIX == "h201c" ]] || [[ $MODEL_SUFFIX == "h305r" ]] || [[ $MODEL_SUFFIX == "y30" ]] ; then
+    if [[ $MODEL_SUFFIX == "h201c" ]] || [[ $MODEL_SUFFIX == "h305r" ]] || [[ $MODEL_SUFFIX == "y30" ]] || [[ $MODEL_SUFFIX == "h307" ]] ; then
         echo "#PTZ" >> $ONVIF_SRVD_CONF
         echo "ptz=1" >> $ONVIF_SRVD_CONF
         echo "move_left=/home/yi-hack/bin/ipc_cmd -m left" >> $ONVIF_SRVD_CONF
