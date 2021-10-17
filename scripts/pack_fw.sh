@@ -171,6 +171,19 @@ if [ ! -L $TMP_DIR/rootfs/etc/back.bin ]; then
 fi
 echo "done!"
 
+# Removing iperf
+echo -n ">>> Removing iperf... "
+if [ ! -L $TMP_DIR/rootfs/bin/iperf ]; then
+    rm -f $TMP_DIR/rootfs/bin/iperf
+fi
+echo "done!"
+
+# Patching resolve.conf in init.sh
+echo -n ">>> Patching resolve.conf in init.sh... "
+sed -i 's/^\trm \/etc\/resolv.conf/#\trm \/etc\/resolv.conf/g' $TMP_DIR/home/app/init.sh
+sed -i 's/^\tln -s \/tmp\/resolv.conf \/etc\/resolv.conf/#\tln -s \/tmp\/resolv.conf \/etc\/resolv.conf/g' $TMP_DIR/home/app/init.sh
+echo "done!"
+
 # adding defaults
 echo -n ">>> Adding defaults... "
 7za a $TMP_DIR/home/yi-hack/etc/defaults.7z $TMP_DIR/home/yi-hack/etc/*.conf $TMP_DIR/home/yi-hack/etc/hostname $TMP_DIR/home/yi-hack/etc/passwd > /dev/null
