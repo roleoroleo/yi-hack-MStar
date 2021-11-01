@@ -31,5 +31,6 @@ INIT_SUBMODULES.md
 *.o
 .idea
 src/h264grabber/h264grabber/h264grabber
+src/h264grabber/h264grabber/h264grabber2
 src/ipc_cmd/ipc_cmd/ipc_cmd
 src/snapshot/snapshot/imggrabber
