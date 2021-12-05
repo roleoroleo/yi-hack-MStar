@@ -1,5 +1,8 @@
 #!/bin/sh
 
+export PATH=$PATH:/home/base/tools:/home/yi-hack/bin:/home/yi-hack/sbin:/tmp/sd/yi-hack/bin:/tmp/sd/yi-hack/sbin
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/lib:/home/yi-hack/lib:/tmp/sd/yi-hack/lib
+
 printf "Content-type: application/json\r\n\r\n"
 
 if [ ! -e /tmp/audio_in_fifo ]; then
