@@ -47,7 +47,14 @@ touch /tmp/httpd.conf
 
 # Restore configuration after a firmware upgrade
 if [ -f $YI_HACK_PREFIX/.fw_upgrade_in_progress ]; then
-    cp -f /tmp/sd/.fw_upgrade/*.conf $YI_HACK_PREFIX/etc/
+    for f in `ls /tmp/sd/.fw_upgrade/*.conf`; do
+        fb="${f##*/}"
+        if [ "$fb" == "proxychains.conf" ]; then
+            cat /tmp/sd/.fw_upgrade/$fb > $YI_HACK_PREFIX/etc/$fb
+        else
+            cp -f /tmp/sd/.fw_upgrade/$fb $YI_HACK_PREFIX/etc/
+        fi
+    done
     chmod 0644 $YI_HACK_PREFIX/etc/*.conf
     if [ -f /tmp/sd/.fw_upgrade/hostname ]; then
         cp -f /tmp/sd/.fw_upgrade/hostname $YI_HACK_PREFIX/etc/

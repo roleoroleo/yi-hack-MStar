@@ -26,9 +26,15 @@ make -j$(nproc) || exit 1
 
 mkdir -p $SCRIPT_DIR/_install/bin
 mkdir -p $SCRIPT_DIR/_install/lib
+mkdir -p $SCRIPT_DIR/_install/etc
 
 cp -f proxychains4 $SCRIPT_DIR/_install/bin
 cp -f libproxychains4.so $SCRIPT_DIR/_install/lib
 
 arm-linux-gnueabihf-strip $SCRIPT_DIR/_install/bin/proxychains4
 arm-linux-gnueabihf-strip $SCRIPT_DIR/_install/lib/libproxychains4.so
+
+cd ..
+cp -f proxychains.conf $SCRIPT_DIR/_install/etc/proxychains.conf.template
+cd $SCRIPT_DIR/_install/etc
+ln -s /tmp/proxychains.conf proxychains.conf

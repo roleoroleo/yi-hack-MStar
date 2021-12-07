@@ -13,4 +13,4 @@ mkdir -p ../../build/home/yi-hack/etc/
 
 rsync -a ./_install/bin/* ../../build/home/yi-hack/bin/
 rsync -a ./_install/lib/* ../../build/home/yi-hack/lib/
-rsync -a ./proxychains.conf ../../build/home/yi-hack/etc/
+rsync -a ./_install/etc/* ../../build/home/yi-hack/etc/
