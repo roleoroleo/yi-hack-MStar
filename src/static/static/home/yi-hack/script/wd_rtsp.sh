@@ -24,18 +24,22 @@ restart_rtsp()
         if [[ $(get_config RTSP_STREAM) == "low" ]]; then
             h264grabber_l -r low -f &
             sleep 1
-            NR_LEVEL=$NR_LEVEL RRTSP_RES=low RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD RRTSP_AUDIO=$RTSP_AUDIO_COMPRESSION rRTSPServer &
+            CODEC_LOW=$(cat /tmp/lowres)
+            NR_LEVEL=$NR_LEVEL RRTSP_RES=low RRTSP_CODEC_LOW=$CODEC_LOW RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD RRTSP_AUDIO=$RTSP_AUDIO_COMPRESSION rRTSPServer &
         fi
         if [[ $(get_config RTSP_STREAM) == "high" ]]; then
             h264grabber_h -r high -f &
             sleep 1
-            NR_LEVEL=$NR_LEVEL RRTSP_RES=high RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD RRTSP_AUDIO=$RTSP_AUDIO_COMPRESSION rRTSPServer &
+            CODEC_HIGH=$(cat /tmp/highres)
+            NR_LEVEL=$NR_LEVEL RRTSP_RES=high RRTSP_CODEC_HIGH=$CODEC_HIGH RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD RRTSP_AUDIO=$RTSP_AUDIO_COMPRESSION rRTSPServer &
         fi
         if [[ $(get_config RTSP_STREAM) == "both" ]]; then
             h264grabber_l -r low -f &
             h264grabber_h -r high -f &
             sleep 1
-            NR_LEVEL=$NR_LEVEL RRTSP_RES=both RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD RRTSP_AUDIO=$RTSP_AUDIO_COMPRESSION rRTSPServer &
+            CODEC_LOW=$(cat /tmp/lowres)
+            CODEC_HIGH=$(cat /tmp/highres)
+            NR_LEVEL=$NR_LEVEL RRTSP_RES=both RRTSP_CODEC_LOW=$CODEC_LOW RRTSP_CODEC_HIGH=$CODEC_HIGH RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD RRTSP_AUDIO=$RTSP_AUDIO_COMPRESSION rRTSPServer &
         fi
     fi
 }

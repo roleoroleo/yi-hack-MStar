@@ -39,6 +39,9 @@
 #define RESOLUTION_HIGH 1080
 #define RESOLUTION_BOTH 1440
 
+#define CODEC_H264 0
+#define CODEC_H265 1
+
 UsageEnvironment* env;
 
 // To make the second and subsequent client for each stream reuse the same
@@ -128,9 +131,13 @@ static void announceStream(RTSPServer* rtspServer, ServerMediaSession* sms, char
 
 void print_usage(char *progname)
 {
-    fprintf(stderr, "\nUsage: %s [-r RES] [-p PORT] [-d]\n\n", progname);
+    fprintf(stderr, "\nUsage: %s [-r RES] [-c CODEC] [-C CODEC] [-a AUDIO] [-p PORT] [-n LEVEL] [-d]\n\n", progname);
     fprintf(stderr, "\t-r RES,  --resolution RES\n");
     fprintf(stderr, "\t\tset resolution: low, high or both (default high)\n");
+    fprintf(stderr, "\t-c CODEC,  --codec_low CODEC\n");
+    fprintf(stderr, "\t\tset codec for low resolution: h264 or h265 (default h264)\n");
+    fprintf(stderr, "\t-C CODEC,  --codec_high CODEC\n");
+    fprintf(stderr, "\t\tset codec for high resolution: h264 or h265 (default h264)\n");
     fprintf(stderr, "\t-a AUDIO,  --audio AUDIO\n");
     fprintf(stderr, "\t\tset audio: yes, no, alaw, ulaw, pcm or aac (default yes)\n");
     fprintf(stderr, "\t-p PORT, --port PORT\n");
@@ -157,6 +164,8 @@ int main(int argc, char** argv)
 
     // Setting default
     int resolution = RESOLUTION_HIGH;
+    int codec_low = CODEC_H264;
+    int codec_high = CODEC_H264;
     int audio = 1;
     int convertToxLaw = WA_PCMU;
     int port = 554;
@@ -167,6 +176,8 @@ int main(int argc, char** argv)
         static struct option long_options[] =
         {
             {"resolution",  required_argument, 0, 'r'},
+            {"codec_low",  required_argument, 0, 'c'},
+            {"codec_high",  required_argument, 0, 'C'},
             {"audio",  required_argument, 0, 'a'},
             {"port",  required_argument, 0, 'p'},
             {"nr_level",  required_argument, 0, 'n'},
@@ -177,7 +188,7 @@ int main(int argc, char** argv)
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        c = getopt_long (argc, argv, "r:a:p:n:dh",
+        c = getopt_long (argc, argv, "r:c:C:a:p:n:dh",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -192,6 +203,22 @@ int main(int argc, char** argv)
                 resolution = RESOLUTION_HIGH;
             } else if (strcasecmp("both", optarg) == 0) {
                 resolution = RESOLUTION_BOTH;
+            }
+            break;
+
+        case 'c':
+            if (strcasecmp("h264", optarg) == 0) {
+                codec_low = CODEC_H264;
+            } else if (strcasecmp("h265", optarg) == 0) {
+                codec_low = CODEC_H265;
+            }
+            break;
+
+        case 'C':
+            if (strcasecmp("h264", optarg) == 0) {
+                codec_high = CODEC_H264;
+            } else if (strcasecmp("h265", optarg) == 0) {
+                codec_high = CODEC_H265;
             }
             break;
 
@@ -274,6 +301,24 @@ int main(int argc, char** argv)
             resolution = RESOLUTION_HIGH;
         } else if (strcasecmp("both", str) == 0) {
             resolution = RESOLUTION_BOTH;
+        }
+    }
+
+    str = getenv("RRTSP_CODEC_LOW");
+    if (str != NULL) {
+        if (strcasecmp("h264", str) == 0) {
+            codec_low = CODEC_H264;
+        } else if (strcasecmp("h265", str) == 0) {
+            codec_low = CODEC_H265;
+        }
+    }
+
+    str = getenv("RRTSP_CODEC_HIGH");
+    if (str != NULL) {
+        if (strcasecmp("h264", str) == 0) {
+            codec_high = CODEC_H264;
+        } else if (strcasecmp("h265", str) == 0) {
+            codec_high = CODEC_H265;
         }
     }
 
@@ -380,8 +425,13 @@ int main(int argc, char** argv)
         ServerMediaSession* sms_high
             = ServerMediaSession::createNew(*env, streamName, streamName,
                                         descriptionString);
-        sms_high->addSubsession(H264VideoFileServerMediaSubsession
-                                        ::createNew(*env, inputFileName, reuseFirstSource));
+        if (codec_low == CODEC_H265) {
+            sms_high->addSubsession(H265VideoFileServerMediaSubsession
+                                            ::createNew(*env, inputFileName, reuseFirstSource));
+        } else {
+            sms_high->addSubsession(H264VideoFileServerMediaSubsession
+                                            ::createNew(*env, inputFileName, reuseFirstSource));
+        }
         if (audio == 1) {
             sms_high->addSubsession(WAVAudioFifoServerMediaSubsession
                                        ::createNew(*env, replicator, reuseFirstSource, convertToxLaw));
@@ -406,8 +456,13 @@ int main(int argc, char** argv)
         ServerMediaSession* sms_low
         = ServerMediaSession::createNew(*env, streamName, streamName,
                                         descriptionString);
-        sms_low->addSubsession(H264VideoFileServerMediaSubsession
-                                        ::createNew(*env, inputFileName, reuseFirstSource));
+        if (codec_high == CODEC_H265) {
+            sms_low->addSubsession(H265VideoFileServerMediaSubsession
+                                            ::createNew(*env, inputFileName, reuseFirstSource));
+        } else {
+            sms_low->addSubsession(H264VideoFileServerMediaSubsession
+                                            ::createNew(*env, inputFileName, reuseFirstSource));
+        }
         if (audio == 1) {
             sms_low->addSubsession(WAVAudioFifoServerMediaSubsession
                                         ::createNew(*env, replicator, reuseFirstSource, convertToxLaw));

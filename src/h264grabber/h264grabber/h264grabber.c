@@ -38,28 +38,30 @@
 #define FIFO_NAME_LOW "/tmp/h264_low_fifo"
 #define FIFO_NAME_HIGH "/tmp/h264_high_fifo"
 
-#define SIZEOF_SPS 16
-#define SIZEOF_PPS 8
-#define OFFSET_IDR 76
+#define SIZEOF_SPS4 16
+#define SIZEOF_PPS4 8
+#define OFFSET_IDR4 76
 
 //#define REPEAT 1
 #define SPS_TIMING_INFO 1
 
-unsigned char SPS[]              = { 0x00, 0x00, 0x00, 0x01, 0x67 };
-unsigned char SPS_1920X1080[]    = { 0x00, 0x00, 0x00, 0x01, 0x67, 0x4D, 0x40, 0x28,
-                                     0x95, 0xA0, 0x1E, 0x00, 0x89, 0xA6, 0xC0, 0x40 };
-unsigned char SPS_1920X1080_TI[] = { 0x00, 0x00, 0x00, 0x01, 0x67, 0x4D, 0x40, 0x28,
-                                     0x95, 0xA0, 0x1E, 0x00, 0x89, 0xA6, 0xC8, 0x00,
-                                     0x00, 0x0F, 0xA0, 0x00, 0x02, 0x71, 0x04, 0x20 };
-unsigned char SPS_640X360[]      = { 0x00, 0x00, 0x00, 0x01, 0x67, 0x4D, 0x40, 0x1E,
-                                     0x95, 0xA0, 0x28, 0x0B, 0xFE, 0x59, 0xB0, 0x10 };
-unsigned char SPS_640X360_TI[]   = { 0x00, 0x00, 0x00, 0x01, 0x67, 0x4D, 0x40, 0x1E,
-                                     0x95, 0xA0, 0x28, 0x0B, 0xFE, 0x59, 0xB2, 0x00,
-                                     0x00, 0x03, 0x03, 0xE8, 0x00, 0x00, 0x9C, 0x41,
-                                     0x08 };
-unsigned char SEI_F0[]           = { 0x00, 0x00, 0x00, 0x01, 0x06, 0xF0 };
-unsigned char SEI_F0_02[]        = { 0x00, 0x00, 0x00, 0x01, 0x06, 0xF0, 0x02 };
-unsigned char SEI_F0_2C[]        = { 0x00, 0x00, 0x00, 0x01, 0x06, 0xF0, 0x2C };
+unsigned char SPS4[]              = { 0x00, 0x00, 0x00, 0x01, 0x67 };
+unsigned char SPS4_1920X1080[]    = { 0x00, 0x00, 0x00, 0x01, 0x67, 0x4D, 0x40, 0x28,
+                                      0x95, 0xA0, 0x1E, 0x00, 0x89, 0xA6, 0xC0, 0x40 };
+unsigned char SPS4_1920X1080_TI[] = { 0x00, 0x00, 0x00, 0x01, 0x67, 0x4D, 0x40, 0x28,
+                                      0x95, 0xA0, 0x1E, 0x00, 0x89, 0xA6, 0xC8, 0x00,
+                                      0x00, 0x0F, 0xA0, 0x00, 0x02, 0x71, 0x04, 0x20 };
+unsigned char SPS4_640X360[]      = { 0x00, 0x00, 0x00, 0x01, 0x67, 0x4D, 0x40, 0x1E,
+                                      0x95, 0xA0, 0x28, 0x0B, 0xFE, 0x59, 0xB0, 0x10 };
+unsigned char SPS4_640X360_TI[]   = { 0x00, 0x00, 0x00, 0x01, 0x67, 0x4D, 0x40, 0x1E,
+                                      0x95, 0xA0, 0x28, 0x0B, 0xFE, 0x59, 0xB2, 0x00,
+                                      0x00, 0x03, 0x03, 0xE8, 0x00, 0x00, 0x9C, 0x41,
+                                      0x08 };
+unsigned char SEI4_F0[]            = { 0x00, 0x00, 0x00, 0x01, 0x06, 0xF0 };
+unsigned char SEI4_F0_02[]         = { 0x00, 0x00, 0x00, 0x01, 0x06, 0xF0, 0x02 };
+unsigned char SEI4_F0_2C[]         = { 0x00, 0x00, 0x00, 0x01, 0x06, 0xF0, 0x2C };
+
+unsigned char VPS5[]              = { 0x00, 0x00, 0x00, 0x01, 0x40 };
 
 // Returns the 1st process id corresponding to pname
 int pidof(const char *pname)
@@ -261,12 +263,38 @@ int main(int argc, char **argv)
 
     if (debug) fprintf(stderr, "Resolution: %d\n", res);
 
-    if (res == RESOLUTION_LOW) {
-        fPtr = fopen("/proc/mstar/OMX/VMFE1/ENCODER_INFO/OBUF_pBuffer", "r");
-        fLen = fopen("/proc/mstar/OMX/VMFE1/ENCODER_INFO/OBUF_nAllocLen", "r");
+    if (access("/proc/mstar/OMX/VVHE0/ENCODER_INFO", F_OK) == 0) {
+        if (res == RESOLUTION_LOW) {
+            fPtr = fopen("/proc/mstar/OMX/VMFE0/ENCODER_INFO/OBUF_pBuffer", "r");
+            fLen = fopen("/proc/mstar/OMX/VMFE0/ENCODER_INFO/OBUF_nAllocLen", "r");
+            char str[] = "h264";
+            FILE *fp = fopen("/tmp/lowres", "wb");
+            fwrite(str , 1 , sizeof(str) , fp);
+            fclose(fp);
+        } else {
+            fPtr = fopen("/proc/mstar/OMX/VVHE0/ENCODER_INFO/OBUF_pBuffer", "r");
+            fLen = fopen("/proc/mstar/OMX/VVHE0/ENCODER_INFO/OBUF_nAllocLen", "r");
+            char str[] = "h265";
+            FILE *fp = fopen("/tmp/highres", "wb");
+            fwrite(str , 1 , sizeof(str) , fp);
+            fclose(fp);
+        }
     } else {
-        fPtr = fopen("/proc/mstar/OMX/VMFE0/ENCODER_INFO/OBUF_pBuffer", "r");
-        fLen = fopen("/proc/mstar/OMX/VMFE0/ENCODER_INFO/OBUF_nAllocLen", "r");
+        if (res == RESOLUTION_LOW) {
+            fPtr = fopen("/proc/mstar/OMX/VMFE1/ENCODER_INFO/OBUF_pBuffer", "r");
+            fLen = fopen("/proc/mstar/OMX/VMFE1/ENCODER_INFO/OBUF_nAllocLen", "r");
+            char str[] = "h264";
+            FILE *fp = fopen("/tmp/lowres", "wb");
+            fwrite(str , 1 , sizeof(str) , fp);
+            fclose(fp);
+        } else {
+            fPtr = fopen("/proc/mstar/OMX/VMFE0/ENCODER_INFO/OBUF_pBuffer", "r");
+            fLen = fopen("/proc/mstar/OMX/VMFE0/ENCODER_INFO/OBUF_nAllocLen", "r");
+            char str[] = "h264";
+            FILE *fp = fopen("/tmp/highres", "wb");
+            fwrite(str , 1 , sizeof(str) , fp);
+            fclose(fp);
+        }
     }
     fscanf(fPtr, "%x", &ivAddr);
     fclose(fPtr);
@@ -294,12 +322,22 @@ int main(int argc, char **argv)
     // close the character device
     close(fMem);
 
-    if (res == RESOLUTION_LOW) {
-        sprintf(filLenFile, "/proc/mstar/OMX/VMFE1/ENCODER_INFO/OBUF_nFilledLen");
-        sprintf(timeStampFile, "/proc/mstar/OMX/VMFE1/ENCODER_INFO/OBUF_nTimeStamp");
+    if (access("/proc/mstar/OMX/VVHE0/ENCODER_INFO", F_OK) == 0) {
+        if (res == RESOLUTION_LOW) {
+            sprintf(filLenFile, "/proc/mstar/OMX/VMFE0/ENCODER_INFO/OBUF_nFilledLen");
+            sprintf(timeStampFile, "/proc/mstar/OMX/VMFE0/ENCODER_INFO/OBUF_nTimeStamp");
+        } else {
+            sprintf(filLenFile, "/proc/mstar/OMX/VVHE0/ENCODER_INFO/OBUF_nFilledLen");
+            sprintf(timeStampFile, "/proc/mstar/OMX/VVHE0/ENCODER_INFO/OBUF_nTimeStamp");
+        }
     } else {
-        sprintf(filLenFile, "/proc/mstar/OMX/VMFE0/ENCODER_INFO/OBUF_nFilledLen");
-        sprintf(timeStampFile, "/proc/mstar/OMX/VMFE0/ENCODER_INFO/OBUF_nTimeStamp");
+        if (res == RESOLUTION_LOW) {
+            sprintf(filLenFile, "/proc/mstar/OMX/VMFE1/ENCODER_INFO/OBUF_nFilledLen");
+            sprintf(timeStampFile, "/proc/mstar/OMX/VMFE1/ENCODER_INFO/OBUF_nTimeStamp");
+        } else {
+            sprintf(filLenFile, "/proc/mstar/OMX/VMFE0/ENCODER_INFO/OBUF_nFilledLen");
+            sprintf(timeStampFile, "/proc/mstar/OMX/VMFE0/ENCODER_INFO/OBUF_nTimeStamp");
+        }
     }
 
     if (fifo == 0) {
@@ -364,35 +402,53 @@ int main(int argc, char **argv)
 
             memcpy(buffer, addr, len);
             oldTime = time;
-            if (memcmp(SPS, buffer, sizeof(SPS)) == 0) {
+            if ((memcmp(SPS4, buffer, sizeof(SPS4)) == 0) || (memcmp(VPS5, buffer, sizeof(VPS5)) == 0)) {
                 if (debug) fprintf(stderr, "time: %u - len: %d\n", time, len);
                 if (ssf0) {
 #ifdef SPS_TIMING_INFO
-                    if (memcmp(SPS_1920X1080, buffer, sizeof(SPS_1920X1080)) == 0) {
-                        fwrite(SPS_1920X1080_TI, 1, sizeof(SPS_1920X1080_TI), fOut);
-                        fwrite(buffer + sizeof(SPS_1920X1080), 1, SIZEOF_PPS, fOut);
-                        fwrite(buffer + OFFSET_IDR, 1, len - OFFSET_IDR, fOut);
-                    } else if (memcmp(SPS_640X360, buffer, sizeof(SPS_640X360)) == 0) {
-                        fwrite(SPS_640X360_TI, 1, sizeof(SPS_640X360_TI), fOut);
-                        fwrite(buffer + sizeof(SPS_640X360), 1, SIZEOF_PPS, fOut);
-                        fwrite(buffer + OFFSET_IDR, 1, len - OFFSET_IDR, fOut);
+                    if (memcmp(SPS4_1920X1080, buffer, sizeof(SPS4_1920X1080)) == 0) {
+                        if (debug) fprintf(stderr, "frame is SPS\n");
+                        fwrite(SPS4_1920X1080_TI, 1, sizeof(SPS4_1920X1080_TI), fOut);
+                        fwrite(buffer + sizeof(SPS4_1920X1080), 1, SIZEOF_PPS4, fOut);
+                        fwrite(buffer + OFFSET_IDR4, 1, len - OFFSET_IDR4, fOut);
+                    } else if (memcmp(SPS4_640X360, buffer, sizeof(SPS4_640X360)) == 0) {
+                        if (debug) fprintf(stderr, "frame is SPS\n");
+                        fwrite(SPS4_640X360_TI, 1, sizeof(SPS4_640X360_TI), fOut);
+                        fwrite(buffer + sizeof(SPS4_640X360), 1, SIZEOF_PPS4, fOut);
+                        fwrite(buffer + OFFSET_IDR4, 1, len - OFFSET_IDR4, fOut);
+                    } else {
+                        // No change if it's a VPS
+                        if (debug) fprintf(stderr, "frame is VPS\n");
+                        fwrite(buffer, 1, len, fOut);
                     }
 #else
-                    fwrite(buffer, 1, SIZEOF_SPS + SIZEOF_PPS, fOut);
-                    fwrite(buffer + OFFSET_IDR, 1, len - OFFSET_IDR, fOut);
+                    if (memcmp(SPS4, buffer, sizeof(SPS4)) == 0) {
+                        if (debug) fprintf(stderr, "frame is SPS\n");
+                        fwrite(buffer, 1, SIZEOF_SPS4 + SIZEOF_PPS4, fOut);
+                        fwrite(buffer + OFFSET_IDR4, 1, len - OFFSET_IDR4, fOut);
+                    } else {
+                        // No change if it's a VPS
+                        if (debug) fprintf(stderr, "frame is VPS\n");
+                        fwrite(buffer, 1, len, fOut);
+                    }
 #endif
                 } else {
 #ifdef SPS_TIMING_INFO
-                    if (memcmp(SPS_1920X1080, buffer, sizeof(SPS_1920X1080)) == 0) {
+                    if (memcmp(SPS4_1920X1080, buffer, sizeof(SPS4_1920X1080)) == 0) {
                         if (debug) fprintf(stderr, "frame is SPS\n");
-                        fwrite(SPS_1920X1080_TI, 1, sizeof(SPS_1920X1080_TI), fOut);
-                        fwrite(buffer + sizeof(SPS_1920X1080), 1, len - sizeof(SPS_1920X1080), fOut);
-                    } else if (memcmp(SPS_640X360, buffer, sizeof(SPS_640X360)) == 0) {
+                        fwrite(SPS4_1920X1080_TI, 1, sizeof(SPS4_1920X1080_TI), fOut);
+                        fwrite(buffer + sizeof(SPS4_1920X1080), 1, len - sizeof(SPS4_1920X1080), fOut);
+                    } else if (memcmp(SPS4_640X360, buffer, sizeof(SPS4_640X360)) == 0) {
                         if (debug) fprintf(stderr, "frame is SPS\n");
-                        fwrite(SPS_640X360_TI, 1, sizeof(SPS_640X360_TI), fOut);
-                        fwrite(buffer + sizeof(SPS_640X360), 1, len - sizeof(SPS_640X360), fOut);
+                        fwrite(SPS4_640X360_TI, 1, sizeof(SPS4_640X360_TI), fOut);
+                        fwrite(buffer + sizeof(SPS4_640X360), 1, len - sizeof(SPS4_640X360), fOut);
+                    } else {
+                        // No change if it's a VPS
+                        if (debug) fprintf(stderr, "frame is VPS\n");
+                        fwrite(buffer, 1, len, fOut);
                     }
 #else
+                    if (debug) fprintf(stderr, "frame is SPS or VPS\n");
                     fwrite(buffer, 1, len, fOut);
 #endif
                 }
@@ -450,40 +506,46 @@ int main(int argc, char **argv)
 
             while (repeat > 0) {
                 if (ssf0) {
-                    if (memcmp(SEI_F0_02, buffer, sizeof(SEI_F0_02)) == 0) {
+                    if (memcmp(SEI4_F0_02, buffer, sizeof(SEI4_F0_02)) == 0) {
                         fwrite(buffer + 62, 1, len - 62, fOut);
-                    } else if (memcmp(SEI_F0_2C, buffer, sizeof(SEI_F0_2C)) == 0) {
+                    } else if (memcmp(SEI4_F0_2C, buffer, sizeof(SEI4_F0_2C)) == 0) {
                         fwrite(buffer + 52, 1, len - 52, fOut);
-                    } else if (memcmp(SPS, buffer, sizeof(SPS)) == 0) {
+                    } else if (memcmp(SPS4, buffer, sizeof(SPS4)) == 0) {
 #ifdef SPS_TIMING_INFO
-                        if (memcmp(SPS_1920X1080, buffer, sizeof(SPS_1920X1080)) == 0) {
+                        if (memcmp(SPS4_1920X1080, buffer, sizeof(SPS4_1920X1080)) == 0) {
                             if (debug) fprintf(stderr, "frame is SPS\n");
-                            fwrite(SPS_1920X1080_TI, 1, sizeof(SPS_1920X1080_TI), fOut);
-                            fwrite(buffer + sizeof(SPS_1920X1080), 1, SIZEOF_PPS, fOut);
-                            fwrite(buffer + OFFSET_IDR, 1, len - OFFSET_IDR, fOut);
-                        } else if (memcmp(SPS_640X360, buffer, sizeof(SPS_640X360)) == 0) {
+                            fwrite(SPS4_1920X1080_TI, 1, sizeof(SPS4_1920X1080_TI), fOut);
+                            fwrite(buffer + sizeof(SPS4_1920X1080), 1, SIZEOF_PPS4, fOut);
+                            fwrite(buffer + OFFSET_IDR4, 1, len - OFFSET_IDR4, fOut);
+                        } else if (memcmp(SPS4_640X360, buffer, sizeof(SPS4_640X360)) == 0) {
                             if (debug) fprintf(stderr, "frame is SPS\n");
-                            fwrite(SPS_640X360_TI, 1, sizeof(SPS_640X360_TI), fOut);
-                            fwrite(buffer + sizeof(SPS_640X360), 1, SIZEOF_PPS, fOut);
-                            fwrite(buffer + OFFSET_IDR, 1, len - OFFSET_IDR, fOut);
+                            fwrite(SPS4_640X360_TI, 1, sizeof(SPS4_640X360_TI), fOut);
+                            fwrite(buffer + sizeof(SPS4_640X360), 1, SIZEOF_PPS4, fOut);
+                            fwrite(buffer + OFFSET_IDR4, 1, len - OFFSET_IDR4, fOut);
                         }
 #else
                         fwrite(buffer, 1, 24, fOut);
                         fwrite(buffer + 76, 1, len - 76, fOut);
 #endif
+                    } else if (memcmp(VPS5, buffer, sizeof(VPS5)) == 0) {
+                        if (debug) fprintf(stderr, "frame is VPS\n");
+                        fwrite(buffer, 1, len, fOut);
                     } else {
                         fwrite(buffer, 1, len, fOut);
                     }
                 } else {
 #ifdef SPS_TIMING_INFO
-                    if (memcmp(SPS_1920X1080, buffer, sizeof(SPS_1920X1080)) == 0) {
+                    if (memcmp(SPS4_1920X1080, buffer, sizeof(SPS4_1920X1080)) == 0) {
                         if (debug) fprintf(stderr, "frame is SPS\n");
-                        fwrite(SPS_1920X1080_TI, 1, sizeof(SPS_1920X1080_TI), fOut);
-                        fwrite(buffer + sizeof(SPS_1920X1080), 1, len - sizeof(SPS_1920X1080), fOut);
-                    } else if (memcmp(SPS_640X360, buffer, sizeof(SPS_640X360)) == 0) {
+                        fwrite(SPS4_1920X1080_TI, 1, sizeof(SPS4_1920X1080_TI), fOut);
+                        fwrite(buffer + sizeof(SPS4_1920X1080), 1, len - sizeof(SPS4_1920X1080), fOut);
+                    } else if (memcmp(SPS4_640X360, buffer, sizeof(SPS4_640X360)) == 0) {
                         if (debug) fprintf(stderr, "frame is SPS\n");
-                        fwrite(SPS_640X360_TI, 1, sizeof(SPS_640X360_TI), fOut);
-                        fwrite(buffer + sizeof(SPS_640X360), 1, len - sizeof(SPS_640X360), fOut);
+                        fwrite(SPS4_640X360_TI, 1, sizeof(SPS4_640X360_TI), fOut);
+                        fwrite(buffer + sizeof(SPS4_640X360), 1, len - sizeof(SPS4_640X360), fOut);
+                    } else if (memcmp(VPS5, buffer, sizeof(VPS5)) == 0) {
+                        if (debug) fprintf(stderr, "frame is VPS\n");
+                        fwrite(buffer, 1, len, fOut);
                     } else {
                         fwrite(buffer, 1, len, fOut);
                     }

@@ -266,9 +266,9 @@ unsigned int rmm_virt2phys(unsigned int inAddr) {
 
 void print_usage(char *progname)
 {
-    fprintf(stderr, "\nUsage: %s [-r RES] [-d]\n\n", progname);
+    fprintf(stderr, "\nUsage: %s [-m MODEL] [-r RES] [-w] [-d]\n\n", progname);
     fprintf(stderr, "\t-m, --model MODEL\n");
-    fprintf(stderr, "\r\rset model: unused parameter\n");
+    fprintf(stderr, "\t\tset model: unused parameter\n");
     fprintf(stderr, "\t-r RES, --resolution RES\n");
     fprintf(stderr, "\t\tset resolution: LOW or HIGH (default HIGH)\n");
     fprintf(stderr, "\t-w, --watermark\n");
@@ -369,12 +369,26 @@ int main(int argc, char **argv)
 
     if (debug) fprintf(stderr, "Resolution: %d\n", resolution);
 
-    if (resolution == RESOLUTION_LOW) {
-        fPtr = fopen("/proc/mstar/OMX/VMFE1/ENCODER_INFO/IBUF_pBuffer", "r");
-        fLen = fopen("/proc/mstar/OMX/VMFE1/ENCODER_INFO/IBUF_nAllocLen", "r");
+    if (access("/proc/mstar/OMX/VVHE0/ENCODER_INFO", F_OK) == 0) {
+        if (resolution == RESOLUTION_LOW) {
+            if (debug) fprintf(stderr, "VMFE0\n");
+            fPtr = fopen("/proc/mstar/OMX/VMFE0/ENCODER_INFO/IBUF_pBuffer", "r");
+            fLen = fopen("/proc/mstar/OMX/VMFE0/ENCODER_INFO/IBUF_nAllocLen", "r");
+        } else {
+            if (debug) fprintf(stderr, "VVHE0\n");
+            fPtr = fopen("/proc/mstar/OMX/VVHE0/ENCODER_INFO/IBUF_pBuffer", "r");
+            fLen = fopen("/proc/mstar/OMX/VVHE0/ENCODER_INFO/IBUF_nAllocLen", "r");
+        }
     } else {
-        fPtr = fopen("/proc/mstar/OMX/VMFE0/ENCODER_INFO/IBUF_pBuffer", "r");
-        fLen = fopen("/proc/mstar/OMX/VMFE0/ENCODER_INFO/IBUF_nAllocLen", "r");
+        if (resolution == RESOLUTION_LOW) {
+            if (debug) fprintf(stderr, "VMFE1\n");
+            fPtr = fopen("/proc/mstar/OMX/VMFE1/ENCODER_INFO/IBUF_pBuffer", "r");
+            fLen = fopen("/proc/mstar/OMX/VMFE1/ENCODER_INFO/IBUF_nAllocLen", "r");
+        } else {
+            if (debug) fprintf(stderr, "VMFE0\n");
+            fPtr = fopen("/proc/mstar/OMX/VMFE0/ENCODER_INFO/IBUF_pBuffer", "r");
+            fLen = fopen("/proc/mstar/OMX/VMFE0/ENCODER_INFO/IBUF_nAllocLen", "r");
+        }
     }
     fscanf(fPtr, "%x", &ivAddr);
     fclose(fPtr);
@@ -420,10 +434,12 @@ int main(int argc, char **argv)
     if (resolution == RESOLUTION_LOW) {
         // The buffer contains YUV N12 image but the UV part is not in the
         // right position. We need to move it.
+        if (debug) fprintf(stderr, "convert YUV image\n");
         memmove(buffer + W_LOW * H_LOW, buffer + W_LOW * H_LOW + UV_OFFSET_LOW,
             W_LOW * H_LOW / 2);
 
         if (watermark) {
+            if (debug) fprintf(stderr, "adding watermark\n");
             if(WMInit(&WM_info, "/home/yi-hack/etc/wm_res/low/wm_540p_") < 0){
                 fprintf(stderr, "water mark init error\n");
             } else {
@@ -434,13 +450,16 @@ int main(int argc, char **argv)
         }
 
         // create jpeg
+        if (debug) fprintf(stderr, "compress ipg image\n");
         outlen = compressYUYVtoJPEG(buffer, W_LOW, H_LOW, W_LOW, H_LOW);
     } else {
         // The buffer contains YUV N21 image saved in blocks.
         // We need to convert to standard YUV N12 image.
+        if (debug) fprintf(stderr, "convert YUV image\n");
         outlen = img2YUV(buffer, size, W_HIGH, H_HIGH);
 
         if (watermark) {
+            if (debug) fprintf(stderr, "adding watermark\n");
             if(WMInit(&WM_info, "/home/yi-hack/etc/wm_res/high/wm_540p_") < 0){
                 fprintf(stderr, "water mark init error\n");
             } else {
@@ -451,6 +470,7 @@ int main(int argc, char **argv)
         }
 
         // create jpeg
+        if (debug) fprintf(stderr, "compress ipg image\n");
         outlen = compressYUYVtoJPEG(buffer, W_HIGH, H_HIGH, W_HIGH, RESOLUTION_HIGH);
     }
 
@@ -458,6 +478,7 @@ int main(int argc, char **argv)
         fwrite(buffer, 1, outlen, stdout);
 
     // Free memory
+    if (debug) fprintf(stderr, "free memory\n");
     munmap(addr, size);
     free(buffer);
 }
