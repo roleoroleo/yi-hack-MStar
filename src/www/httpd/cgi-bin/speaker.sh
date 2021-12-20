@@ -3,11 +3,41 @@
 export PATH=$PATH:/home/base/tools:/home/yi-hack/bin:/home/yi-hack/sbin:/tmp/sd/yi-hack/bin:/tmp/sd/yi-hack/sbin
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/lib:/home/yi-hack/lib:/tmp/sd/yi-hack/lib
 
+YI_HACK_PREFIX="/home/yi-hack"
+
+. $YI_HACK_PREFIX/www/cgi-bin/validate.sh
+
+if ! $(validateQueryString $QUERY_STRING); then
+    printf "Content-type: application/json\r\n\r\n"
+    printf "{\n"
+    printf "\"%s\":\"%s\",\\n" "error" "true"
+    printf "\"%s\":\"%s\"\\n" "description" "Wrong parameter"
+    printf "}"
+    exit
+fi
+
+VOL="1"
+
+PARAM="$(echo $QUERY_STRING | cut -d'&' -f1 | cut -d'=' -f1)"
+VALUE="$(echo $QUERY_STRING | cut -d'&' -f1 | cut -d'=' -f2)"
+
+if [ "$PARAM" == "vol" ] ; then
+    VOL="$VALUE"
+fi
+
+if ! $(validateNumber $VOL); then
+    printf "{\n"
+    printf "\"%s\":\"%s\",\\n" "error" "true"
+    printf "\"%s\":\"%s\"\\n" "description" "Invalid volume"
+    printf "}"
+    exit
+fi
+
 printf "Content-type: application/json\r\n\r\n"
 
 if [ ! -e /tmp/audio_in_fifo ]; then
     printf "{\n"
-    printf "\"%s\":\"%s\"\\n" "error" "true"
+    printf "\"%s\":\"%s\",\\n" "error" "true"
     printf "\"%s\":\"%s\"\\n" "description" "Audio input is not available"
     printf "}"
     exit
@@ -37,10 +67,10 @@ if [ $? -eq 0 ]; then
         mv $TMP_FILE.tmp $TMP_FILE
     fi
 
-    cat $TMP_FILE > /tmp/audio_in_fifo &
+    cat $TMP_FILE | pcmvol -g $VOL > /tmp/audio_in_fifo &
 
     printf "{\n"
-    printf "\"%s\":\"%s\"\\n" "error" "false"
+    printf "\"%s\":\"%s\",\\n" "error" "false"
     printf "\"%s\":\"%s\"\\n" "description" ""
     printf "}"
 else
@@ -70,17 +100,17 @@ else
             mv $TMP_FILE.tmp $TMP_FILE
         fi
 
-        cat $TMP_FILE > /tmp/audio_in_fifo
+        cat $TMP_FILE | pcmvol -g $VOL > /tmp/audio_in_fifo
         sleep 1
         rm $TMP_FILE
 
         printf "{\n"
-        printf "\"%s\":\"%s\"\\n" "error" "false"
+        printf "\"%s\":\"%s\",\\n" "error" "false"
         printf "\"%s\":\"%s\"\\n" "description" ""
         printf "}"
     else
         printf "{\n"
-        printf "\"%s\":\"%s\"\\n" "error" "true"
+        printf "\"%s\":\"%s\",\\n" "error" "true"
         printf "\"%s\":\"%s\"\\n" "description" "File is too big"
         printf "}"
     fi
