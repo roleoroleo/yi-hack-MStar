@@ -1,9 +1,19 @@
 #!/bin/sh
 
+export PATH=$PATH:/home/base/tools:/home/yi-hack/bin:/home/yi-hack/sbin:/tmp/sd/yi-hack/bin:/tmp/sd/yi-hack/sbin
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/lib:/home/yi-hack/lib:/tmp/sd/yi-hack/lib
+
 YI_HACK_PREFIX="/home/yi-hack"
 
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/lib:/home/yi-hack/lib:/tmp/sd/yi-hack/lib
-export PATH=$PATH:/home/base/tools:/home/yi-hack/bin:/home/yi-hack/sbin:/tmp/sd/yi-hack/bin:/tmp/sd/yi-hack/sbin
+. $YI_HACK_PREFIX/www/cgi-bin/validate.sh
+
+if ! $(validateQueryString $QUERY_STRING); then
+    printf "Content-type: application/json\r\n\r\n"
+    printf "{\n"
+    printf "\"%s\":\"%s\"\\n" "error" "true"
+    printf "}"
+    exit
+fi
 
 NAME="$(echo $QUERY_STRING | cut -d'=' -f1)"
 VAL="$(echo $QUERY_STRING | cut -d'=' -f2)"
@@ -19,6 +29,7 @@ if [ "$VAL" == "info" ] ; then
     LATEST_FW=`wget -O -  https://api.github.com/repos/roleoroleo/yi-hack-MStar/releases/latest 2>&1 | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/'`
 
     printf "{\n"
+    printf "\"%s\":\"%s\",\n" "error" "false"
     printf "\"%s\":\"%s\",\n" "fw_version"      "$FW_VERSION"
     printf "\"%s\":\"%s\"\n" "latest_fw"       "$LATEST_FW"
     printf "}"

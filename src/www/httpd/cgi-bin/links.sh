@@ -1,7 +1,6 @@
 #!/bin/sh
 
 CONF_FILE="etc/system.conf"
-
 YI_HACK_PREFIX="/home/yi-hack"
 
 get_config()

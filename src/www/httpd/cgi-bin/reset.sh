@@ -15,4 +15,5 @@ rm system.conf
 
 printf "Content-type: application/json\r\n\r\n"
 printf "{\n"
+printf "\"%s\":\"%s\"\\n" "error" "false"
 printf "}\n"

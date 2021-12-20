@@ -1,6 +1,5 @@
 #!/bin/sh
 
-# Conf
 CONF_FILE="etc/camera.conf"
 YI_HACK_PREFIX="/home/yi-hack"
 
