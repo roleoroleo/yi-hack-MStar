@@ -10,10 +10,10 @@
 
 # Custom firmware for Yi camera based on MStar platform
 This firmware is completely based on the work done by TheCrypt0
-https://github.com/TheCrypt0/yi-hack-v4
+https://github.com/alienatedsec/yi-hack-v5
 It's a clone made for Yi cameras based on MStar platform.
 
-**But you can't choose between TheCrypt0 and MStar: if your cam is based on Hi3518e Chipset then you have to use TheCrypt0, if your cam is based on MStar Infinity Chipset then you have to use MStar.**
+**But you can't choose between alienatedsec and MStar: if your cam is based on Hi3518e Chipset then you have to use alienatedsec, if your cam is based on MStar Infinity Chipset then you have to use MStar.**
 
 I have no time to support the project, so feel free to clone/fork this git and modify it as you want.
 
