@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 roleo.
+ * Copyright (c) 2022 roleo.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,6 +39,7 @@
 #define RESOLUTION_HIGH 1080
 #define RESOLUTION_BOTH 1440
 
+#define CODEC_NONE -1
 #define CODEC_H264 0
 #define CODEC_H265 1
 
@@ -116,11 +117,15 @@ StreamReplicator* startReplicatorStream(const char* inputAudioFileName) {
     return replicator;
 }
 
-static void announceStream(RTSPServer* rtspServer, ServerMediaSession* sms, char const* streamName, char const* inputFileName, int audio) {
+static void announceStream(RTSPServer* rtspServer, ServerMediaSession* sms, char const* streamName, char const* inputFileName, int audio, int h26x) {
     char* url = rtspServer->rtspURL(sms);
     UsageEnvironment& env = rtspServer->envir();
     env << "\n\"" << streamName << "\" stream, from the file \""
         << inputFileName << "\"\n";
+    if (h26x == CODEC_H265)
+        env << "Video is H265\n";
+    else if (h26x == CODEC_H264)
+        env << "Video is H264\n";
     if (audio == 1)
         env << "PCM audio enabled\n";
     else if (audio == 2)
@@ -349,8 +354,8 @@ int main(int argc, char** argv)
     }
 
     str = getenv("RRTSP_DEBUG");
-    if ((str != NULL) && (sscanf (str, "%i", &nm) == 1) && (nm == 1)) {
-        debug = nm;
+    if (str != NULL) {
+        debug = 1;
     }
 
     memset(user, 0, sizeof(user));
@@ -376,7 +381,7 @@ int main(int argc, char** argv)
 
     // If fifo doesn't exist, disable audio
     if (stat (inputAudioFileName, &stat_buffer) != 0) {
-        *env << "Audio fifo does not exist, disabling audio.n";
+        *env << "Audio fifo does not exist, disabling audio.";
         audio = 0;
     }
 
@@ -413,19 +418,19 @@ int main(int argc, char** argv)
     // "ServerMediaSession" object, plus one or more
     // "ServerMediaSubsession" objects for each audio/video substream.
 
-    // A H.264 video elementary stream:
+    // A H.264/5 video elementary stream:
     if ((resolution == RESOLUTION_HIGH) || (resolution == RESOLUTION_BOTH))
     {
         char const* streamName = "ch0_0.h264";
         char const* inputFileName = "/tmp/h264_high_fifo";
 
         // First, make sure that the RTPSinks' buffers will be large enough to handle the huge size of DV frames (as big as 288000).
-        OutPacketBuffer::maxSize = 300000;
+        OutPacketBuffer::maxSize = 262144;
 
         ServerMediaSession* sms_high
             = ServerMediaSession::createNew(*env, streamName, streamName,
                                         descriptionString);
-        if (codec_low == CODEC_H265) {
+        if (codec_high == CODEC_H265) {
             sms_high->addSubsession(H265VideoFileServerMediaSubsession
                                             ::createNew(*env, inputFileName, reuseFirstSource));
         } else {
@@ -441,22 +446,22 @@ int main(int argc, char** argv)
         }
         rtspServer->addServerMediaSession(sms_high);
 
-        announceStream(rtspServer, sms_high, streamName, inputFileName, audio);
+        announceStream(rtspServer, sms_high, streamName, inputFileName, audio, codec_high);
     }
 
-    // A H.264 video elementary stream:
+    // A H.264/5 video elementary stream:
     if ((resolution == RESOLUTION_LOW) || (resolution == RESOLUTION_BOTH))
     {
         char const* streamName = "ch0_1.h264";
         char const* inputFileName = "/tmp/h264_low_fifo";
 
         // First, make sure that the RTPSinks' buffers will be large enough to handle the huge size of DV frames (as big as 288000).
-        OutPacketBuffer::maxSize = 300000;
+        OutPacketBuffer::maxSize = 262144;
 
         ServerMediaSession* sms_low
         = ServerMediaSession::createNew(*env, streamName, streamName,
                                         descriptionString);
-        if (codec_high == CODEC_H265) {
+        if (codec_low == CODEC_H265) {
             sms_low->addSubsession(H265VideoFileServerMediaSubsession
                                             ::createNew(*env, inputFileName, reuseFirstSource));
         } else {
@@ -472,7 +477,7 @@ int main(int argc, char** argv)
         }
         rtspServer->addServerMediaSession(sms_low);
 
-        announceStream(rtspServer, sms_low, streamName, inputFileName, audio);
+        announceStream(rtspServer, sms_low, streamName, inputFileName, audio, codec_low);
     }
 
     // A PCM audio elementary stream:
@@ -481,7 +486,7 @@ int main(int argc, char** argv)
         char const* streamName = "ch0_2.h264";
 
         // First, make sure that the RTPSinks' buffers will be large enough to handle the huge size of DV frames (as big as 288000).
-        OutPacketBuffer::maxSize = 300000;
+        OutPacketBuffer::maxSize = 262144;
 
         ServerMediaSession* sms_audio
             = ServerMediaSession::createNew(*env, streamName, streamName,
@@ -495,7 +500,7 @@ int main(int argc, char** argv)
         }
         rtspServer->addServerMediaSession(sms_audio);
 
-        announceStream(rtspServer, sms_audio, streamName, inputAudioFileName, audio);
+        announceStream(rtspServer, sms_audio, streamName, inputAudioFileName, audio, CODEC_NONE);
     }
 
     // Also, attempt to create a HTTP server for RTSP-over-HTTP tunneling.

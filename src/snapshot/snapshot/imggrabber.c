@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 roleo.
+ * Copyright (c) 2022 roleo.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,6 +34,9 @@
 
 #include "water_mark.h"
 
+#define GENERIC 0
+#define H305R 1
+
 #define RESOLUTION_LOW 360
 #define RESOLUTION_HIGH 1080
 
@@ -44,6 +47,8 @@
 
 #define W_MB 16
 #define H_MB 16
+#define W_B 4
+#define H_B 4
 
 #define UV_OFFSET_LOW 0x3c00
 #define UV_OFFSET_HIGH 0x0023a000
@@ -188,6 +193,59 @@ int img2YUV(unsigned char *bufIn, int size, int width, int height)
     return width * height * 3 / 2;
 }
 
+/**
+ * The image is stored in this manner:
+ * - both Y and UV are stored in block 4 x 4
+ * - Y component is at the base address, 8 bpp
+ * - UV component is at 0x23a000, 1 byte U followed by 1 byte V
+ * - every line is left/right reversed (bytes 3, 2, 1 and 0)
+ * This function reuse input buffer to save memory.
+ */
+int img2YUV_2(unsigned char *bufIn, int size, int width, int height)
+{
+    unsigned char bufOut[width*H_MB];
+    int i, j, k, l;
+    int r, c;
+    unsigned char *ptr, *ptrIn, *ptrOut;
+
+    ptrIn = bufIn;
+
+    for (i=0; i<height/H_B; i++) {
+        ptrOut = bufOut;
+        for (j=0; j<width/W_B; j++) {
+            for (l=0; l<W_B*H_B; l++) {
+                r = l/(W_B);
+                c = l%(W_B);
+                ptr = ptrOut + j * W_B + (3 - r) * width + (3 - c);
+                *ptr = *ptrIn;
+                ptrIn++;
+            }
+        }
+        memmove(bufIn + i * width * H_B, bufOut, width * H_B);
+    }
+
+    ptrIn = bufIn + UV_OFFSET_HIGH;
+
+    for (i=0; i<(height/2)/H_B; i++) {
+        ptrOut = bufOut;
+        for (j=0; j<(width/2)/W_B; j++) {
+            for (l=0; l<W_B*H_B; l++) {
+                r = l/(W_B);
+                c = l%(W_B);
+                ptr = ptrOut + (j * W_B + r * width/2 + 3 - c) * 2;
+                *(ptr + 1) = *ptrIn;
+//                ptr++;
+                ptrIn++;
+                *ptr = *ptrIn;
+                ptrIn++;
+            }
+        }
+        memmove(bufIn + width * height + i * width * H_B, bufOut, width * H_B);
+    }
+
+    return width * height * 3 / 2;
+}
+
 // Returns the 1st process id corresponding to pname
 int pidof(const char *pname)
 {
@@ -288,6 +346,7 @@ void fillCheck(unsigned char *check, int checkSize, unsigned char *buf, int bufS
 
 int main(int argc, char **argv)
 {
+    int model = GENERIC;
     int c;
     const char memDevice[] = "/dev/mem";
     int resolution = RESOLUTION_HIGH;
@@ -325,7 +384,11 @@ int main(int argc, char **argv)
 
         switch (c) {
         case 'm':
-            // Unused parameter
+            if (strcasecmp("h305r", optarg) == 0) {
+                model = H305R;
+            } else {
+                model = GENERIC;
+            }
             break;
 
         case 'r':
@@ -369,7 +432,7 @@ int main(int argc, char **argv)
 
     if (debug) fprintf(stderr, "Resolution: %d\n", resolution);
 
-    if (access("/proc/mstar/OMX/VVHE0/ENCODER_INFO", F_OK) == 0) {
+    if (model == H305R) {
         if (resolution == RESOLUTION_LOW) {
             if (debug) fprintf(stderr, "VMFE0\n");
             fPtr = fopen("/proc/mstar/OMX/VMFE0/ENCODER_INFO/IBUF_pBuffer", "r");
@@ -390,6 +453,11 @@ int main(int argc, char **argv)
             fLen = fopen("/proc/mstar/OMX/VMFE0/ENCODER_INFO/IBUF_nAllocLen", "r");
         }
     }
+    if ((fPtr == NULL) || (fLen == NULL)) {
+        fprintf(stderr, "Unable to open /proc files\n");
+        return -1;
+    }
+
     fscanf(fPtr, "%x", &ivAddr);
     fclose(fPtr);
     fscanf(fLen, "%d", &size);
@@ -406,14 +474,14 @@ int main(int argc, char **argv)
     fMem = open(memDevice, O_RDONLY); // | O_SYNC);
     if (fMem < 0) {
         fprintf(stderr, "Failed to open the /dev/mem\n");
-        return -1;
+        return -2;
     }
 
     // mmap() the opened /dev/mem
     addr = (unsigned char *) (mmap(NULL, size, PROT_READ, MAP_SHARED, fMem, ipAddr));
     if (addr == MAP_FAILED) {
         fprintf(stderr, "Failed to map memory\n");
-        return -1;
+        return -3;
     }
 
     // close the character device
@@ -432,7 +500,7 @@ int main(int argc, char **argv)
     }
 
     if (resolution == RESOLUTION_LOW) {
-        // The buffer contains YUV N12 image but the UV part is not in the
+        // The buffer contains YUV NV12 image but the UV part is not in the
         // right position. We need to move it.
         if (debug) fprintf(stderr, "convert YUV image\n");
         memmove(buffer + W_LOW * H_LOW, buffer + W_LOW * H_LOW + UV_OFFSET_LOW,
@@ -453,10 +521,14 @@ int main(int argc, char **argv)
         if (debug) fprintf(stderr, "compress ipg image\n");
         outlen = compressYUYVtoJPEG(buffer, W_LOW, H_LOW, W_LOW, H_LOW);
     } else {
-        // The buffer contains YUV N21 image saved in blocks.
-        // We need to convert to standard YUV N12 image.
+        // The buffer contains YUV NV21 image saved in blocks.
+        // We need to convert to standard YUV NV12 image.
         if (debug) fprintf(stderr, "convert YUV image\n");
-        outlen = img2YUV(buffer, size, W_HIGH, H_HIGH);
+        if (model == H305R) {
+            outlen = img2YUV_2(buffer, size, W_HIGH, H_HIGH);
+        } else {
+            outlen = img2YUV(buffer, size, W_HIGH, H_HIGH);
+        }
 
         if (watermark) {
             if (debug) fprintf(stderr, "adding watermark\n");
@@ -481,4 +553,6 @@ int main(int argc, char **argv)
     if (debug) fprintf(stderr, "free memory\n");
     munmap(addr, size);
     free(buffer);
+
+    return 0;
 }

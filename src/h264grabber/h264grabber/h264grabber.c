@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 roleo.
+ * Copyright (c) 2022 roleo.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,6 +32,9 @@
 #include <sys/resource.h>
 #include <signal.h>
 
+#define GENERIC 0
+#define H305R 1
+
 #define RESOLUTION_LOW 360
 #define RESOLUTION_HIGH 1080
 
@@ -42,7 +45,6 @@
 #define SIZEOF_PPS4 8
 #define OFFSET_IDR4 76
 
-//#define REPEAT 1
 #define SPS_TIMING_INFO 1
 
 unsigned char SPS4[]              = { 0x00, 0x00, 0x00, 0x01, 0x67 };
@@ -163,7 +165,9 @@ void sigpipe_handler(int unused)
 
 void print_usage(char *progname)
 {
-    fprintf(stderr, "\nUsage: %s [-r RES] [-d]\n\n", progname);
+    fprintf(stderr, "\nUsage: %s [-m MODEL] [-r RES] [-d]\n\n", progname);
+    fprintf(stderr, "\t-m MODEL, --model MODEL\n");
+    fprintf(stderr, "\t\tset model\n");
     fprintf(stderr, "\t-r RES, --resolution RES\n");
     fprintf(stderr, "\t\tset resolution: LOW or HIGH (default HIGH)\n");
     fprintf(stderr, "\t-f, --fifo\n");
@@ -178,13 +182,13 @@ void print_usage(char *progname)
 
 int main(int argc, char **argv)
 {
+    int model = GENERIC;
     int res = RESOLUTION_HIGH;
     int fifo = 0;
     int ssf0 = 0;
     int debug = 0;
 
     int c;
-    int repeat;
     const char memDevice[] = "/dev/mem";
     FILE *fPtr, *fLen, *fTime, *fOut;
     int fMem;
@@ -203,6 +207,7 @@ int main(int argc, char **argv)
     while (1) {
         static struct option long_options[] =
         {
+            {"model",  required_argument, 0, 'm'},
             {"resolution",  required_argument, 0, 'r'},
             {"fifo",  no_argument, 0, 'f'},
             {"ssf0",  no_argument, 0, 's'},
@@ -213,7 +218,7 @@ int main(int argc, char **argv)
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        c = getopt_long (argc, argv, "r:fsdh",
+        c = getopt_long (argc, argv, "m:r:fsdh",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -221,6 +226,14 @@ int main(int argc, char **argv)
             break;
 
         switch (c) {
+        case 'm':
+            if (strcasecmp("h305r", optarg) == 0) {
+                model = H305R;
+            } else {
+                model = GENERIC;
+            }
+            break;
+
         case 'r':
             if (strcasecmp("low", optarg) == 0) {
                 res = RESOLUTION_LOW;
@@ -263,7 +276,7 @@ int main(int argc, char **argv)
 
     if (debug) fprintf(stderr, "Resolution: %d\n", res);
 
-    if (access("/proc/mstar/OMX/VVHE0/ENCODER_INFO", F_OK) == 0) {
+    if (model == H305R) {
         if (res == RESOLUTION_LOW) {
             fPtr = fopen("/proc/mstar/OMX/VMFE0/ENCODER_INFO/OBUF_pBuffer", "r");
             fLen = fopen("/proc/mstar/OMX/VMFE0/ENCODER_INFO/OBUF_nAllocLen", "r");
@@ -296,6 +309,11 @@ int main(int argc, char **argv)
             fclose(fp);
         }
     }
+    if ((fPtr == NULL) || (fLen == NULL)) {
+        fprintf(stderr, "unable to open /proc files\n");
+        return -2;
+    }
+
     fscanf(fPtr, "%x", &ivAddr);
     fclose(fPtr);
     fscanf(fLen, "%d", &size);
@@ -309,20 +327,20 @@ int main(int argc, char **argv)
     fMem = open(memDevice, O_RDONLY); // | O_SYNC);
     if (fMem < 0) {
         fprintf(stderr, "Failed to open the /dev/mem\n");
-        return -1;
+        return -3;
     }
 
     // mmap() the opened /dev/mem
     addr = (unsigned char *) (mmap(NULL, size, PROT_READ, MAP_SHARED, fMem, ipAddr));
     if (addr == MAP_FAILED) {
         fprintf(stderr, "Failed to map memory\n");
-        return -1;
+        return -4;
     }
 
     // close the character device
     close(fMem);
 
-    if (access("/proc/mstar/OMX/VVHE0/ENCODER_INFO", F_OK) == 0) {
+    if (model == H305R) {
         if (res == RESOLUTION_LOW) {
             sprintf(filLenFile, "/proc/mstar/OMX/VMFE0/ENCODER_INFO/OBUF_nFilledLen");
             sprintf(timeStampFile, "/proc/mstar/OMX/VMFE0/ENCODER_INFO/OBUF_nTimeStamp");
@@ -354,23 +372,23 @@ int main(int argc, char **argv)
             unlink(FIFO_NAME_LOW);
             if (mkfifo(FIFO_NAME_LOW, mode) < 0) {
                 fprintf(stderr, "mkfifo failed for file %s\n", FIFO_NAME_LOW);
-                return -1;
+                return -5;
             }
             fOut = fopen(FIFO_NAME_LOW, "w");
             if (fOut == NULL) {
                 fprintf(stderr, "Error opening fifo %s\n", FIFO_NAME_LOW);
-                return -1;
+                return -5;
             }
         } else if (res == RESOLUTION_HIGH) {
             unlink(FIFO_NAME_HIGH);
             if (mkfifo(FIFO_NAME_HIGH, mode) < 0) {
                 fprintf(stderr, "mkfifo failed for file %s\n", FIFO_NAME_HIGH);
-                return -1;
+                return -5;
             }
             fOut = fopen(FIFO_NAME_HIGH, "w");
             if (fOut == NULL) {
                 fprintf(stderr, "Error opening fifo %s\n", FIFO_NAME_HIGH);
-                return -1;
+                return -5;
             }
         }
     }
@@ -466,19 +484,11 @@ int main(int argc, char **argv)
             if (time == oldTime) {
                 usleep(8000);
                 continue;
-            } else if (time - oldTime <= 75000) {
-                repeat = 1;
             } else if ((time - oldTime > 75000) && (time - oldTime <= 125000)) {
                 fprintf(stderr, "frame lost: %u\n", time - oldTime);
-#ifdef REPEAT
-                repeat = 2;
-#else
-                repeat = 1;
-#endif
             } else if (time - oldTime > 125000) {
                 // If time - oldTime > 125000 (125 ms) assume sync lost
                 fprintf(stderr, "sync lost: %u - %u\n", time, oldTime);
-                repeat = 1;
                 break;
             }
 
@@ -504,58 +514,55 @@ int main(int argc, char **argv)
             }
             oldTime = time;
 
-            while (repeat > 0) {
-                if (ssf0) {
-                    if (memcmp(SEI4_F0_02, buffer, sizeof(SEI4_F0_02)) == 0) {
-                        fwrite(buffer + 62, 1, len - 62, fOut);
-                    } else if (memcmp(SEI4_F0_2C, buffer, sizeof(SEI4_F0_2C)) == 0) {
-                        fwrite(buffer + 52, 1, len - 52, fOut);
-                    } else if (memcmp(SPS4, buffer, sizeof(SPS4)) == 0) {
-#ifdef SPS_TIMING_INFO
-                        if (memcmp(SPS4_1920X1080, buffer, sizeof(SPS4_1920X1080)) == 0) {
-                            if (debug) fprintf(stderr, "frame is SPS\n");
-                            fwrite(SPS4_1920X1080_TI, 1, sizeof(SPS4_1920X1080_TI), fOut);
-                            fwrite(buffer + sizeof(SPS4_1920X1080), 1, SIZEOF_PPS4, fOut);
-                            fwrite(buffer + OFFSET_IDR4, 1, len - OFFSET_IDR4, fOut);
-                        } else if (memcmp(SPS4_640X360, buffer, sizeof(SPS4_640X360)) == 0) {
-                            if (debug) fprintf(stderr, "frame is SPS\n");
-                            fwrite(SPS4_640X360_TI, 1, sizeof(SPS4_640X360_TI), fOut);
-                            fwrite(buffer + sizeof(SPS4_640X360), 1, SIZEOF_PPS4, fOut);
-                            fwrite(buffer + OFFSET_IDR4, 1, len - OFFSET_IDR4, fOut);
-                        }
-#else
-                        fwrite(buffer, 1, 24, fOut);
-                        fwrite(buffer + 76, 1, len - 76, fOut);
-#endif
-                    } else if (memcmp(VPS5, buffer, sizeof(VPS5)) == 0) {
-                        if (debug) fprintf(stderr, "frame is VPS\n");
-                        fwrite(buffer, 1, len, fOut);
-                    } else {
-                        fwrite(buffer, 1, len, fOut);
-                    }
-                } else {
+            if (ssf0) {
+                if (memcmp(SEI4_F0_02, buffer, sizeof(SEI4_F0_02)) == 0) {
+                    fwrite(buffer + 62, 1, len - 62, fOut);
+                } else if (memcmp(SEI4_F0_2C, buffer, sizeof(SEI4_F0_2C)) == 0) {
+                    fwrite(buffer + 52, 1, len - 52, fOut);
+                } else if (memcmp(SPS4, buffer, sizeof(SPS4)) == 0) {
 #ifdef SPS_TIMING_INFO
                     if (memcmp(SPS4_1920X1080, buffer, sizeof(SPS4_1920X1080)) == 0) {
                         if (debug) fprintf(stderr, "frame is SPS\n");
                         fwrite(SPS4_1920X1080_TI, 1, sizeof(SPS4_1920X1080_TI), fOut);
-                        fwrite(buffer + sizeof(SPS4_1920X1080), 1, len - sizeof(SPS4_1920X1080), fOut);
+                        fwrite(buffer + sizeof(SPS4_1920X1080), 1, SIZEOF_PPS4, fOut);
+                        fwrite(buffer + OFFSET_IDR4, 1, len - OFFSET_IDR4, fOut);
                     } else if (memcmp(SPS4_640X360, buffer, sizeof(SPS4_640X360)) == 0) {
                         if (debug) fprintf(stderr, "frame is SPS\n");
                         fwrite(SPS4_640X360_TI, 1, sizeof(SPS4_640X360_TI), fOut);
-                        fwrite(buffer + sizeof(SPS4_640X360), 1, len - sizeof(SPS4_640X360), fOut);
-                    } else if (memcmp(VPS5, buffer, sizeof(VPS5)) == 0) {
-                        if (debug) fprintf(stderr, "frame is VPS\n");
-                        fwrite(buffer, 1, len, fOut);
-                    } else {
-                        fwrite(buffer, 1, len, fOut);
+                        fwrite(buffer + sizeof(SPS4_640X360), 1, SIZEOF_PPS4, fOut);
+                        fwrite(buffer + OFFSET_IDR4, 1, len - OFFSET_IDR4, fOut);
                     }
 #else
-                    fwrite(buffer, 1, len, fOut);
+                    fwrite(buffer, 1, 24, fOut);
+                    fwrite(buffer + 76, 1, len - 76, fOut);
 #endif
+                } else if (memcmp(VPS5, buffer, sizeof(VPS5)) == 0) {
+                    if (debug) fprintf(stderr, "frame is VPS\n");
+                    fwrite(buffer, 1, len, fOut);
+                } else {
+                    fwrite(buffer, 1, len, fOut);
                 }
-                fflush(fOut);
-                repeat--;
+            } else {
+#ifdef SPS_TIMING_INFO
+                if (memcmp(SPS4_1920X1080, buffer, sizeof(SPS4_1920X1080)) == 0) {
+                    if (debug) fprintf(stderr, "frame is SPS\n");
+                    fwrite(SPS4_1920X1080_TI, 1, sizeof(SPS4_1920X1080_TI), fOut);
+                    fwrite(buffer + sizeof(SPS4_1920X1080), 1, len - sizeof(SPS4_1920X1080), fOut);
+                } else if (memcmp(SPS4_640X360, buffer, sizeof(SPS4_640X360)) == 0) {
+                    if (debug) fprintf(stderr, "frame is SPS\n");
+                    fwrite(SPS4_640X360_TI, 1, sizeof(SPS4_640X360_TI), fOut);
+                    fwrite(buffer + sizeof(SPS4_640X360), 1, len - sizeof(SPS4_640X360), fOut);
+                } else if (memcmp(VPS5, buffer, sizeof(VPS5)) == 0) {
+                    if (debug) fprintf(stderr, "frame is VPS\n");
+                    fwrite(buffer, 1, len, fOut);
+                } else {
+                    fwrite(buffer, 1, len, fOut);
+                }
+#else
+                fwrite(buffer, 1, len, fOut);
+#endif
             }
+            fflush(fOut);
         }
     }
 
@@ -570,4 +577,6 @@ int main(int argc, char **argv)
     }
 
     munmap(addr, size);
+
+    return 0;
 }

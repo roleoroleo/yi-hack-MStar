@@ -218,22 +218,22 @@ if [[ $(get_config RTSP) == "yes" ]] ; then
     NR_LEVEL=$(get_config RTSP_AUDIO_NR_LEVEL)
 
     if [[ $(get_config RTSP_STREAM) == "low" ]]; then
-        h264grabber_l -r low -f &
+        h264grabber_l -m $MODEL_SUFFIX -r low -f &
         sleep 1
         CODEC_LOW=$(cat /tmp/lowres)
         NR_LEVEL=$NR_LEVEL RRTSP_RES=low RRTSP_CODEC_LOW=$CODEC_LOW RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD RRTSP_AUDIO=$RTSP_AUDIO_COMPRESSION rRTSPServer &
         ONVIF_PROFILE_1="name=Profile_1\nwidth=640\nheight=360\nurl=rtsp://%s$D_RTSP_PORT/ch0_1.h264\nsnapurl=http://%s$D_HTTPD_PORT/cgi-bin/snapshot.sh?res=low$WATERMARK\ntype=H264"
     fi
     if [[ $(get_config RTSP_STREAM) == "high" ]]; then
-        h264grabber_h -r high -f &
+        h264grabber_h -m $MODEL_SUFFIX -r high -f &
         sleep 1
         CODEC_HIGH=$(cat /tmp/highres)
         NR_LEVEL=$NR_LEVEL RRTSP_RES=high RRTSP_CODEC_HIGH=$CODEC_HIGH RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD RRTSP_AUDIO=$RTSP_AUDIO_COMPRESSION rRTSPServer &
         ONVIF_PROFILE_0="name=Profile_0\nwidth=1920\nheight=1080\nurl=rtsp://%s$D_RTSP_PORT/ch0_0.h264\nsnapurl=http://%s$D_HTTPD_PORT/cgi-bin/snapshot.sh?res=high$WATERMARK\ntype=H264"
     fi
     if [[ $(get_config RTSP_STREAM) == "both" ]]; then
-        h264grabber_l -r low -f &
-        h264grabber_h -r high -f &
+        h264grabber_l -m $MODEL_SUFFIX -r low -f &
+        h264grabber_h -m $MODEL_SUFFIX -r high -f &
         sleep 1
         CODEC_LOW=$(cat /tmp/lowres)
         CODEC_HIGH=$(cat /tmp/highres)

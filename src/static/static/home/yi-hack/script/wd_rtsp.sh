@@ -3,6 +3,7 @@
 CONF_FILE="etc/system.conf"
 
 YI_HACK_PREFIX="/home/yi-hack"
+MODEL_SUFFIX=$(cat /home/yi-hack/model_suffix)
 
 #LOG_FILE="/tmp/sd/wd_rtsp.log"
 LOG_FILE="/dev/null"
@@ -22,20 +23,20 @@ restart_rtsp()
 {
     if [[ $(get_config RTSP) == "yes" ]] ; then
         if [[ $(get_config RTSP_STREAM) == "low" ]]; then
-            h264grabber_l -r low -f &
+            h264grabber_l -m $MODEL_SUFFIX -r low -f &
             sleep 1
             CODEC_LOW=$(cat /tmp/lowres)
             NR_LEVEL=$NR_LEVEL RRTSP_RES=low RRTSP_CODEC_LOW=$CODEC_LOW RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD RRTSP_AUDIO=$RTSP_AUDIO_COMPRESSION rRTSPServer &
         fi
         if [[ $(get_config RTSP_STREAM) == "high" ]]; then
-            h264grabber_h -r high -f &
+            h264grabber_h -m $MODEL_SUFFIX -r high -f &
             sleep 1
             CODEC_HIGH=$(cat /tmp/highres)
             NR_LEVEL=$NR_LEVEL RRTSP_RES=high RRTSP_CODEC_HIGH=$CODEC_HIGH RRTSP_PORT=$RTSP_PORT RRTSP_USER=$USERNAME RRTSP_PWD=$PASSWORD RRTSP_AUDIO=$RTSP_AUDIO_COMPRESSION rRTSPServer &
         fi
         if [[ $(get_config RTSP_STREAM) == "both" ]]; then
-            h264grabber_l -r low -f &
-            h264grabber_h -r high -f &
+            h264grabber_l -m $MODEL_SUFFIX -r low -f &
+            h264grabber_h -m $MODEL_SUFFIX -r high -f &
             sleep 1
             CODEC_LOW=$(cat /tmp/lowres)
             CODEC_HIGH=$(cat /tmp/highres)
