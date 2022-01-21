@@ -312,7 +312,7 @@ diff -Naur tinyalsa-1.0.0.ori/src/pcm.c tinyalsa-1.0.0/src/pcm.c
 +    };
 +
 +    if (fcntl(snoop_fd, F_SETPIPE_SZ, 8192) != 8192) {
-+        oops(pcm, errno, "cannot set non-block to snoop fifo");
++        oops(pcm, errno, "cannot set size to snoop fifo");
 +        close(snoop_fd);
 +        snoop_fd = 0;
 +        return -1;
