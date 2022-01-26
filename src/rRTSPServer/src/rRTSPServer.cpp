@@ -136,7 +136,7 @@ static void announceStream(RTSPServer* rtspServer, ServerMediaSession* sms, char
 
 void print_usage(char *progname)
 {
-    fprintf(stderr, "\nUsage: %s [-r RES] [-c CODEC] [-C CODEC] [-a AUDIO] [-p PORT] [-n LEVEL] [-d]\n\n", progname);
+    fprintf(stderr, "\nUsage: %s [-r RES] [-c CODEC] [-C CODEC] [-a AUDIO] [-p PORT] [-n LEVEL] [-u USER] [-w PASSWORD] [-d]\n\n", progname);
     fprintf(stderr, "\t-r RES,  --resolution RES\n");
     fprintf(stderr, "\t\tset resolution: low, high or both (default high)\n");
     fprintf(stderr, "\t-c CODEC,  --codec_low CODEC\n");
@@ -149,6 +149,10 @@ void print_usage(char *progname)
     fprintf(stderr, "\t\tset TCP port (default 554)\n");
     fprintf(stderr, "\t-n LEVEL, --nr_level LEVEL\n");
     fprintf(stderr, "\t\tset noise reduction level (only pcm and xlaw)\n");
+    fprintf(stderr, "\t-u USER, --user USER\n");
+    fprintf(stderr, "\t\tset username\n");
+    fprintf(stderr, "\t-w PASSWORD, --password PASSWORD\n");
+    fprintf(stderr, "\t\tset password\n");
     fprintf(stderr, "\t-d,      --debug\n");
     fprintf(stderr, "\t\tenable debug\n");
     fprintf(stderr, "\t-h,      --help\n");
@@ -193,7 +197,7 @@ int main(int argc, char** argv)
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        c = getopt_long (argc, argv, "r:c:C:a:p:n:dh",
+        c = getopt_long (argc, argv, "r:c:C:a:p:n:u:w:dh",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -274,6 +278,18 @@ int main(int argc, char** argv)
             if (endptr == optarg) {
                 print_usage(argv[0]);
                 exit(EXIT_FAILURE);
+            }
+            break;
+
+        case 'u':
+            if (strlen(optarg) < sizeof(user)) {
+                strcpy(user, optarg);
+            }
+            break;
+
+        case 'w':
+            if (strlen(optarg) < sizeof(pwd)) {
+                strcpy(pwd, optarg);
             }
             break;
 
