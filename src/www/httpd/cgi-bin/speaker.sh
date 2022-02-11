@@ -17,20 +17,36 @@ if ! $(validateQueryString $QUERY_STRING); then
 fi
 
 VOL="1"
+VOLDB="0"
+IS_DB="0"
 
 PARAM="$(echo $QUERY_STRING | cut -d'&' -f1 | cut -d'=' -f1)"
 VALUE="$(echo $QUERY_STRING | cut -d'&' -f1 | cut -d'=' -f2)"
 
 if [ "$PARAM" == "vol" ] ; then
     VOL="$VALUE"
+
+    if ! $(validateNumber $VOL); then
+        printf "{\n"
+        printf "\"%s\":\"%s\",\\n" "error" "true"
+        printf "\"%s\":\"%s\"\\n" "description" "Invalid volume"
+        printf "}"
+        exit
+    fi
+    IS_DB=0
 fi
 
-if ! $(validateNumber $VOL); then
-    printf "{\n"
-    printf "\"%s\":\"%s\",\\n" "error" "true"
-    printf "\"%s\":\"%s\"\\n" "description" "Invalid volume"
-    printf "}"
-    exit
+if [ "$PARAM" == "voldb" ] ; then
+    VOLDB="$VALUE"
+
+    if ! $(validateNumber $VOLDB); then
+        printf "{\n"
+        printf "\"%s\":\"%s\",\\n" "error" "true"
+        printf "\"%s\":\"%s\"\\n" "description" "Invalid volume (dB)"
+        printf "}"
+        exit
+    fi
+    IS_DB=1
 fi
 
 printf "Content-type: application/json\r\n\r\n"
@@ -67,7 +83,11 @@ if [ $? -eq 0 ]; then
         mv $TMP_FILE.tmp $TMP_FILE
     fi
 
-    cat $TMP_FILE | pcmvol -g $VOL > /tmp/audio_in_fifo &
+    if [ "$IS_DB" == "1" ]; then
+        cat $TMP_FILE | pcmvol -G $VOLDB > /tmp/audio_in_fifo &
+    else
+        cat $TMP_FILE | pcmvol -g $VOL > /tmp/audio_in_fifo &
+    fi
 
     printf "{\n"
     printf "\"%s\":\"%s\",\\n" "error" "false"
@@ -100,7 +120,11 @@ else
             mv $TMP_FILE.tmp $TMP_FILE
         fi
 
-        cat $TMP_FILE | pcmvol -g $VOL > /tmp/audio_in_fifo
+        if [ "$IS_DB" == "1" ]; then
+            cat $TMP_FILE | pcmvol -G $VOLDB > /tmp/audio_in_fifo
+        else
+            cat $TMP_FILE | pcmvol -g $VOL > /tmp/audio_in_fifo
+        fi
         sleep 1
         rm $TMP_FILE
 
