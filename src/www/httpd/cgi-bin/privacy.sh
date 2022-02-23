@@ -73,23 +73,33 @@ start_rtsp()
     fi
 
     if [[ $RTSP_RES == "low" ]]; then
-        if [ "$RTSP_ALT" == "yes" ]; then
-            h264grabber -m $MODEL_SUFFIX -r low -f &
-            sleep 1
+        h264grabber -m $MODEL_SUFFIX -r low -f &
+        sleep 1
+        CODEC_LOW=$(cat /tmp/lowres)
+        if [ ! -z $CODEC_LOW ]; then
+            CODEC_LOW="-c "$CODEC_LOW
         fi
-        $RTSP_DAEMON -m $MODEL_SUFFIX -r low $RTSP_AUDIO_COMPRESSION $RTSP_PORT $RTSP_USER $RTSP_PASSWORD $NR_LEVEL &
+        $RTSP_DAEMON -r low $CODEC_LOW $RTSP_AUDIO_COMPRESSION $RTSP_PORT $RTSP_USER $RTSP_PASSWORD $NR_LEVEL &
     elif [[ $RTSP_RES == "high" ]]; then
-        if [ "$RTSP_ALT" == "yes" ]; then
-            h264grabber -m $MODEL_SUFFIX -r high -f &
-            sleep 1
+        h264grabber -m $MODEL_SUFFIX -r high -f &
+        sleep 1
+        CODEC_HIGH=$(cat /tmp/highres)
+        if [ ! -z $CODEC_HIGH ]; then
+            CODEC_HIGH="-C "$CODEC_HIGH
         fi
-        $RTSP_DAEMON -m $MODEL_SUFFIX -r high $RTSP_AUDIO_COMPRESSION $RTSP_PORT $RTSP_USER $RTSP_PASSWORD $NR_LEVEL &
+        $RTSP_DAEMON -r high $CODEC_HIGH $RTSP_AUDIO_COMPRESSION $RTSP_PORT $RTSP_USER $RTSP_PASSWORD $NR_LEVEL &
     elif [[ $RTSP_RES == "both" ]]; then
-        if [ "$RTSP_ALT" == "yes" ]; then
-            h264grabber -m $MODEL_SUFFIX -r both -f &
-            sleep 1
+        h264grabber -m $MODEL_SUFFIX -r both -f &
+        sleep 1
+        CODEC_LOW=$(cat /tmp/lowres)
+        if [ ! -z $CODEC_LOW ]; then
+            CODEC_LOW="-c "$CODEC_LOW
         fi
-        $RTSP_DAEMON -m $MODEL_SUFFIX -r both $RTSP_AUDIO_COMPRESSION $RTSP_PORT $RTSP_USER $RTSP_PASSWORD $NR_LEVEL &
+        CODEC_HIGH=$(cat /tmp/highres)
+        if [ ! -z $CODEC_HIGH ]; then
+            CODEC_HIGH="-C "$CODEC_HIGH
+        fi
+        $RTSP_DAEMON -r both $CODEC_LOW $CODEC_HIGH $RTSP_AUDIO_COMPRESSION $RTSP_PORT $RTSP_USER $RTSP_PASSWORD $NR_LEVEL &
     fi
     $YI_HACK_PREFIX/script/wd_rtsp.sh >/dev/null &
 }

@@ -36,7 +36,7 @@ restart_rtsp()
             sleep 1
             CODEC_HIGH=$(cat /tmp/highres)
             if [ ! -z $CODEC_HIGH ]; then
-                CODEC_LOW="-C "$CODEC_HIGH
+                CODEC_HIGH="-C "$CODEC_HIGH
             fi
             $RTSP_DAEMON -r high $CODEC_HIGH $RTSP_AUDIO_COMPRESSION $RTSP_PORT $RTSP_USER $RTSP_PASSWORD $NR_LEVEL &
         fi
