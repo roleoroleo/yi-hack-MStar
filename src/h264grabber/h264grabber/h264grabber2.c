@@ -35,7 +35,7 @@
 #include <signal.h>
 
 #define BUF_OFFSET 228
-#define BUF_SIZE 1786008
+#define BUF_SIZE 1786086
 #define FRAME_HEADER_SIZE 19
 
 #define MILLIS_25 25000
