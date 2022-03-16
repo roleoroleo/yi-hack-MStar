@@ -32,6 +32,13 @@
 
 #include <jpeglib.h>
 
+#ifdef HAVE_AV_CONFIG_H
+#undef HAVE_AV_CONFIG_H
+#endif
+
+#include "libavcodec/avcodec.h"
+
+#include "convert2jpg.h"
 #include "water_mark.h"
 
 #define GENERIC 0
@@ -54,85 +61,32 @@
 #define UV_OFFSET_HIGH 0x0023a000
 
 #define PROC_FILE "/proc/umap/vb"
-#define JPEG_QUALITY 100
+
+#define PATH_RES_LOW  "/home/yi-hack/etc/wm_res/low/wm_540p_"
+#define PATH_RES_HIGH "/home/yi-hack/etc/wm_res/high/wm_540p_"
+
+#define FF_INPUT_BUFFER_PADDING_SIZE 32
+
+typedef struct {
+    int sps_addr;
+    int sps_len;
+    int pps_addr;
+    int pps_len;
+    int vps_addr;
+    int vps_len;
+    int idr_addr;
+    int idr_len;
+} frame;
+
+struct __attribute__((__packed__)) frame_header {
+    uint32_t len;
+    uint32_t counter;
+    uint32_t time;
+    uint16_t type;
+    uint16_t stream_counter;
+};
 
 int debug = 0;
-
-/**
- * Converts a YUYV raw buffer to a JPEG buffer.
- * Input is YUYV (YUV 420SP NV12). Output is JPEG binary.
- */
-int compressYUYVtoJPEG(unsigned char *input, const int width, const int height, const int dest_width, const int dest_height)
-{
-    struct jpeg_compress_struct cinfo;
-    struct jpeg_error_mgr jerr;
-    JSAMPROW row_ptr[1];
-    int row_stride;
-
-    uint8_t* outbuffer = NULL;
-    unsigned long outlen = 0;
-
-    unsigned int wsl, hsl, i, j;
-    unsigned int offset;
-    unsigned int uv;
-
-    // width != dest_width currently not supported
-    if (width < dest_width) return -1;
-
-    // height < dest_height currently not supported
-    if (height < dest_height) return -1;
-
-    wsl = width - dest_width;
-    hsl = height - dest_height;
-
-    // width - dest_width must be even
-    if ((wsl % 2) == 1) return -1;
-
-    // height - dest_height must be even
-    if ((hsl % 2) == 1) return -1;
-
-    cinfo.err = jpeg_std_error(&jerr);
-    jpeg_create_compress(&cinfo);
-    jpeg_mem_dest(&cinfo, &outbuffer, &outlen);
-
-    // jrow is a libjpeg row of samples array of 1 row pointer
-    cinfo.image_width = dest_width & -1;
-    cinfo.image_height = dest_height & -1;
-    cinfo.input_components = 3;
-    cinfo.in_color_space = JCS_YCbCr; //libJPEG expects YUV 3bytes, 24bit
-
-    jpeg_set_defaults(&cinfo);
-    jpeg_set_quality(&cinfo, JPEG_QUALITY, TRUE);
-    jpeg_start_compress(&cinfo, TRUE);
-
-    uint8_t tmprowbuf[dest_width * 3];
-
-    JSAMPROW row_pointer[1];
-    row_pointer[0] = &tmprowbuf[0];
-
-    while (cinfo.next_scanline < cinfo.image_height) {
-        offset = (cinfo.next_scanline + hsl/2) * width + wsl/2; //offset to the correct row
-        uv = width * (height - (cinfo.next_scanline + hsl/2 + 1) / 2) + wsl/2;
-
-        for (i = 0, j = 0; i < cinfo.image_width; i += 2, j += 6) { //input strides by 2 bytes, output strides by 6 (2 pixels)
-            tmprowbuf[j + 0] = input[offset + i];          // Y (unique to this pixel)
-            tmprowbuf[j + 1] = input[offset + uv + i];     // U (shared between pixels)
-            tmprowbuf[j + 2] = input[offset + uv + i + 1]; // V (shared between pixels)
-            tmprowbuf[j + 3] = input[offset + i + 1];      // Y (unique to this pixel)
-            tmprowbuf[j + 4] = input[offset + uv + i];     // U (shared between pixels)
-            tmprowbuf[j + 5] = input[offset + uv + i + 1]; // V (shared between pixels)
-        }
-        jpeg_write_scanlines(&cinfo, row_pointer, 1);
-    }
-
-    jpeg_finish_compress(&cinfo);
-    jpeg_destroy_compress(&cinfo);
-
-    // Reuse input buffer
-    memcpy (input, outbuffer, outlen);
-
-    return outlen;
-}
 
 /**
  * The image is stored in this manner:
@@ -234,7 +188,6 @@ int img2YUV_2(unsigned char *bufIn, int size, int width, int height)
                 c = l%(W_B);
                 ptr = ptrOut + (j * W_B + r * width/2 + 3 - c) * 2;
                 *(ptr + 1) = *ptrIn;
-//                ptr++;
                 ptrIn++;
                 *ptr = *ptrIn;
                 ptrIn++;
@@ -249,42 +202,42 @@ int img2YUV_2(unsigned char *bufIn, int size, int width, int height)
 // Returns the 1st process id corresponding to pname
 int pidof(const char *pname)
 {
-  DIR *dirp;
-  FILE *fp;
-  struct dirent *entry;
-  char path[1024], read_buf[1024];
-  int ret = 0;
+    DIR *dirp;
+    FILE *fp;
+    struct dirent *entry;
+    char path[1024], read_buf[1024];
+    int ret = 0;
 
-  dirp = opendir ("/proc/");
-  if (dirp == NULL) {
-    fprintf(stderr, "error opening /proc");
-    return 0;
-  }
-
-  while ((entry = readdir (dirp)) != NULL) {
-    if (atoi(entry->d_name) > 0) {
-      sprintf(path, "/proc/%s/comm", entry->d_name);
-
-      /* A file may not exist, Ait may have been removed.
-       * dut to termination of the process. Actually we need to
-       * make sure the error is actually file does not exist to
-       * be accurate.
-       */
-      fp = fopen (path, "r");
-      if (fp != NULL) {
-        fscanf (fp, "%s", read_buf);
-        if (strcmp (read_buf, pname) == 0) {
-            ret = atoi(entry->d_name);
-            fclose (fp);
-            break;
-        }
-        fclose (fp);
-      }
+    dirp = opendir ("/proc/");
+    if (dirp == NULL) {
+        fprintf(stderr, "error opening /proc");
+        return 0;
     }
-  }
 
-  closedir (dirp);
-  return ret;
+    while ((entry = readdir (dirp)) != NULL) {
+        if (atoi(entry->d_name) > 0) {
+            sprintf(path, "/proc/%s/comm", entry->d_name);
+
+              /* A file may not exist, Ait may have been removed.
+               * dut to termination of the process. Actually we need to
+               * make sure the error is actually file does not exist to
+               * be accurate.
+               */
+              fp = fopen (path, "r");
+              if (fp != NULL) {
+                  fscanf (fp, "%s", read_buf);
+                  if (strcmp (read_buf, pname) == 0) {
+                      ret = atoi(entry->d_name);
+                      fclose (fp);
+                      break;
+                  }
+                  fclose (fp);
+              }
+          }
+    }
+
+    closedir (dirp);
+    return ret;
 }
 
 // Converts virtual address to physical address
@@ -322,11 +275,140 @@ unsigned int rmm_virt2phys(unsigned int inAddr) {
     return outAddr;
 }
 
+int frame_decode(unsigned char *outbuffer, unsigned char *p, int length, int h26x)
+{
+    AVCodec *codec;
+    AVCodecContext *c= NULL;
+    AVFrame *picture;
+    int got_picture, len;
+    FILE *fOut;
+    uint8_t *inbuf;
+    AVPacket avpkt;
+    int i, j, size;
+
+//////////////////////////////////////////////////////////
+//                    Reading H264                      //
+//////////////////////////////////////////////////////////
+
+    if (debug) fprintf(stderr, "Starting decode\n");
+
+    av_init_packet(&avpkt);
+
+    if (h26x == 4) {
+        codec = avcodec_find_decoder(AV_CODEC_ID_H264);
+        if (!codec) {
+            if (debug) fprintf(stderr, "Codec h264 not found\n");
+            return -2;
+        }
+    } else {
+        codec = avcodec_find_decoder(AV_CODEC_ID_HEVC);
+        if (!codec) {
+            if (debug) fprintf(stderr, "Codec hevc not found\n");
+            return -2;
+        }
+    }
+
+    c = avcodec_alloc_context3(codec);
+    picture = av_frame_alloc();
+
+    if((codec->capabilities) & AV_CODEC_CAP_TRUNCATED)
+        (c->flags) |= AV_CODEC_FLAG_TRUNCATED;
+
+    if (avcodec_open2(c, codec, NULL) < 0) {
+        if (debug) fprintf(stderr, "Could not open codec h264\n");
+        av_free(c);
+        return -2;
+    }
+
+    // inbuf is already allocated in the main function
+    inbuf = p;
+    memset(inbuf + length, 0, FF_INPUT_BUFFER_PADDING_SIZE);
+
+    // Get only 1 frame
+    memcpy(inbuf, p, length);
+    avpkt.size = length;
+    avpkt.data = inbuf;
+
+    // Decode frame
+    if (debug) fprintf(stderr, "Decode frame\n");
+    if (c->codec_type == AVMEDIA_TYPE_VIDEO ||
+         c->codec_type == AVMEDIA_TYPE_AUDIO) {
+
+        len = avcodec_send_packet(c, &avpkt);
+        if (len < 0 && len != AVERROR(EAGAIN) && len != AVERROR_EOF) {
+            if (debug) fprintf(stderr, "Error decoding frame\n");
+            return -2;
+        } else {
+            if (len >= 0)
+                avpkt.size = 0;
+            len = avcodec_receive_frame(c, picture);
+            if (len >= 0)
+                got_picture = 1;
+        }
+    }
+    if(!got_picture) {
+        if (debug) fprintf(stderr, "No input frame\n");
+        av_frame_free(&picture);
+        avcodec_close(c);
+        av_free(c);
+        return -2;
+    }
+
+    if (debug) fprintf(stderr, "Writing yuv buffer\n");
+    memset(outbuffer, 0x80, c->width * c->height * 3 / 2);
+    memcpy(outbuffer, picture->data[0], c->width * c->height);
+    for(i=0; i<c->height/2; i++) {
+        for(j=0; j<c->width/2; j++) {
+            outbuffer[c->width * c->height + c->width * i +  2 * j] = *(picture->data[1] + i * picture->linesize[1] + j);
+            outbuffer[c->width * c->height + c->width * i +  2 * j + 1] = *(picture->data[2] + i * picture->linesize[2] + j);
+        }
+    }
+
+    // Clean memory
+    if (debug) fprintf(stderr, "Cleaning ffmpeg memory\n");
+    av_frame_free(&picture);
+    avcodec_close(c);
+    av_free(c);
+
+    return 0;
+}
+
+int add_watermark(unsigned char *buffer, int w_res, int h_res)
+{
+    char path_res[1024];
+    FILE *fBuf;
+    WaterMarkInfo WM_info;
+
+    if (w_res != W_LOW) {
+        strcpy(path_res, PATH_RES_HIGH);
+    } else {
+        strcpy(path_res, PATH_RES_LOW);
+    }
+
+    if (WMInit(&WM_info, path_res) < 0) {
+        fprintf(stderr, "water mark init error\n");
+        return -1;
+    } else {
+        if (w_res != W_LOW) {
+            AddWM(&WM_info, w_res, h_res, buffer,
+                buffer + w_res*h_res, w_res-460, h_res-40, NULL);
+        } else {
+            AddWM(&WM_info, w_res, h_res, buffer,
+                buffer + w_res*h_res, w_res-230, h_res-20, NULL);
+        }
+        WMRelease(&WM_info);
+    }
+
+    return 0;
+}
+
 void print_usage(char *progname)
 {
     fprintf(stderr, "\nUsage: %s [-m MODEL] [-r RES] [-w] [-d]\n\n", progname);
     fprintf(stderr, "\t-m, --model MODEL\n");
     fprintf(stderr, "\t\tset model: unused parameter\n");
+    fprintf(stderr, "\t-f, --file FILE\n");
+    fprintf(stderr, "\t\tRead frame from file FILE\n");
     fprintf(stderr, "\t-r RES, --resolution RES\n");
     fprintf(stderr, "\t\tset resolution: LOW or HIGH (default HIGH)\n");
     fprintf(stderr, "\t-w, --watermark\n");
@@ -349,23 +431,40 @@ int main(int argc, char **argv)
     int model = GENERIC;
     int c;
     const char memDevice[] = "/dev/mem";
+    char file[256];
     int resolution = RESOLUTION_HIGH;
     int watermark = 0;
-    FILE *fPtr, *fLen;
+    int width, height;
+    FILE *fPtr, *fLen, *fHF;
     int fMem;
     unsigned int ivAddr, ipAddr;
     unsigned int size;
     unsigned char *addr;
-    unsigned char *buffer;
+    unsigned char *bufferyuv, *bufferh26x;
     unsigned char check1[64], check2[64];
     int outlen;
 
     WaterMarkInfo WM_info;
 
+    struct frame_header fh, fhs, fhp, fhv, fhi;
+    unsigned char *fhs_addr, *fhp_addr, *fhv_addr, *fhi_addr;
+
+    int sps_start_found = -1, sps_end_found = -1;
+    int pps_start_found = -1, pps_end_found = -1;
+    int vps_start_found = -1, vps_end_found = -1;
+    int idr_start_found = -1;
+    int i, j, f, start_code;
+    unsigned char *h26x_file_buffer;
+    long h26x_file_size;
+    size_t nread;
+
+    memset(file, '\0', sizeof(file));
+
     while (1) {
         static struct option long_options[] =
         {
             {"model",     required_argument, 0, 'm'},
+            {"file",      required_argument, 0, 'f'},
             {"resolution",  required_argument, 0, 'r'},
             {"watermark",  no_argument, 0, 'w'},
             {"debug",  no_argument, 0, 'd'},
@@ -375,7 +474,7 @@ int main(int argc, char **argv)
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        c = getopt_long (argc, argv, "m:r:wdh",
+        c = getopt_long (argc, argv, "m:f:r:wdh",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -390,6 +489,11 @@ int main(int argc, char **argv)
                 model = GENERIC;
             }
             break;
+
+        case 'f':
+            if (strlen(optarg) < sizeof(file)) {
+                strcpy(file, optarg);
+            }
 
         case 'r':
             if (strcasecmp("low", optarg) == 0) {
@@ -430,129 +534,260 @@ int main(int argc, char **argv)
         return 0;
     }
 
-    if (debug) fprintf(stderr, "Resolution: %d\n", resolution);
-
-    if (model == H305R) {
-        if (resolution == RESOLUTION_LOW) {
-            if (debug) fprintf(stderr, "VMFE0\n");
-            fPtr = fopen("/proc/mstar/OMX/VMFE0/ENCODER_INFO/IBUF_pBuffer", "r");
-            fLen = fopen("/proc/mstar/OMX/VMFE0/ENCODER_INFO/IBUF_nAllocLen", "r");
-        } else {
-            if (debug) fprintf(stderr, "VVHE0\n");
-            fPtr = fopen("/proc/mstar/OMX/VVHE0/ENCODER_INFO/IBUF_pBuffer", "r");
-            fLen = fopen("/proc/mstar/OMX/VVHE0/ENCODER_INFO/IBUF_nAllocLen", "r");
-        }
-    } else {
-        if (resolution == RESOLUTION_LOW) {
-            if (debug) fprintf(stderr, "VMFE1\n");
-            fPtr = fopen("/proc/mstar/OMX/VMFE1/ENCODER_INFO/IBUF_pBuffer", "r");
-            fLen = fopen("/proc/mstar/OMX/VMFE1/ENCODER_INFO/IBUF_nAllocLen", "r");
-        } else {
-            if (debug) fprintf(stderr, "VMFE0\n");
-            fPtr = fopen("/proc/mstar/OMX/VMFE0/ENCODER_INFO/IBUF_pBuffer", "r");
-            fLen = fopen("/proc/mstar/OMX/VMFE0/ENCODER_INFO/IBUF_nAllocLen", "r");
-        }
-    }
-    if ((fPtr == NULL) || (fLen == NULL)) {
-        fprintf(stderr, "Unable to open /proc files\n");
-        return -1;
-    }
-
-    fscanf(fPtr, "%x", &ivAddr);
-    fclose(fPtr);
-    fscanf(fLen, "%d", &size);
-    fclose(fLen);
-
-    ipAddr = rmm_virt2phys(ivAddr);
-
-    if (debug) fprintf(stderr, "vaddr: 0x%08x - paddr: 0x%08x - size: %u\n", ivAddr, ipAddr, size);
-
-    // allocate buffer memory (png header + data buffer)
-    buffer = (unsigned char *) malloc(size * sizeof(unsigned char));
-
-    // open /dev/mem and error checking
-    fMem = open(memDevice, O_RDONLY); // | O_SYNC);
-    if (fMem < 0) {
-        fprintf(stderr, "Failed to open the /dev/mem\n");
-        return -2;
-    }
-
-    // mmap() the opened /dev/mem
-    addr = (unsigned char *) (mmap(NULL, size, PROT_READ, MAP_SHARED, fMem, ipAddr));
-    if (addr == MAP_FAILED) {
-        fprintf(stderr, "Failed to map memory\n");
-        return -3;
-    }
-
-    // close the character device
-    close(fMem);
-
-    if (debug) fprintf(stderr, "copy buffer: len %d\n", size);
-    memcpy(buffer, addr, size);
-    memset(check1, '\0', sizeof(check1));
-    fillCheck(check2, sizeof(check2), buffer, size);
-
-    while (memcmp(check1, check2, sizeof(check1)) != 0) {
-        if (debug) fprintf(stderr, "copy again buffer: len %d\n", size);
-        memcpy(buffer, addr, size);
-        memcpy(check1, check2, sizeof(check1));
-        fillCheck(check2, sizeof(check2), buffer, size);
-    }
-
     if (resolution == RESOLUTION_LOW) {
-        // The buffer contains YUV NV12 image but the UV part is not in the
-        // right position. We need to move it.
-        if (debug) fprintf(stderr, "convert YUV image\n");
-        memmove(buffer + W_LOW * H_LOW, buffer + W_LOW * H_LOW + UV_OFFSET_LOW,
-            W_LOW * H_LOW / 2);
-
-        if (watermark) {
-            if (debug) fprintf(stderr, "adding watermark\n");
-            if(WMInit(&WM_info, "/home/yi-hack/etc/wm_res/low/wm_540p_") < 0){
-                fprintf(stderr, "water mark init error\n");
-            } else {
-                AddWM(&WM_info, W_LOW, H_LOW, buffer,
-                    buffer + W_LOW*H_LOW, W_LOW-230, H_LOW-20, NULL);
-                WMRelease(&WM_info);
-            }
-        }
-
-        // create jpeg
-        if (debug) fprintf(stderr, "compress ipg image\n");
-        outlen = compressYUYVtoJPEG(buffer, W_LOW, H_LOW, W_LOW, H_LOW);
+        width = W_LOW;
+        height = H_LOW;
     } else {
-        // The buffer contains YUV NV21 image saved in blocks.
-        // We need to convert to standard YUV NV12 image.
-        if (debug) fprintf(stderr, "convert YUV image\n");
-        if (model == H305R) {
-            outlen = img2YUV_2(buffer, size, W_HIGH, H_HIGH);
-        } else {
-            outlen = img2YUV(buffer, size, W_HIGH, H_HIGH);
-        }
-
-        if (watermark) {
-            if (debug) fprintf(stderr, "adding watermark\n");
-            if(WMInit(&WM_info, "/home/yi-hack/etc/wm_res/high/wm_540p_") < 0){
-                fprintf(stderr, "water mark init error\n");
-            } else {
-                AddWM(&WM_info, W_HIGH, H_HIGH, buffer,
-                    buffer + W_HIGH*H_HIGH, W_HIGH-460, H_HIGH-40, NULL);
-                WMRelease(&WM_info);
-            }
-        }
-
-        // create jpeg
-        if (debug) fprintf(stderr, "compress ipg image\n");
-        outlen = compressYUYVtoJPEG(buffer, W_HIGH, H_HIGH, W_HIGH, RESOLUTION_HIGH);
+        width = W_HIGH;
+        height = H_HIGH;
     }
 
-    if (outlen != -1)
-        fwrite(buffer, 1, outlen, stdout);
+    if (file[0] == '\0') {
+        if (debug) fprintf(stderr, "Resolution: %d\n", resolution);
 
-    // Free memory
-    if (debug) fprintf(stderr, "free memory\n");
-    munmap(addr, size);
-    free(buffer);
+        if (model == H305R) {
+            if (resolution == RESOLUTION_LOW) {
+                if (debug) fprintf(stderr, "VMFE0\n");
+                fPtr = fopen("/proc/mstar/OMX/VMFE0/ENCODER_INFO/IBUF_pBuffer", "r");
+                fLen = fopen("/proc/mstar/OMX/VMFE0/ENCODER_INFO/IBUF_nAllocLen", "r");
+            } else {
+                if (debug) fprintf(stderr, "VVHE0\n");
+                fPtr = fopen("/proc/mstar/OMX/VVHE0/ENCODER_INFO/IBUF_pBuffer", "r");
+                fLen = fopen("/proc/mstar/OMX/VVHE0/ENCODER_INFO/IBUF_nAllocLen", "r");
+            }
+        } else {
+            if (resolution == RESOLUTION_LOW) {
+                if (debug) fprintf(stderr, "VMFE1\n");
+                fPtr = fopen("/proc/mstar/OMX/VMFE1/ENCODER_INFO/IBUF_pBuffer", "r");
+                fLen = fopen("/proc/mstar/OMX/VMFE1/ENCODER_INFO/IBUF_nAllocLen", "r");
+            } else {
+                if (debug) fprintf(stderr, "VMFE0\n");
+                fPtr = fopen("/proc/mstar/OMX/VMFE0/ENCODER_INFO/IBUF_pBuffer", "r");
+                fLen = fopen("/proc/mstar/OMX/VMFE0/ENCODER_INFO/IBUF_nAllocLen", "r");
+            }
+        }
+    if ((fPtr == NULL) || (fLen == NULL)) {
+            fprintf(stderr, "Unable to open /proc files\n");
+            return -1;
+        }
+
+        fscanf(fPtr, "%x", &ivAddr);
+        fclose(fPtr);
+        fscanf(fLen, "%d", &size);
+        fclose(fLen);
+
+        ipAddr = rmm_virt2phys(ivAddr);
+
+        if (debug) fprintf(stderr, "vaddr: 0x%08x - paddr: 0x%08x - size: %u\n", ivAddr, ipAddr, size);
+
+        // allocate buffer memory (header + data buffer)
+        bufferyuv = (unsigned char *) malloc(size * sizeof(unsigned char));
+
+        // open /dev/mem and error checking
+        fMem = open(memDevice, O_RDONLY); // | O_SYNC);
+        if (fMem < 0) {
+            fprintf(stderr, "Failed to open the /dev/mem\n");
+            return -2;
+        }
+
+        // mmap() the opened /dev/mem
+        addr = (unsigned char *) (mmap(NULL, size, PROT_READ, MAP_SHARED, fMem, ipAddr));
+        if (addr == MAP_FAILED) {
+            fprintf(stderr, "Failed to map memory\n");
+            return -3;
+        }
+
+        // close the character device
+        close(fMem);
+
+        if (debug) fprintf(stderr, "copy buffer: len %d\n", size);
+        memcpy(bufferyuv, addr, size);
+        memset(check1, '\0', sizeof(check1));
+        fillCheck(check2, sizeof(check2), bufferyuv, size);
+
+        while (memcmp(check1, check2, sizeof(check1)) != 0) {
+            if (debug) fprintf(stderr, "copy again buffer: len %d\n", size);
+            memcpy(bufferyuv, addr, size);
+            memcpy(check1, check2, sizeof(check1));
+            fillCheck(check2, sizeof(check2), bufferyuv, size);
+        }
+
+        if (resolution == RESOLUTION_LOW) {
+            // The buffer contains YUV NV12 image but the UV part is not in the
+            // right position. We need to move it.
+            if (debug) fprintf(stderr, "convert YUV image\n");
+            memmove(bufferyuv + W_LOW * H_LOW, bufferyuv + W_LOW * H_LOW + UV_OFFSET_LOW,
+                    W_LOW * H_LOW / 2);
+        } else {
+            // The buffer contains YUV NV21 image saved in blocks.
+            // We need to convert to standard YUV NV12 image.
+            if (debug) fprintf(stderr, "convert YUV image\n");
+            if (model == H305R) {
+                outlen = img2YUV_2(bufferyuv, size, W_HIGH, H_HIGH);
+            } else {
+                outlen = img2YUV(bufferyuv, size, W_HIGH, H_HIGH);
+            }
+        }
+    } else {
+        // Read frames from h26x file
+        fhs.len = 0;
+        fhp.len = 0;
+        fhv.len = 0;
+        fhi.len = 0;
+        fhs_addr = NULL;
+        fhp_addr = NULL;
+        fhv_addr = NULL;
+        fhi_addr = NULL;
+
+        fHF = fopen(file, "r");
+        if ( fHF == NULL ) {
+            fprintf(stderr, "Could not get size of %s\n", file);
+            return -4;
+        }
+        fseek(fHF, 0, SEEK_END);
+        h26x_file_size = ftell(fHF);
+        fseek(fHF, 0, SEEK_SET);
+        h26x_file_buffer = (unsigned char *) malloc(h26x_file_size);
+        nread = fread(h26x_file_buffer, 1, h26x_file_size, fHF);
+        fclose(fHF);
+        if (debug) fprintf(stderr, "The size of the file is %d\n", h26x_file_size);
+
+        if (nread != h26x_file_size) {
+            fprintf(stderr, "Read error %s\n", file);
+            return -5;
+        }
+
+        for (f=0; f<h26x_file_size; i++) {
+            for (i=f; i<h26x_file_size; i++) {
+                if(h26x_file_buffer[i] == 0 && h26x_file_buffer[i+1] == 0 && h26x_file_buffer[i+2] == 0 && h26x_file_buffer[i+3] == 1) {
+                    start_code = 4;
+                } else {
+                    continue;
+                }
+
+                if ((h26x_file_buffer[i+start_code]&0x7E) == 0x40) {
+                    vps_start_found = i;
+                    break;
+                } else if (((h26x_file_buffer[i+start_code]&0x1F) == 0x7) || ((h26x_file_buffer[i+start_code]&0x7E) == 0x42)) {
+                    sps_start_found = i;
+                    break;
+                } else if (((h26x_file_buffer[i+start_code]&0x1F) == 0x8) || ((h26x_file_buffer[i+start_code]&0x7E) == 0x44)) {
+                    pps_start_found = i;
+                    break;
+                } else if (((h26x_file_buffer[i+start_code]&0x1F) == 0x5) || ((h26x_file_buffer[i+start_code]&0x7E) == 0x26)) {
+                    idr_start_found = i;
+                    break;
+                }
+            }
+
+            for (j = i + 4; j<h26x_file_size; j++) {
+                if (h26x_file_buffer[j] == 0 && h26x_file_buffer[j+1] == 0 && h26x_file_buffer[j+2] == 0 && h26x_file_buffer[j+3] == 1) {
+                    start_code = 4;
+                } else {
+                    continue;
+                }
+
+                if ((h26x_file_buffer[j+start_code]&0x7E) == 0x42) {
+                    vps_end_found = j;
+                    break;
+                } else if (((h26x_file_buffer[j+start_code]&0x1F) == 0x8) || ((h26x_file_buffer[j+start_code]&0x7E) == 0x44)) {
+                    sps_end_found = j;
+                    break;
+                } else if (((h26x_file_buffer[j+start_code]&0x1F) == 0x5) || ((h26x_file_buffer[j+start_code]&0x7E) == 0x26)) {
+                    pps_end_found = j;
+                    break;
+                }
+            }
+            f = j;
+        }
+
+        if ((sps_start_found >= 0) && (pps_start_found >= 0) && (idr_start_found >= 0) &&
+                (sps_end_found >= 0) && (pps_end_found >= 0)) {
+
+            if ((vps_start_found >= 0) && (vps_end_found >= 0)) {
+                fhv.len = vps_end_found - vps_start_found;
+                fhv_addr = &h26x_file_buffer[vps_start_found];
+            }
+            fhs.len = sps_end_found - sps_start_found;
+            fhp.len = pps_end_found - pps_start_found;
+            fhi.len = h26x_file_size - idr_start_found;
+            fhs_addr = &h26x_file_buffer[sps_start_found];
+            fhp_addr = &h26x_file_buffer[pps_start_found];
+            fhi_addr = &h26x_file_buffer[idr_start_found];
+
+            if (debug) {
+                fprintf(stderr, "Found SPS at %d, len %d\n", sps_start_found, fhs.len);
+                fprintf(stderr, "Found PPS at %d, len %d\n", pps_start_found, fhp.len);
+                if (fhv_addr != NULL) {
+                    fprintf(stderr, "Found VPS at %d, len %d\n", vps_start_found, fhv.len);
+                }
+                fprintf(stderr, "Found IDR at %d, len %d\n", idr_start_found, fhi.len);
+            }
+        } else {
+            if (debug) fprintf(stderr, "No frame found\n");
+            return -6;
+        }
+
+        // Add FF_INPUT_BUFFER_PADDING_SIZE to make the size compatible with ffmpeg conversion
+        bufferh26x = (unsigned char *) malloc(fhv.len + fhs.len + fhp.len + fhi.len + FF_INPUT_BUFFER_PADDING_SIZE);
+        if (bufferh26x == NULL) {
+            fprintf(stderr, "Unable to allocate memory\n");
+            return -7;
+        }
+
+        bufferyuv = (unsigned char *) malloc(width * height * 3 / 2);
+        if (bufferyuv == NULL) {
+            fprintf(stderr, "Unable to allocate memory\n");
+            return -8;
+        }
+
+        if (fhv_addr != NULL) {
+            memcpy(bufferh26x, fhv_addr, fhv.len);
+        }
+        memcpy(bufferh26x + fhv.len, fhs_addr, fhs.len);
+        memcpy(bufferh26x + fhv.len + fhs.len, fhp_addr, fhp.len);
+        memcpy(bufferh26x + fhv.len + fhs.len + fhp.len, fhi_addr, fhi.len);
+
+        free(h26x_file_buffer);
+
+        if (fhv_addr == NULL) {
+            if (debug) fprintf(stderr, "Decoding h264 frame\n");
+            if(frame_decode(bufferyuv, bufferh26x, fhs.len + fhp.len + fhi.len, 4) < 0) {
+                fprintf(stderr, "Error decoding h264 frame\n");
+                return -9;
+            }
+        } else {
+            if (debug) fprintf(stderr, "Decoding h265 frame\n");
+            if(frame_decode(bufferyuv, bufferh26x, fhv.len + fhs.len + fhp.len + fhi.len, 5) < 0) {
+                fprintf(stderr, "Error decoding h265 frame\n");
+                return -9;
+            }
+        }
+        free(bufferh26x);
+
+    }
+
+    if (watermark) {
+        if (debug) fprintf(stderr, "Adding watermark\n");
+        if (add_watermark(bufferyuv, width, height) < 0) {
+            fprintf(stderr, "Error adding watermark\n");
+            return -10;
+        }
+    }
+
+    if (debug) fprintf(stderr, "Encoding jpeg image\n");
+    if(YUVtoJPG("stdout", bufferyuv, width, height, width, height) < 0) {
+        fprintf(stderr, "Error encoding jpeg file\n");
+        return -11;
+    }
+
+    free(bufferyuv);
+
+    if (file[0] == '\0') {
+        // Free memory
+        if (debug) fprintf(stderr, "Free memory\n");
+        munmap(addr, size);
+    }
 
     return 0;
 }
