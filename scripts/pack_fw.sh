@@ -186,7 +186,13 @@ echo "done!"
 
 # adding defaults
 echo -n ">>> Adding defaults... "
-7za a -ax $TMP_DIR/home/yi-hack/etc/proxychains.conf $TMP_DIR/home/yi-hack/etc/defaults.7z $TMP_DIR/home/yi-hack/etc/*.conf $TMP_DIR/home/yi-hack/etc/hostname $TMP_DIR/home/yi-hack/etc/passwd > /dev/null
+mkdir -p $TMP_DIR/home/yi-hack/etc_defaults
+cp -r $TMP_DIR/home/yi-hack/etc/* $TMP_DIR/home/yi-hack/etc_defaults/
+rm -f $TMP_DIR/home/yi-hack/etc_defaults/proxychains.conf
+rm -rf $TMP_DIR/home/yi-hack/etc_defaults/wm_res
+7za a $TMP_DIR/home/yi-hack/etc_defaults/defaults.7z $TMP_DIR/home/yi-hack/etc_defaults/* > /dev/null
+mv $TMP_DIR/home/yi-hack/etc_defaults/defaults.7z $TMP_DIR/home/yi-hack/etc/defaults.7z
+rm -rf $TMP_DIR/home/yi-hack/etc_defaults
 echo "done!"
 
 # insert the version file
