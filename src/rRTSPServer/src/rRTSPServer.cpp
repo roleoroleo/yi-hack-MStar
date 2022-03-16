@@ -181,6 +181,9 @@ int main(int argc, char** argv)
     int nr_level = 0;
     int debug = 0;
 
+    memset(user, 0, sizeof(user));
+    memset(pwd, 0, sizeof(pwd));
+
     while (1) {
         static struct option long_options[] =
         {
@@ -190,6 +193,8 @@ int main(int argc, char** argv)
             {"audio",  required_argument, 0, 'a'},
             {"port",  required_argument, 0, 'p'},
             {"nr_level",  required_argument, 0, 'n'},
+            {"user",  required_argument, 0, 'u'},
+            {"password",  required_argument, 0, 'w'},
             {"debug",  no_argument, 0, 'd'},
             {"help",  no_argument, 0, 'h'},
             {0, 0, 0, 0}
@@ -374,13 +379,11 @@ int main(int argc, char** argv)
         debug = 1;
     }
 
-    memset(user, 0, sizeof(user));
     str = getenv("RRTSP_USER");
     if ((str != NULL) && (strlen(str) < sizeof(user))) {
         strcpy(user, str);
     }
 
-    memset(pwd, 0, sizeof(pwd));
     str = getenv("RRTSP_PWD");
     if ((str != NULL) && (strlen(str) < sizeof(pwd))) {
         strcpy(pwd, str);
