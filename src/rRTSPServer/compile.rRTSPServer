@@ -31,7 +31,6 @@ cp -rf ./_install/include/* ../live/include/
 cd ..
 
 cd live || exit 1
-
 make clean
 make || exit 1
 

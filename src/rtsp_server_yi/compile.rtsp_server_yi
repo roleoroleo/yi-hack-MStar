@@ -27,4 +27,4 @@ mkdir -p ../_install/bin || exit 1
 
 cp ./rtsp_server_yi ../_install/bin/rtsp_server_yi || exit 1
 
-arm-linux-gnueabihf-strip ../_install/bin/* || exit 1
+${STRIP} ../_install/bin/* || exit 1
