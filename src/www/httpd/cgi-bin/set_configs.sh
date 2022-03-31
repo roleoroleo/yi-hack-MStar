@@ -86,6 +86,8 @@ for ROW in $ROWS; do
             fi
         fi
     elif [ "$KEY" == "PROXYCHAINS_SERVERS" ] ; then
+        VALUE=$(echo $VALUE | sed 's/^\"//g')
+        VALUE=$(echo $VALUE | sed 's/\"$//g')
         VALUE=$(echo $VALUE | sed 's/;/\\n/g')
         cat $CONF_FILE.template > $CONF_FILE
         echo -e $VALUE >> $CONF_FILE
