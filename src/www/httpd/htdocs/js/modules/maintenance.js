@@ -26,6 +26,9 @@ APP.maintenance = (function($) {
         $(document).on("click", '#button-upgrade', function(e) {
             upgradeFirmware();
         });
+        $(document).on("click", '#button-umount', function(e) {
+            umountSD();
+        });
     }
 
     function saveConfig() {
@@ -188,6 +191,29 @@ APP.maintenance = (function($) {
                 setFwStatus("Installed: " + data.fw_version + " - Available: " + data.latest_fw);
                 if (data.fw_version == data.latest_fw) {
                     $('#button-upgrade').attr("disabled", true);
+                }
+            }
+        });
+    }
+
+    function umountSD() {
+        $('#button-umount').attr("disabled", true);
+        $('input[type="text"][data-key="SD"]').prop('value', "Umount SD in progress...");
+        $.ajax({
+            type: "GET",
+            url: 'cgi-bin/umount_sd.sh',
+            error: function(response) {
+                console.log('error', response);
+                $('#button-umount').attr("disabled", false);
+                $('input[type="text"][data-key="SD"]').prop('value', "Failed");
+            },
+            success: function(response) {
+                $('#button-umount').attr("disabled", false);
+                if (response.error == "false") {
+                    $('input[type="text"][data-key="SD"]').prop('value', "Success, reboot the cam.");
+                } else {
+                    console.log('error', response);
+                    $('input[type="text"][data-key="SD"]').prop('value', "Failed");
                 }
             }
         });
