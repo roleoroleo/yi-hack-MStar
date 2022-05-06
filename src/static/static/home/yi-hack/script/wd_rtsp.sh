@@ -60,11 +60,20 @@ restart_rtsp()
 check_rtsp()
 {
 #  echo "$(date +'%Y-%m-%d %H:%M:%S') - Checking RTSP process..." >> $LOG_FILE
-    SOCKET=`netstat -an 2>&1 | grep ":$RTSP_PORT " | grep ESTABLISHED | grep -c ^`
+    LISTEN=`netstat -an 2>&1 | grep ":$RTSP_PORT_NUMBER " | grep LISTEN | grep -c ^`
+    SOCKET=`netstat -an 2>&1 | grep ":$RTSP_PORT_NUMBER " | grep ESTABLISHED | grep -c ^`
     CPU_1_L=`top -b -n 2 -d 1 | grep h264grabber_l | grep -v grep | tail -n 1 | awk '{print $8}'`
     CPU_1_H=`top -b -n 2 -d 1 | grep h264grabber_h | grep -v grep | tail -n 1 | awk '{print $8}'`
     CPU_2=`top -b -n 2 -d 1 | grep rRTSPServer | grep -v grep | tail -n 1 | awk '{print $8}'`
 
+    if [ $LISTEN -eq 0 ]; then
+        echo "$(date +'%Y-%m-%d %H:%M:%S') - Restarting rtsp process" >> $LOG_FILE
+        killall -q rRTSPServer
+        killall -q h264grabber_l
+        killall -q h264grabber_h
+        sleep 1
+        restart_rtsp
+    fi
     if [[ $(get_config RTSP_STREAM) == "low" ]] || [[ $(get_config RTSP_STREAM) == "both" ]]; then
         if [ "$CPU_1_L" == "" ] || [ "$CPU_2" == "" ]; then
             echo "$(date +'%Y-%m-%d %H:%M:%S') - No running processes for low res, restarting..." >> $LOG_FILE
@@ -125,10 +134,19 @@ check_rtsp()
 check_rtsp_alt()
 {
 #  echo "$(date +'%Y-%m-%d %H:%M:%S') - Checking RTSP process..." >> $LOG_FILE
+    LISTEN=`netstat -an 2>&1 | grep ":$RTSP_PORT_NUMBER " | grep LISTEN | grep -c ^`
     CPU_1_L=`top -b -n 2 -d 1 | grep h264grabber_l | grep -v grep | tail -n 1 | awk '{print $8}'`
     CPU_1_H=`top -b -n 2 -d 1 | grep h264grabber_h | grep -v grep | tail -n 1 | awk '{print $8}'`
     CPU_2=`top -b -n 2 -d 1 | grep rtsp_server_yi | grep -v grep | tail -n 1 | awk '{print $8}'`
 
+    if [ $LISTEN -eq 0 ]; then
+        echo "$(date +'%Y-%m-%d %H:%M:%S') - Restarting rtsp process" >> $LOG_FILE
+        killall -q rtsp_server_yi
+        killall -q h264grabber_l
+        killall -q h264grabber_h
+        sleep 1
+        restart_rtsp
+    fi
     if [[ $(get_config RTSP_STREAM) == "low" ]] || [[ $(get_config RTSP_STREAM) == "both" ]]; then
         if [ "$CPU_1_L" == "" ] || [ "$CPU_2" == "" ]; then
             echo "$(date +'%Y-%m-%d %H:%M:%S') - No running processes for low res, restarting..." >> $LOG_FILE
@@ -197,6 +215,7 @@ if [ ! -z $RTSP_AUDIO_COMPRESSION ]; then
     RTSP_AUDIO_COMPRESSION="-a "$RTSP_AUDIO_COMPRESSION
 fi
 if [ ! -z $RTSP_PORT ]; then
+    RTSP_PORT_NUMBER=$RTSP_PORT
     RTSP_PORT="-p "$RTSP_PORT
 fi
 if [ ! -z $USERNAME ]; then
