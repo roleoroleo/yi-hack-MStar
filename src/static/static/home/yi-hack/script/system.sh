@@ -345,7 +345,7 @@ if [ "$FREE_SPACE" != "0" ]; then
     echo "0 * * * * sleep 20; /home/yi-hack/script/clean_records.sh $FREE_SPACE" >> /var/spool/cron/crontabs/root
 fi
 if [[ $(get_config FTP_UPLOAD) == "yes" ]] ; then
-    echo "0 * * * * sleep 40; /home/yi-hack/script/ftppush.sh cron" >> /var/spool/cron/crontabs/root
+    echo "* * * * * sleep 40; /home/yi-hack/script/ftppush.sh cron" >> /var/spool/cron/crontabs/root
 fi
 /usr/sbin/crond -c /var/spool/cron/crontabs/
 
