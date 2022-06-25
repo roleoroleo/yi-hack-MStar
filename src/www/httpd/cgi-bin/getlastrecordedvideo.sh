@@ -95,7 +95,7 @@ done
 COUNT=`ls -At /tmp/sd/record/$DIRNAME | grep .mp4 -c`
 IDX=1
 for f in `ls -At /tmp/sd/record/$DIRNAME | grep .mp4`; do
-    if [ ${#f} == 12 ] || [ ${#f} == 12 ]; then
+    if [ ${#f} == 12 ] || [ ${#f} == 14 ]; then
         VIDNAME="$f"
         if [ "$IDX" -ge "$OLDNESS" ]; then
             break;

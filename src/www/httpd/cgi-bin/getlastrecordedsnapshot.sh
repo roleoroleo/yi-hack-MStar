@@ -93,7 +93,7 @@ done
 COUNT=`ls -At /tmp/sd/record/$DIRNAME | grep .jpg -c`
 IDX=1
 for f in `ls -At /tmp/sd/record/$DIRNAME | grep .jpg`; do
-    if [ ${#f} == 12 ] || [ ${#f} == 12 ]; then
+    if [ ${#f} == 12 ] || [ ${#f} == 14 ]; then
         IMGNAME="$f"
         if [ "$IDX" -ge "$OLDNESS" ]; then
             break;
