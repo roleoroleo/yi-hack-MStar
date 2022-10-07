@@ -49,6 +49,7 @@ if [ "$DIR" != "none" ] ; then
 fi
 
 printf "Content-type: application/json\r\n\r\n"
+
 printf "{\n"
 printf "\"%s\":\"%s\"\\n" "error" "false"
 printf "}"

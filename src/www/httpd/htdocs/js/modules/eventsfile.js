@@ -72,7 +72,6 @@ APP.eventsfile = (function($) {
                         } else {
                             html += "<td>No preview</td>";
                         }
-
                         html += "<td><a href=\"record/" + getUrlVar('dirname') + "/" + record.filename + "\">" + record.filename + "</a></td>";
                         html += "<td><input class=\"button-primary button-play\" type=\"button\" id=\"button-play-" + "record/" + getUrlVar('dirname') + "/" + record.filename + "\" value=\"Play\"/><br/>";
                         html += "<input class=\"button-primary button-delete\" type=\"button\" id=\"button-delete-" + getUrlVar('dirname') + "/" + record.filename + "\" value=\"Delete\"/></td></tr>";

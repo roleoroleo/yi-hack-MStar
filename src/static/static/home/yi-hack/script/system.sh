@@ -2,8 +2,8 @@
 
 CONF_FILE="etc/system.conf"
 
-YI_HACK_PREFIX="/home/yi-hack"
 YI_PREFIX="/home/app"
+YI_HACK_PREFIX="/home/yi-hack"
 
 YI_HACK_VER=$(cat /home/yi-hack/version)
 MODEL_SUFFIX=$(cat /home/yi-hack/model_suffix)
@@ -29,8 +29,8 @@ start_buffer()
     ipc_cmd -x
 }
 
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/lib:/home/yi-hack/lib:/tmp/sd/yi-hack/lib
 export PATH=$PATH:/home/base/tools:/home/yi-hack/bin:/home/yi-hack/sbin:/tmp/sd/yi-hack/bin:/tmp/sd/yi-hack/sbin
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/lib:/home/yi-hack/lib:/tmp/sd/yi-hack/lib
 
 ulimit -s 1024
 
@@ -152,6 +152,11 @@ else
         fi
 
         echo "127.0.0.1    api.eu.xiaoyi.com" >> /etc/hosts
+        echo "127.0.0.1    api.us.xiaoyi.com" >> /etc/hosts
+        echo "127.0.0.1    api.xiaoyi.com.tw" >> /etc/hosts
+        echo "127.0.0.1    log.eu.xiaoyi.com" >> /etc/hosts
+        echo "127.0.0.1    log.us.xiaoyi.com" >> /etc/hosts
+        echo "127.0.0.1    log.xiaoyi.com.tw" >> /etc/hosts
     )
 fi
 

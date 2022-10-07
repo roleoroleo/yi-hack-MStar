@@ -81,5 +81,5 @@ printf "{\n"
 if [ ! -z "$RES" ]; then
     printf "\"status\": \"$RES\",\n"
 fi
-printf "\"%s\":\"%s\"\\n" "error" "true"
+printf "\"%s\":\"%s\"\\n" "error" "false"
 printf "}"
