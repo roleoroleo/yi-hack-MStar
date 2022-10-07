@@ -25,6 +25,7 @@ fi
 mkdir -p $YI_HACK_PREFIX/yi-hack/etc/dropbear
 
 # Comment out all the cloud stuff from base/init.sh
+sed -i 's/\t\.\/dispatch \&/\tLD_PRELOAD=\/home\/yi-hack\/lib\/ipc_multiplex.so \.\/dispatch \&/g' /home/app/init.sh
 sed -i 's/\t\.\/watch_process \&/\t#\.\/watch_process \&/g' /home/app/init.sh
 sed -i 's/\t\.\/oss \&/\t#\.\/oss \&/g' /home/app/init.sh
 sed -i 's/\t\.\/oss_fast \&/\t#\.\/oss_fast \&/g' /home/app/init.sh

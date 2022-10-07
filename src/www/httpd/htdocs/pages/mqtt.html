@@ -130,6 +130,8 @@
                             <input class="u-full-width" type="text" placeholder="" id="motion_start_msg" data-key="MOTION_START_MSG"/>
                             <label for="motion_stop_msg">Motion Stop Message</label>
                             <input class="u-full-width" type="text" placeholder="" id="motion_stop_msg" data-key="MOTION_STOP_MSG"/>
+                            <label for="baby_crying_msg">Baby Crying Message</label>
+                            <input class="u-full-width" type="text" placeholder="" id="baby_crying_msg" data-key="BABY_CRYING_MSG"/>
                             <label for="topic_motion_image">Topic Suffix for jpeg image</label>
                             <input class="u-full-width" type="text" placeholder="" id="topic_motion_image" data-key="TOPIC_MOTION_IMAGE"/>
                             <span class="switch-description">
@@ -139,15 +141,6 @@
                             <input class="u-full-width" type="text" placeholder="" id="motion_image_delay" data-key="MOTION_IMAGE_DELAY">
                             <label for="topic_motion_files">Topic Suffix for video list message</label>
                             <input class="u-full-width" type="text" placeholder="" id="topic_motion_files" data-key="TOPIC_MOTION_FILES">
-                        </td>
-                    </tr>
-                    <tr class="row">
-                        <td>Baby Crying</td>
-                        <td>
-                            <label for="topic_baby_crying">Topic Suffix</label>
-                            <input class="u-full-width" type="text" placeholder="" id="topic_baby_crying" data-key="TOPIC_BABY_CRYING"/>
-                            <label for="baby_crying_msg">Baby Crying Message</label>
-                            <input class="u-full-width" type="text" placeholder="" id="baby_crying_msg" data-key="BABY_CRYING_MSG"/>
                         </td>
                     </tr>
                     <tr class="row">
@@ -221,15 +214,6 @@
                         <td>Retain for video list messages</td>
                         <td>
                             <input class="u-full-width" type="text" placeholder="1" data-key="MQTT_RETAIN_MOTION_FILES"/>
-                            <span class="switch-description">
-                                A retained message is a normal MQTT message with the retained flag set to true. The broker stores the last retained message and the corresponding QoS for that topic. (1 = enabled, 0 = disabled)
-                            </span>
-                        </td>
-                    </tr>
-                    <tr class="row">
-                        <td>Retain for Baby Crying messages</td>
-                        <td>
-                            <input class="u-full-width" type="text" placeholder="1" data-key="MQTT_RETAIN_BABY_CRYING"/>
                             <span class="switch-description">
                                 A retained message is a normal MQTT message with the retained flag set to true. The broker stores the last retained message and the corresponding QoS for that topic. (1 = enabled, 0 = disabled)
                             </span>
