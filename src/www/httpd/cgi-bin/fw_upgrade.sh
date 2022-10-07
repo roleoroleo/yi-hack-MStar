@@ -54,19 +54,24 @@ elif [ "$VAL" == "upgrade" ] ; then
     cd /tmp/sd/.fw_upgrade
 
     MODEL_SUFFIX=`cat $YI_HACK_PREFIX/model_suffix`
-    FW_VERSION=`cat /home/yi-hack/version`
-    LATEST_FW=`wget -O -  https://api.github.com/repos/roleoroleo/yi-hack-MStar/releases/latest 2>&1 | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/'`
-    if [ "$FW_VERSION" == "$LATEST_FW" ]; then
-        printf "Content-type: text/html\r\n\r\n"
-        printf "No new firmware available."
-        exit
-    fi
+    FW_VERSION=`cat $YI_HACK_PREFIX/version`
+    if [ -f /tmp/sd/${MODEL_SUFFIX}_x.x.x.tgz ]; then
+        mv /tmp/sd/${MODEL_SUFFIX}_x.x.x.tgz /tmp/sd/.fw_upgrade/${MODEL_SUFFIX}_x.x.x.tgz
+        LATEST_FW="x.x.x"
+    else
+        LATEST_FW=`wget -O -  https://api.github.com/repos/roleoroleo/yi-hack-MStar/releases/latest 2>&1 | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/'`
+        if [ "$FW_VERSION" == "$LATEST_FW" ]; then
+            printf "Content-type: text/html\r\n\r\n"
+            printf "No new firmware available."
+            exit
+        fi
 
-    wget https://github.com/roleoroleo/yi-hack-MStar/releases/download/$LATEST_FW/${MODEL_SUFFIX}_${LATEST_FW}.tgz
-    if [ ! -f ${MODEL_SUFFIX}_${LATEST_FW}.tgz ]; then
-        printf "Content-type: text/html\r\n\r\n"
-        printf "Unable to download firmware file."
-        exit
+        wget https://github.com/roleoroleo/yi-hack-MStar/releases/download/$LATEST_FW/${MODEL_SUFFIX}_${LATEST_FW}.tgz
+        if [ ! -f ${MODEL_SUFFIX}_${LATEST_FW}.tgz ]; then
+            printf "Content-type: text/html\r\n\r\n"
+            printf "Unable to download firmware file."
+            exit
+        fi
     fi
 
     tar zxvf ${MODEL_SUFFIX}_${LATEST_FW}.tgz
