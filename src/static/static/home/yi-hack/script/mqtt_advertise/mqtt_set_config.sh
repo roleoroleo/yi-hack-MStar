@@ -20,7 +20,6 @@ get_mqtt_advertise_config() {
     grep -w $1 $YI_HACK_PREFIX/$CONF_MQTT_ADVERTISE_FILE | cut -d "=" -f2
 }
 
-HOSTNAME=$(hostname)
 MQTT_IP=$(get_config MQTT_IP)
 MQTT_PORT=$(get_config MQTT_PORT)
 MQTT_USER=$(get_config MQTT_USER)
@@ -36,59 +35,54 @@ fi
 
 MQTT_PREFIX=$(get_config MQTT_PREFIX)
 MQTT_ADV_CAMERA_SETTING_TOPIC=$(get_mqtt_advertise_config MQTT_ADV_CAMERA_SETTING_TOPIC)
+TOPIC=$MQTT_PREFIX'/'$MQTT_ADV_CAMERA_SETTING_TOPIC'/+/set'
 
 while :; do
-    TOPIC=$MQTT_PREFIX'/'$MQTT_ADV_CAMERA_SETTING_TOPIC'/+/set'
-    SUBSCRIBED=$($YI_HACK_PREFIX/bin/mosquitto_sub -i $HOSTNAME -v -C 1 -h $HOST -t $TOPIC)
+$YI_HACK_PREFIX/bin/mosquitto_sub -v -h $HOST -t $TOPIC | while read -r SUBSCRIBED; do
     CONF_UPPER=$(echo $SUBSCRIBED | awk '{print $1}' | awk -F / '{ print $(NF-1)}')
     CONF=$(echo $CONF_UPPER | awk '{ print tolower($0) }')
     VAL=$(echo $SUBSCRIBED | awk '{print $2}')
 
     sed -i "s/^\(${CONF_UPPER}\s*=\s*\).*$/\1${VAL}/" $YI_HACK_PREFIX/$CONF_FILE
-    if [ "$CONF" == "switch_on" ]; then
-        if [ "$VAL" == "no" ]; then
-            ipc_cmd -t off
-        else
-            ipc_cmd -t on
-        fi
-    elif [ "$CONF" == "save_video_on_motion" ]; then
-        if [ "$VAL" == "no" ]; then
-            ipc_cmd -v always
-        else
-            ipc_cmd -v detect
-        fi
-    elif [ "$CONF" == "sensitivity" ]; then
-        ipc_cmd -s $VAL
-    elif [ "$CONF" == "ai_human_detection" ]; then
-        if [ "$VAL" == "no" ]; then
-            ipc_cmd -a off
-        else
-            ipc_cmd -a on
-        fi
-    elif [ "$CONF" == "sound_detection" ]; then
-        if [ "$VAL" == "no" ]; then
-            ipc_cmd -b off
-        else
-            ipc_cmd -b on
-        fi
-    elif [ "$CONF" == "led" ]; then
-        if [ "$VAL" == "no" ]; then
-            ipc_cmd -l off
-        else
-            ipc_cmd -l on
-        fi
-    elif [ "$CONF" == "ir" ]; then
-        if [ "$VAL" == "no" ]; then
-            ipc_cmd -i off
-        else
-            ipc_cmd -i on
-        fi
-    elif [ "$CONF" == "rotate" ]; then
-        if [ "$VAL" == "no" ]; then
-            ipc_cmd -r off
-        else
-            ipc_cmd -r on
-        fi
+    IPC_OPT=""
+    case "$CONF" in
+        switch_on)
+            IPC_OPT="-t"
+        ;;
+        save_video_on_motion)
+            IPC_OPT="-v"
+            if [ "$VAL" == "no" ] || [ "$VAL" == "off" ] ; then
+                VAL="always"
+            else
+                VAL="detect"
+            fi
+        ;;
+        baby_crying_detect)
+            IPC_OPT="-b"
+        ;;
+        led)
+            IPC_OPT="-l"
+        ;;
+        ir)
+            IPC_OPT="-i"
+        ;;
+        rotate)
+            IPC_OPT="-r"
+        ;;
+        ptz_preset)
+            IPC_OPT="-p"
+        ;;
+    esac
+    if [ "$VAL" == "no" ] || [ "$VAL" == "off" ] ; then
+        VAL="off"
+    elif [ "$VAL" == "yes" ] || [ "$VAL" == "on" ] ; then
+        VAL="on"
     fi
+    ipc_cmd $IPC_OPT $VAL &
+
     $YI_HACK_PREFIX/$CONFIG_SET
+done
+
+# program exited, wait and retry
+sleep 4
 done
