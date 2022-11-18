@@ -3,7 +3,7 @@
 CONF_FILE="etc/system.conf"
 YI_HACK_PREFIX="/home/yi-hack"
 YI_HACK_VER=$(cat /home/yi-hack/version)
-MODEL_SUFFIX=$(cat /tmp/sd/yi-hack/model_suffix)
+MODEL_SUFFIX=$(cat /home/yi-hack/model_suffix)
 
 get_config()
 {

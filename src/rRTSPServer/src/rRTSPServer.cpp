@@ -432,6 +432,9 @@ int main(int argc, char** argv)
 
     char const* descriptionString = "Session streamed by \"rRTSPServer\"";
 
+    // First, make sure that the RTPSinks' buffers will be large enough to handle the huge size of DV frames (as big as 288000).
+    OutPacketBuffer::maxSize = 262144;
+
     // Set up each of the possible streams that can be served by the
     // RTSP server.  Each such stream is implemented using a
     // "ServerMediaSession" object, plus one or more
@@ -442,9 +445,6 @@ int main(int argc, char** argv)
     {
         char const* streamName = "ch0_0.h264";
         char const* inputFileName = "/tmp/h264_high_fifo";
-
-        // First, make sure that the RTPSinks' buffers will be large enough to handle the huge size of DV frames (as big as 288000).
-        OutPacketBuffer::maxSize = 262144;
 
         ServerMediaSession* sms_high
             = ServerMediaSession::createNew(*env, streamName, streamName,
@@ -474,9 +474,6 @@ int main(int argc, char** argv)
         char const* streamName = "ch0_1.h264";
         char const* inputFileName = "/tmp/h264_low_fifo";
 
-        // First, make sure that the RTPSinks' buffers will be large enough to handle the huge size of DV frames (as big as 288000).
-        OutPacketBuffer::maxSize = 262144;
-
         ServerMediaSession* sms_low
         = ServerMediaSession::createNew(*env, streamName, streamName,
                                         descriptionString);
@@ -503,9 +500,6 @@ int main(int argc, char** argv)
     if (audio != 0)
     {
         char const* streamName = "ch0_2.h264";
-
-        // First, make sure that the RTPSinks' buffers will be large enough to handle the huge size of DV frames (as big as 288000).
-        OutPacketBuffer::maxSize = 262144;
 
         ServerMediaSession* sms_audio
             = ServerMediaSession::createNew(*env, streamName, streamName,
