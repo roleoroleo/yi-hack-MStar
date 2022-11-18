@@ -25,13 +25,20 @@ fi
 if [ "$VAL" == "info" ] ; then
     printf "Content-type: application/json\r\n\r\n"
 
-    FW_VERSION=`cat /home/yi-hack/version`
+    MODEL_SUFFIX=`cat $YI_HACK_PREFIX/model_suffix`
+    FW_VERSION=`cat $YI_HACK_PREFIX/version`
     LATEST_FW=`wget -O -  https://api.github.com/repos/roleoroleo/yi-hack-MStar/releases/latest 2>&1 | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/'`
+    if [ -f /tmp/sd/${MODEL_SUFFIX}_x.x.x.tgz ]; then
+        LOCAL_FW="true"
+    else
+        LOCAL_FW="false"
+    fi
 
     printf "{\n"
     printf "\"%s\":\"%s\",\n" "error" "false"
     printf "\"%s\":\"%s\",\n" "fw_version"      "$FW_VERSION"
-    printf "\"%s\":\"%s\"\n" "latest_fw"       "$LATEST_FW"
+    printf "\"%s\":\"%s\",\n" "latest_fw"       "$LATEST_FW"
+    printf "\"%s\":%s\n" "local_fw"             "$LOCAL_FW"
     printf "}"
 
 elif [ "$VAL" == "upgrade" ] ; then
