@@ -56,7 +56,7 @@ void ipc_stop()
 
 void print_usage(char *progname)
 {
-    fprintf(stderr, "\nUsage: %s [t ON/OFF] [-s SENS] [-l LED] [-v WHEN] [-i IR] [-r ROTATE] [-m MOVE] [-p NUM] [-P] [-f FILE] [-S] [-T] [-d]\n\n", progname);
+    fprintf(stderr, "\nUsage: %s [t ON/OFF] [-s SENS] [-l LED] [-v WHEN] [-i IR] [-r ROTATE] [-m MOVE] [-p NUM] [-P] [-P] [-R NUM] [-C MODE] [-f FILE] [-S] [-T] [-d]\n\n", progname);
     fprintf(stderr, "\t-t ON/OFF, --switch ON/OFF\n");
     fprintf(stderr, "\t\tswitch ON or OFF the cam\n");
     fprintf(stderr, "\t-s SENS, --sensitivity SENS\n");
@@ -75,8 +75,12 @@ void print_usage(char *progname)
     fprintf(stderr, "\t\tsend PTZ command: RIGHT, LEFT, DOWN, UP or STOP\n");
     fprintf(stderr, "\t-p NUM, --preset NUM\n");
     fprintf(stderr, "\t\tsend PTZ go to preset command: NUM = [0..7]\n");
-    fprintf(stderr, "\t-P, --set_preset\n");
-    fprintf(stderr, "\t\tadd PTZ preset\n");
+    fprintf(stderr, "\t-P, --add_preset\n");
+    fprintf(stderr, "\t\tadd PTZ preset in the first available position\n");
+    fprintf(stderr, "\t-R NUM, --remove_preset NUM\n");
+    fprintf(stderr, "\t\tremove PTZ preset: NUM = [0..7] or \"all\"\n");
+    fprintf(stderr, "\t-C MODE, --cruise MODE\n");
+    fprintf(stderr, "\t\tset cruise mode: \"off\", \"on\", \"presets\" or \"360\"\n");
     fprintf(stderr, "\t-f FILE, --file FILE\n");
     fprintf(stderr, "\t\tread binary command from FILE\n");
     fprintf(stderr, "\t-x, --xxx\n");
@@ -96,7 +100,7 @@ int main(int argc, char ** argv)
 {
     int errno;
     char *endptr;
-    int c, ret;
+    int c, ret, i;
     int switch_on = NONE;
     int sensitivity = NONE;
     int led = NONE;
@@ -107,6 +111,9 @@ int main(int argc, char ** argv)
     int move = NONE;
     int preset = NONE;
     int set_preset = NONE;
+    int add_preset = NONE;
+    int remove_preset = NONE;
+    int cruise = NONE;
     int debug = 0;
     unsigned char preset_msg[20];
     int start = 0;
@@ -132,7 +139,9 @@ int main(int argc, char ** argv)
             {"babycrying",  required_argument, 0, 'b'},
             {"move",  required_argument, 0, 'm'},
             {"preset",  required_argument, 0, 'p'},
-            {"set_preset",  no_argument, 0, 'P'},
+            {"add_preset",  no_argument, 0, 'P'},
+            {"remove_preset",  required_argument, 0, 'R'},
+            {"cruise",  required_argument, 0, 'C'},
             {"file", required_argument, 0, 'f'},
             {"start", required_argument, 0, 'S'},
             {"stop", no_argument, 0, 'T'},
@@ -144,7 +153,7 @@ int main(int argc, char ** argv)
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        c = getopt_long (argc, argv, "t:s:l:v:i:r:b:m:p:Pf:S:Txdh",
+        c = getopt_long (argc, argv, "t:s:l:v:i:r:b:m:p:PR:C:f:S:Txdh",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -240,7 +249,42 @@ int main(int argc, char ** argv)
             break;
 
         case 'P':
-            set_preset = 1;
+            add_preset = 1;
+            break;
+
+        case 'R':
+            errno = 0;    /* To distinguish success/failure after call */
+            if (strcasecmp("all", optarg) == 0) {
+                remove_preset = 255;
+            } else {
+                remove_preset = strtol(optarg, &endptr, 10);
+
+                /* Check for various possible errors */
+                if ((errno == ERANGE && (remove_preset == LONG_MAX || remove_preset == LONG_MIN)) || (errno != 0 && remove_preset == 0)) {
+                    print_usage(argv[0]);
+                    exit(EXIT_FAILURE);
+                }
+                if (endptr == optarg) {
+                    print_usage(argv[0]);
+                    exit(EXIT_FAILURE);
+                }
+            }
+            if ((remove_preset != 255) && ((remove_preset < 0) || (remove_preset > 7))) {
+                print_usage(argv[0]);
+                exit(EXIT_FAILURE);
+            }
+            break;
+
+        case 'C':
+            if (strcasecmp("off", optarg) == 0) {
+                cruise = CRUISE_OFF;
+            } else if (strcasecmp("on", optarg) == 0) {
+                cruise = CRUISE_ON;
+            } else if (strcasecmp("presets", optarg) == 0) {
+                cruise = CRUISE_PRESETS;
+            } else if (strcasecmp("360", optarg) == 0) {
+                cruise = CRUISE_360;
+            }
             break;
 
         case 'f':
@@ -373,8 +417,34 @@ int main(int argc, char ** argv)
         mq_send(ipc_mq, preset_msg, sizeof(IPC_GOTO_PRESET) - 1, 0);
     }
 
-    if (set_preset != NONE) {
-        mq_send(ipc_mq, IPC_SET_PRESET, sizeof(IPC_SET_PRESET) - 1, 0);
+    if (add_preset != NONE) {
+        mq_send(ipc_mq, IPC_ADD_PRESET, sizeof(IPC_ADD_PRESET) - 1, 0);
+    }
+
+    if (remove_preset != NONE) {
+        if (remove_preset == 255) {
+            for (i = 0; i < 8; i++) {
+                memcpy(preset_msg, IPC_REMOVE_PRESET, sizeof(IPC_REMOVE_PRESET) - 1);
+                preset_msg[16] = i & 0xff;
+                mq_send(ipc_mq, preset_msg, sizeof(IPC_REMOVE_PRESET) - 1, 0);
+            }
+        } else {
+            memcpy(preset_msg, IPC_REMOVE_PRESET, sizeof(IPC_REMOVE_PRESET) - 1);
+            preset_msg[16] = remove_preset & 0xff;
+            mq_send(ipc_mq, preset_msg, sizeof(IPC_REMOVE_PRESET) - 1, 0);
+        }
+    }
+
+    if (cruise != NONE) {
+        if (cruise == CRUISE_OFF) {
+            mq_send(ipc_mq, IPC_CRUISE_OFF, sizeof(IPC_CRUISE_OFF) - 1, 0);
+        } else if (cruise == CRUISE_ON) {
+            mq_send(ipc_mq, IPC_CRUISE_ON, sizeof(IPC_CRUISE_ON) - 1, 0);
+        } else if (cruise == CRUISE_PRESETS) {
+            mq_send(ipc_mq, IPC_CRUISE_PRESETS, sizeof(IPC_CRUISE_PRESETS) - 1, 0);
+        } else if (cruise == CRUISE_360) {
+            mq_send(ipc_mq, IPC_CRUISE_360, sizeof(IPC_CRUISE_360) - 1, 0);
+        }
     }
 
     if (file[0] != '\0') {
