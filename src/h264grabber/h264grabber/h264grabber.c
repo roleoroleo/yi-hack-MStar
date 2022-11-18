@@ -172,6 +172,8 @@ void print_usage(char *progname)
     fprintf(stderr, "\t\tset resolution: LOW or HIGH (default HIGH)\n");
     fprintf(stderr, "\t-f, --fifo\n");
     fprintf(stderr, "\t\tenable fifo output\n");
+    fprintf(stderr, "\t-t, --no-ti\n");
+    fprintf(stderr, "\t\tdon't add timing info\n");
     fprintf(stderr, "\t-s, --ssf0\n");
     fprintf(stderr, "\t\tskip SEI F0\n");
     fprintf(stderr, "\t-d, --debug\n");
@@ -185,6 +187,7 @@ int main(int argc, char **argv)
     int model = GENERIC;
     int res = RESOLUTION_HIGH;
     int fifo = 0;
+    int noti = 0;
     int ssf0 = 0;
     int debug = 0;
 
@@ -210,6 +213,7 @@ int main(int argc, char **argv)
             {"model",  required_argument, 0, 'm'},
             {"resolution",  required_argument, 0, 'r'},
             {"fifo",  no_argument, 0, 'f'},
+            {"no-ti",  no_argument, 0, 't'},
             {"ssf0",  no_argument, 0, 's'},
             {"debug",  no_argument, 0, 'd'},
             {"help",  no_argument, 0, 'h'},
@@ -218,7 +222,7 @@ int main(int argc, char **argv)
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        c = getopt_long (argc, argv, "m:r:fsdh",
+        c = getopt_long (argc, argv, "m:r:ftsdh",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -245,6 +249,11 @@ int main(int argc, char **argv)
         case 'f':
             fprintf (stderr, "using fifo as output\n");
             fifo = 1;
+            break;
+
+        case 't':
+            fprintf (stderr, "don't add timing info\n");
+            noti = 1;
             break;
 
         case 's':
@@ -423,52 +432,52 @@ int main(int argc, char **argv)
             if ((memcmp(SPS4, buffer, sizeof(SPS4)) == 0) || (memcmp(VPS5, buffer, sizeof(VPS5)) == 0)) {
                 if (debug) fprintf(stderr, "time: %u - len: %d\n", time, len);
                 if (ssf0) {
-#ifdef SPS_TIMING_INFO
-                    if (memcmp(SPS4_1920X1080, buffer, sizeof(SPS4_1920X1080)) == 0) {
-                        if (debug) fprintf(stderr, "frame is SPS\n");
-                        fwrite(SPS4_1920X1080_TI, 1, sizeof(SPS4_1920X1080_TI), fOut);
-                        fwrite(buffer + sizeof(SPS4_1920X1080), 1, SIZEOF_PPS4, fOut);
-                        fwrite(buffer + OFFSET_IDR4, 1, len - OFFSET_IDR4, fOut);
-                    } else if (memcmp(SPS4_640X360, buffer, sizeof(SPS4_640X360)) == 0) {
-                        if (debug) fprintf(stderr, "frame is SPS\n");
-                        fwrite(SPS4_640X360_TI, 1, sizeof(SPS4_640X360_TI), fOut);
-                        fwrite(buffer + sizeof(SPS4_640X360), 1, SIZEOF_PPS4, fOut);
-                        fwrite(buffer + OFFSET_IDR4, 1, len - OFFSET_IDR4, fOut);
+                    if (!noti) {
+                        if (memcmp(SPS4_1920X1080, buffer, sizeof(SPS4_1920X1080)) == 0) {
+                            if (debug) fprintf(stderr, "frame is SPS\n");
+                            fwrite(SPS4_1920X1080_TI, 1, sizeof(SPS4_1920X1080_TI), fOut);
+                            fwrite(buffer + sizeof(SPS4_1920X1080), 1, SIZEOF_PPS4, fOut);
+                            fwrite(buffer + OFFSET_IDR4, 1, len - OFFSET_IDR4, fOut);
+                        } else if (memcmp(SPS4_640X360, buffer, sizeof(SPS4_640X360)) == 0) {
+                            if (debug) fprintf(stderr, "frame is SPS\n");
+                            fwrite(SPS4_640X360_TI, 1, sizeof(SPS4_640X360_TI), fOut);
+                            fwrite(buffer + sizeof(SPS4_640X360), 1, SIZEOF_PPS4, fOut);
+                            fwrite(buffer + OFFSET_IDR4, 1, len - OFFSET_IDR4, fOut);
+                        } else {
+                            // No change if it's a VPS
+                            if (debug) fprintf(stderr, "frame is VPS\n");
+                            fwrite(buffer, 1, len, fOut);
+                        }
                     } else {
-                        // No change if it's a VPS
-                        if (debug) fprintf(stderr, "frame is VPS\n");
-                        fwrite(buffer, 1, len, fOut);
+                        if (memcmp(SPS4, buffer, sizeof(SPS4)) == 0) {
+                            if (debug) fprintf(stderr, "frame is SPS\n");
+                            fwrite(buffer, 1, SIZEOF_SPS4 + SIZEOF_PPS4, fOut);
+                            fwrite(buffer + OFFSET_IDR4, 1, len - OFFSET_IDR4, fOut);
+                        } else {
+                            // No change if it's a VPS
+                            if (debug) fprintf(stderr, "frame is VPS\n");
+                            fwrite(buffer, 1, len, fOut);
+                        }
                     }
-#else
-                    if (memcmp(SPS4, buffer, sizeof(SPS4)) == 0) {
-                        if (debug) fprintf(stderr, "frame is SPS\n");
-                        fwrite(buffer, 1, SIZEOF_SPS4 + SIZEOF_PPS4, fOut);
-                        fwrite(buffer + OFFSET_IDR4, 1, len - OFFSET_IDR4, fOut);
-                    } else {
-                        // No change if it's a VPS
-                        if (debug) fprintf(stderr, "frame is VPS\n");
-                        fwrite(buffer, 1, len, fOut);
-                    }
-#endif
                 } else {
-#ifdef SPS_TIMING_INFO
-                    if (memcmp(SPS4_1920X1080, buffer, sizeof(SPS4_1920X1080)) == 0) {
-                        if (debug) fprintf(stderr, "frame is SPS\n");
-                        fwrite(SPS4_1920X1080_TI, 1, sizeof(SPS4_1920X1080_TI), fOut);
-                        fwrite(buffer + sizeof(SPS4_1920X1080), 1, len - sizeof(SPS4_1920X1080), fOut);
-                    } else if (memcmp(SPS4_640X360, buffer, sizeof(SPS4_640X360)) == 0) {
-                        if (debug) fprintf(stderr, "frame is SPS\n");
-                        fwrite(SPS4_640X360_TI, 1, sizeof(SPS4_640X360_TI), fOut);
-                        fwrite(buffer + sizeof(SPS4_640X360), 1, len - sizeof(SPS4_640X360), fOut);
+                    if (!noti) {
+                        if (memcmp(SPS4_1920X1080, buffer, sizeof(SPS4_1920X1080)) == 0) {
+                            if (debug) fprintf(stderr, "frame is SPS\n");
+                            fwrite(SPS4_1920X1080_TI, 1, sizeof(SPS4_1920X1080_TI), fOut);
+                            fwrite(buffer + sizeof(SPS4_1920X1080), 1, len - sizeof(SPS4_1920X1080), fOut);
+                        } else if (memcmp(SPS4_640X360, buffer, sizeof(SPS4_640X360)) == 0) {
+                            if (debug) fprintf(stderr, "frame is SPS\n");
+                            fwrite(SPS4_640X360_TI, 1, sizeof(SPS4_640X360_TI), fOut);
+                            fwrite(buffer + sizeof(SPS4_640X360), 1, len - sizeof(SPS4_640X360), fOut);
+                        } else {
+                            // No change if it's a VPS
+                            if (debug) fprintf(stderr, "frame is VPS\n");
+                            fwrite(buffer, 1, len, fOut);
+                        }
                     } else {
-                        // No change if it's a VPS
-                        if (debug) fprintf(stderr, "frame is VPS\n");
+                        if (debug) fprintf(stderr, "frame is SPS or VPS\n");
                         fwrite(buffer, 1, len, fOut);
                     }
-#else
-                    if (debug) fprintf(stderr, "frame is SPS or VPS\n");
-                    fwrite(buffer, 1, len, fOut);
-#endif
                 }
                 fflush(fOut);
                 stream_started = 1;
@@ -520,22 +529,22 @@ int main(int argc, char **argv)
                 } else if (memcmp(SEI4_F0_2C, buffer, sizeof(SEI4_F0_2C)) == 0) {
                     fwrite(buffer + 52, 1, len - 52, fOut);
                 } else if (memcmp(SPS4, buffer, sizeof(SPS4)) == 0) {
-#ifdef SPS_TIMING_INFO
-                    if (memcmp(SPS4_1920X1080, buffer, sizeof(SPS4_1920X1080)) == 0) {
-                        if (debug) fprintf(stderr, "frame is SPS\n");
-                        fwrite(SPS4_1920X1080_TI, 1, sizeof(SPS4_1920X1080_TI), fOut);
-                        fwrite(buffer + sizeof(SPS4_1920X1080), 1, SIZEOF_PPS4, fOut);
-                        fwrite(buffer + OFFSET_IDR4, 1, len - OFFSET_IDR4, fOut);
-                    } else if (memcmp(SPS4_640X360, buffer, sizeof(SPS4_640X360)) == 0) {
-                        if (debug) fprintf(stderr, "frame is SPS\n");
-                        fwrite(SPS4_640X360_TI, 1, sizeof(SPS4_640X360_TI), fOut);
-                        fwrite(buffer + sizeof(SPS4_640X360), 1, SIZEOF_PPS4, fOut);
-                        fwrite(buffer + OFFSET_IDR4, 1, len - OFFSET_IDR4, fOut);
+                    if (!noti) {
+                        if (memcmp(SPS4_1920X1080, buffer, sizeof(SPS4_1920X1080)) == 0) {
+                            if (debug) fprintf(stderr, "frame is SPS\n");
+                            fwrite(SPS4_1920X1080_TI, 1, sizeof(SPS4_1920X1080_TI), fOut);
+                            fwrite(buffer + sizeof(SPS4_1920X1080), 1, SIZEOF_PPS4, fOut);
+                            fwrite(buffer + OFFSET_IDR4, 1, len - OFFSET_IDR4, fOut);
+                        } else if (memcmp(SPS4_640X360, buffer, sizeof(SPS4_640X360)) == 0) {
+                            if (debug) fprintf(stderr, "frame is SPS\n");
+                            fwrite(SPS4_640X360_TI, 1, sizeof(SPS4_640X360_TI), fOut);
+                            fwrite(buffer + sizeof(SPS4_640X360), 1, SIZEOF_PPS4, fOut);
+                            fwrite(buffer + OFFSET_IDR4, 1, len - OFFSET_IDR4, fOut);
+                        }
+                    } else {
+                        fwrite(buffer, 1, 24, fOut);
+                        fwrite(buffer + 76, 1, len - 76, fOut);
                     }
-#else
-                    fwrite(buffer, 1, 24, fOut);
-                    fwrite(buffer + 76, 1, len - 76, fOut);
-#endif
                 } else if (memcmp(VPS5, buffer, sizeof(VPS5)) == 0) {
                     if (debug) fprintf(stderr, "frame is VPS\n");
                     fwrite(buffer, 1, len, fOut);
@@ -543,24 +552,24 @@ int main(int argc, char **argv)
                     fwrite(buffer, 1, len, fOut);
                 }
             } else {
-#ifdef SPS_TIMING_INFO
-                if (memcmp(SPS4_1920X1080, buffer, sizeof(SPS4_1920X1080)) == 0) {
-                    if (debug) fprintf(stderr, "frame is SPS\n");
-                    fwrite(SPS4_1920X1080_TI, 1, sizeof(SPS4_1920X1080_TI), fOut);
-                    fwrite(buffer + sizeof(SPS4_1920X1080), 1, len - sizeof(SPS4_1920X1080), fOut);
-                } else if (memcmp(SPS4_640X360, buffer, sizeof(SPS4_640X360)) == 0) {
-                    if (debug) fprintf(stderr, "frame is SPS\n");
-                    fwrite(SPS4_640X360_TI, 1, sizeof(SPS4_640X360_TI), fOut);
-                    fwrite(buffer + sizeof(SPS4_640X360), 1, len - sizeof(SPS4_640X360), fOut);
-                } else if (memcmp(VPS5, buffer, sizeof(VPS5)) == 0) {
-                    if (debug) fprintf(stderr, "frame is VPS\n");
-                    fwrite(buffer, 1, len, fOut);
+                if (!noti) {
+                    if (memcmp(SPS4_1920X1080, buffer, sizeof(SPS4_1920X1080)) == 0) {
+                        if (debug) fprintf(stderr, "frame is SPS\n");
+                        fwrite(SPS4_1920X1080_TI, 1, sizeof(SPS4_1920X1080_TI), fOut);
+                        fwrite(buffer + sizeof(SPS4_1920X1080), 1, len - sizeof(SPS4_1920X1080), fOut);
+                    } else if (memcmp(SPS4_640X360, buffer, sizeof(SPS4_640X360)) == 0) {
+                        if (debug) fprintf(stderr, "frame is SPS\n");
+                        fwrite(SPS4_640X360_TI, 1, sizeof(SPS4_640X360_TI), fOut);
+                        fwrite(buffer + sizeof(SPS4_640X360), 1, len - sizeof(SPS4_640X360), fOut);
+                    } else if (memcmp(VPS5, buffer, sizeof(VPS5)) == 0) {
+                        if (debug) fprintf(stderr, "frame is VPS\n");
+                        fwrite(buffer, 1, len, fOut);
+                    } else {
+                        fwrite(buffer, 1, len, fOut);
+                    }
                 } else {
                     fwrite(buffer, 1, len, fOut);
                 }
-#else
-                fwrite(buffer, 1, len, fOut);
-#endif
             }
             fflush(fOut);
         }
