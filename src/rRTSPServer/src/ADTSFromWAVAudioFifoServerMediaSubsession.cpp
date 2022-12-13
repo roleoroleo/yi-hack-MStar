@@ -56,7 +56,7 @@ FramedSource* ADTSFromWAVAudioFifoServerMediaSubsession
   FramedSource* resultSource = NULL;
   ADTSFromWAVAudioFifoSource* originalSource = NULL;
   FramedFilter* previousSource = (FramedFilter*)fReplicator->inputSource();
-  estBitrate = 12; // kbps, estimate
+  estBitrate = 32; // kbps, estimate
 
   // Iterate back into the filter chain until a source is found that 
   // has a sample frequency and expected to be a ADTSFromWAVAudioFifoSource.
@@ -93,7 +93,7 @@ FramedSource* ADTSFromWAVAudioFifoServerMediaSubsession
             originalSource->samplingFrequency(), originalSource->numChannels(), originalSource->configStr());
 #endif
 
-    estBitrate = 12; // kbps, estimate
+    estBitrate = 32; // kbps, estimate
     return resultSource;
   }
 }
