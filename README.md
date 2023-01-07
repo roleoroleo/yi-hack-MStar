@@ -84,6 +84,7 @@ Apart from RTSP, snapshot and ONVIF, all the features are copied from the TheCry
 
 - ADDITIONAL FEATURES
   - Google Drive synchronization - https://github.com/roleoroleo/yi-hack-MStar.gdrive
+  - Microsoft OneDrive synchronization - https://github.com/denven/yihack-onedrive-uploader  
   - rsync synchronization thanks to @hetzbh - https://github.com/hetzbh/yi-cams-backup
 
 ## RTSP Server
