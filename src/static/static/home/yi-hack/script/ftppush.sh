@@ -143,6 +143,21 @@ lstat ()
 }
 
 
+translateFULLFNWithTz ()
+{
+	TIMEZONE=`cat /etc/TZ`
+	TR_PREFIX=${1:0:15}
+	TR_DATE=""
+	TR_HOUR_PREFIX=""
+	TR_SUFFIX=""
+	TR_DATE="${1:15:4}-${1:20:2}-${1:23:2} ${1:26:2}:${1:30:2}:${1:33:2}"
+	TR_SUFFIX=${1:35:7}
+	TR_SECONDS_1970=$(date +%s -u -d "$TR_DATE")
+	TR_RET=$(TZ=$TIMEZONE date +$TR_PREFIX%YY%mM%dD%HH/$TR_HOUR_PREFIX%MM%SS$TR_SUFFIX -d "@$TR_SECONDS_1970")
+	echo $TR_RET
+}
+
+
 uploadToFtp ()
 {
 	#
@@ -164,7 +179,9 @@ uploadToFtp ()
 	#
 	# Variables.
 	UTF_FULLFN="${2}"
+	UTF_FULLFN_TZ="$(translateFULLFNWithTz ${UTF_FULLFN})"
 	FTP_DIR_HOUR="$(lparentdir ${UTF_FULLFN})"
+	FTP_DIR_HOUR_TZ="$(lparentdir ${UTF_FULLFN_TZ})"
 	#
 	if [ "${SKIP_UPLOAD_TO_FTP}" = "1" ]; then
 		logAdd "[INFO] uploadToFtp skipped due to SKIP_UPLOAD_TO_FTP == 1."
@@ -180,8 +197,9 @@ uploadToFtp ()
 	if [ "${FTP_DIR_TREE}" == "yes" ]; then
 		if [ ! -z "${FTP_DIR_HOUR}" ]; then
 			# Create hour directory on FTP server
-			echo -e "USER ${FTP_USERNAME}\r\nPASS ${FTP_PASSWORD}\r\nmkd ${FTP_DIR}/${FTP_DIR_HOUR}\r\nquit\r\n" | nc -w 5 ${FTP_HOST} 21 | grep "${FTP_DIR_HOUR}"
+			echo -e "USER ${FTP_USERNAME}\r\nPASS ${FTP_PASSWORD}\r\nmkd ${FTP_DIR}/${FTP_DIR_HOUR_TZ}\r\nquit\r\n" | nc -w 5 ${FTP_HOST} 21 | grep "${FTP_DIR_HOUR}"
 			FTP_DIR_HOUR="${FTP_DIR_HOUR}/"
+			FTP_DIR_HOUR_TZ="${FTP_DIR_HOUR_TZ}/"
 		fi
 	fi
 	#
@@ -191,12 +209,12 @@ uploadToFtp ()
 	fi
 	#
 	if [ "${FTP_DIR_TREE}" == "yes" ]; then
-		if ( ! ftpput -u "${FTP_USERNAME}" -p "${FTP_PASSWORD}" "${FTP_HOST}" "${FTP_DIR}${FTP_DIR_HOUR}$(lbasename "${UTF_FULLFN}")" "${UTF_FULLFN}" ); then
+		if ( ! ftpput -u "${FTP_USERNAME}" -p "${FTP_PASSWORD}" "${FTP_HOST}" "${FTP_DIR}${FTP_DIR_HOUR_TZ}$(lbasename "${UTF_FULLFN_TZ}")" "${UTF_FULLFN}" ); then
 			logAdd "[ERROR] uploadToFtp: ftpput FAILED."
 			return 1
 		fi
 	else
-		if ( ! ftpput -u "${FTP_USERNAME}" -p "${FTP_PASSWORD}" "${FTP_HOST}" "${FTP_DIR}$(lbasename "${UTF_FULLFN}")" "${UTF_FULLFN}" ); then
+		if ( ! ftpput -u "${FTP_USERNAME}" -p "${FTP_PASSWORD}" "${FTP_HOST}" "${FTP_DIR}$(lbasename "${UTF_FULLFN_TZ}")" "${UTF_FULLFN}" ); then
 			logAdd "[ERROR] uploadToFtp: ftpput FAILED."
 			return 1
 		fi

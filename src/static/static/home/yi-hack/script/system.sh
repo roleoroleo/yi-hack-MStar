@@ -76,6 +76,12 @@ fi
 
 $YI_HACK_PREFIX/script/check_conf.sh
 
+# Set timezone for yi processes
+TIMEZONE=`cat /etc/TZ`
+TZP=$(TZ=$TIMEZONE date +%z)
+TZP_SET=$(echo ${TZP:0:1} ${TZP:1:2} ${TZP:3:2} | awk '{ print ($1$2*3600+$3*60) }')
+set_tz_offset -v $TZP_SET
+
 hostname -F /etc/hostname
 
 if [[ x$(get_config USERNAME) != "x" ]] ; then
@@ -175,6 +181,8 @@ else
         route add -host 47.74.255.9 reject
     )
 fi
+
+[ -f /etc/TZ ] && export TZ=`cat /etc/TZ`
 
 if [[ $(get_config HTTPD) == "yes" ]] ; then
     httpd -p $HTTPD_PORT -h $YI_HACK_PREFIX/www/ -c /tmp/httpd.conf
@@ -378,6 +386,8 @@ fi
 if [ -f "$YI_HACK_PREFIX/script/mqtt_advertise/startup.sh" ]; then
     $YI_HACK_PREFIX/script/mqtt_advertise/startup.sh
 fi
+
+unset TZ
 
 if [ -f "/tmp/sd/yi-hack/startup.sh" ]; then
     /tmp/sd/yi-hack/startup.sh
