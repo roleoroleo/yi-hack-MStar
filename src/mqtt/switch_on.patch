@@ -1,0 +1,36 @@
+diff -Naur mqttv4.ori/include/mqttv4.h mqttv4/include/mqttv4.h
+--- mqttv4.ori/include/mqttv4.h	2023-01-05 10:03:49.000000000 +0100
++++ mqttv4/include/mqttv4.h	2023-01-05 10:07:56.491044930 +0100
+@@ -21,6 +21,8 @@
+ 
+ #define MQTTV4_SNAPSHOT     "export MOD=$(cat /home/yi-hack/model_suffix); /home/yi-hack/bin/imggrabber -m $MOD -r high -w"
+ 
++#define SWITCH_ON_SCRIPT    "/home/yi-hack/script/privacy.sh"
++
+ #define TH_AVAILABLE 0
+ #define TH_WAITING   1
+ #define TH_RUNNING   2
+diff -Naur mqttv4.ori/src/mqttv4.c mqttv4/src/mqttv4.c
+--- mqttv4.ori/src/mqttv4.c	2023-01-05 10:07:05.000000000 +0100
++++ mqttv4/src/mqttv4.c	2023-01-05 10:07:15.971085994 +0100
+@@ -520,6 +520,7 @@
+     mqtt_msg_t msg;
+     IPC_COMMAND_TYPE *cmd_type = (IPC_COMMAND_TYPE *) arg;
+     int i;
++    char sys_cmd[128];
+ 
+     fprintf(stderr, "CALLBACK COMMAND\n");
+ 
+@@ -541,6 +542,12 @@
+ 
+     mqtt_send_message(&msg, 1);
+ 
++    // Call switch_on script to enable/disable video (only MStar)
++    if (strcasecmp("switch_on", key) == 0) {
++        sprintf(sys_cmd, "%s %s", SWITCH_ON_SCRIPT, value);
++        system(sys_cmd);
++    }
++
+     if (dont_loop > 0) return;
+ 
+     if ((strcasecmp("motion_detection", key) == 0) && (strcasecmp("yes", value) == 0)) {
