@@ -6,13 +6,16 @@ LIBS = -lrt
 all: ipc_cmd ipc_read ipc_notify ipc_multiplex.so
 
 ipc_cmd.o: ipc_cmd.c $(HEADERS)
-	$(CC) -c $< -D_GNU_SOURCE -fPIC -Os -o $@
+	$(CC) -c $< -D_GNU_SOURCE -std=c99 -fPIC -Os -o $@
 
 ipc_read.o: ipc_read.c $(HEADERS)
-	$(CC) -c $< -D_GNU_SOURCE -fPIC -Os -o $@
+	$(CC) -c $< -D_GNU_SOURCE -std=c99 -fPIC -Os -o $@
+
+ipc_notify.o: ipc_notify.c $(HEADERS)
+	$(CC) -c $< -D_GNU_SOURCE -std=c99 -fPIC -Os -o $@
 
 ipc_multiplex.so: ipc_multiplex.c $(HEADERS)
-	$(CC) $< -D_GNU_SOURCE -fPIC -Os -shared -o $@
+	$(CC) $< -D_GNU_SOURCE -std=c99 -fPIC -Os -shared -o $@
 
 ipc_cmd: $(OBJECTS_C)
 	$(CC) $(OBJECTS_C) $(LIBS) -fPIC -Os -o $@

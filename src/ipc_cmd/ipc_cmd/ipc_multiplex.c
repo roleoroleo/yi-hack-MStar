@@ -33,8 +33,7 @@ void ipc_multiplex_initialize() {
     };
 
     char queue_name[64];
-    int i;
-    for (i = 1; i < 10; i++) {
+    for (int i = 1; i < 10; i++) {
         sprintf(queue_name, "%s_%d", IPC_QUEUE_NAME, i);
 
         // Open the message queue or create a new one if it does not exist
@@ -75,8 +74,7 @@ ssize_t mq_receive(mqd_t mqdes, char *msg_ptr, size_t msg_len, unsigned int *msg
 
     if (debug) {
         fprintf(stderr, "*** [IPC_MULTIPLEX] ");
-        int i;
-        for(i = 0; i < bytes_read; i++)
+        for(int i = 0; i < bytes_read; i++)
             fprintf(stderr, "%02x ", msg_ptr[i]);
         fprintf(stderr, "\n");
     }
@@ -87,8 +85,7 @@ ssize_t mq_receive(mqd_t mqdes, char *msg_ptr, size_t msg_len, unsigned int *msg
 //    }
 
     // Resend the received message to the dispatch queues
-    int i;
-    for (i = 1; i < 10; i++) {
+    for (int i = 1; i < 10; i++) {
 
         // mq_send will fail with EAGAIN whenever the target message queue is full.
         if (mq_send(ipc_mq[i], msg_ptr, bytes_read, MESSAGE_PRIORITY) != 0 && errno != EAGAIN) {

@@ -56,7 +56,7 @@ void ipc_stop()
 
 void print_usage(char *progname)
 {
-    fprintf(stderr, "\nUsage: %s [t ON/OFF] [-s SENS] [-l LED] [-v WHEN] [-i IR] [-r ROTATE] [-m MOVE] [-p NUM] [-P] [-P] [-R NUM] [-C MODE] [-f FILE] [-S] [-T] [-d]\n\n", progname);
+    fprintf(stderr, "\nUsage: %s [t ON/OFF] [-s SENS] [-l LED] [-v WHEN] [-i IR] [-r ROTATE] [-1] [-a AIHUMANDETECTION] [-E AIVEHICLEDETECTION] [-N AIANIMALDETECTION] [-O AIMOTIONDETECTION] [-c FACEDETECTION] [-o MOTIONTRACKING] [-I MIC] [-b SOUNDDETECTION] [-B BABYCRYING] [-n SOUNDSENSITIVITY] [-m MOVE] [-p NUM] [-P] [-R NUM] [-C MODE] [-f FILE] [-S] [-T] [-d]\n\n", progname);
     fprintf(stderr, "\t-t ON/OFF, --switch ON/OFF\n");
     fprintf(stderr, "\t\tswitch ON or OFF the cam\n");
     fprintf(stderr, "\t-s SENS, --sensitivity SENS\n");
@@ -69,8 +69,28 @@ void print_usage(char *progname)
     fprintf(stderr, "\t\tset ir led: ON or OFF\n");
     fprintf(stderr, "\t-r ROTATE, --rotate ROTATE\n");
     fprintf(stderr, "\t\tset rotate: ON or OFF\n");
-    fprintf(stderr, "\t-b BABYCRYING, --babycrying BABYCRYING\n");
+    fprintf(stderr, "\t-1, --setalertallowstate_human\n");
+    fprintf(stderr, "\t\tset alert allow state to human\n");
+    fprintf(stderr, "\t-a AIHUMANDETECTION, --aihumandetection AIHUMANDETECTION\n");
+    fprintf(stderr, "\t\tset AI Human Detection: ON or OFF\n");
+    fprintf(stderr, "\t-E AIVEHICLEDETECTION, --aivehicledetection AIVEHICLEDETECTION\n");
+    fprintf(stderr, "\t\tset AI Vehicle Detection: ON or OFF\n");
+    fprintf(stderr, "\t-N AIANIMALDETECTION, --aianimaldetection AIANIMALDETECTION\n");
+    fprintf(stderr, "\t\tset AI Animal Detection: ON or OFF\n");
+    fprintf(stderr, "\t-O AIMOTIONDETECTION, --aimotiondetection AIMOTIONDETECTION\n");
+    fprintf(stderr, "\t\tset AI Motion Detection: ON or OFF (disable all other AI detections)\n");
+    fprintf(stderr, "\t-c FACEDETECTION, --facedetection FACEDETECTION\n");
+    fprintf(stderr, "\t\tset Face Detection: ON or OFF\n");
+    fprintf(stderr, "\t-o MOTIONTRACKING, --motiontracking MOTIONTRACKING\n");
+    fprintf(stderr, "\t\tset Motion Tracking sensor: ON or OFF\n");
+    fprintf(stderr, "\t-I MIC, --mic MIC\n");
+    fprintf(stderr, "\t\tset Microphone: ON or OFF\n");
+    fprintf(stderr, "\t-b SOUNDDETECTION, --sounddetection SOUNDDETECTION\n");
+    fprintf(stderr, "\t\tset Sound Detection: ON or OFF\n");
+    fprintf(stderr, "\t-B BABYCRYING, --babycrying BABYCRYING\n");
     fprintf(stderr, "\t\tset baby crying detection: ON or OFF\n");
+    fprintf(stderr, "\t-n SOUNDSENSITIVITY, --soundsensitivity SOUNDSENSITIVITY\n");
+    fprintf(stderr, "\t\tset Sound Detection Sensitivity: 30 - 90\n");
     fprintf(stderr, "\t-m MOVE, --move MOVE\n");
     fprintf(stderr, "\t\tsend PTZ command: RIGHT, LEFT, DOWN, UP or STOP\n");
     fprintf(stderr, "\t-p NUM, --preset NUM\n");
@@ -80,11 +100,9 @@ void print_usage(char *progname)
     fprintf(stderr, "\t-R NUM, --remove_preset NUM\n");
     fprintf(stderr, "\t\tremove PTZ preset: NUM = [0..7] or \"all\"\n");
     fprintf(stderr, "\t-C MODE, --cruise MODE\n");
-    fprintf(stderr, "\t\tset cruise mode: \"off\", \"on\", \"presets\" or \"360\"\n");
+    fprintf(stderr, "\t\tset cruise mode: \"on\", \"off\", \"presets\" or \"360\"\n");
     fprintf(stderr, "\t-f FILE, --file FILE\n");
     fprintf(stderr, "\t\tread binary command from FILE\n");
-    fprintf(stderr, "\t-x, --xxx\n");
-    fprintf(stderr, "\t\tsend xxx message\n");
     fprintf(stderr, "\t-S TIME, --start_motion TIME\n");
     fprintf(stderr, "\t\tstart a motion detection event that lasts TIME\n");
     fprintf(stderr, "\t\t(0<TIME<=300 seconds)\n");
@@ -107,10 +125,19 @@ int main(int argc, char ** argv)
     int save = NONE;
     int ir = NONE;
     int rotate = NONE;
+    int setalertallowstate_human = NONE;
+    int aihumandetection = NONE;
+    int aivehicledetection = NONE;
+    int aianimaldetection = NONE;
+    int aimotiondetection = NONE;
+    int facedetection = NONE;
+    int motiontracking = NONE;
+    int mic = NONE;
+    int sounddetection = NONE;
     int babycrying = NONE;
+    int soundsensitivity = NONE;
     int move = NONE;
     int preset = NONE;
-    int set_preset = NONE;
     int add_preset = NONE;
     int remove_preset = NONE;
     int cruise = NONE;
@@ -123,7 +150,7 @@ int main(int argc, char ** argv)
     unsigned char msg_file[1024];
     FILE *fIn;
     int nread = 0;
-    int xxx = 0;
+    int xxx_0 = 0;
 
     file[0] = '\0';
 
@@ -136,8 +163,19 @@ int main(int argc, char ** argv)
             {"save",  required_argument, 0, 'v'},
             {"ir",  required_argument, 0, 'i'},
             {"rotate",  required_argument, 0, 'r'},
-            {"babycrying",  required_argument, 0, 'b'},
+            {"setalertallowstate_human",  no_argument, 0, '1'},
+            {"aihumandetection",  required_argument, 0, 'a'},
+            {"aivehicledetection",  required_argument, 0, 'E'},
+            {"aianimaldetection",  required_argument, 0, 'N'},
+            {"aimotiondetection",  required_argument, 0, 'O'},
+            {"facedetection",  required_argument, 0, 'c'},
+            {"motiontracking",  required_argument, 0, 'o'},
+            {"mic",  required_argument, 0, 'I'},
+            {"sounddetection",  required_argument, 0, 'b'},
+            {"babycrying",  required_argument, 0, 'B'},
+            {"soundsensitivity",  required_argument, 0, 'n'},
             {"move",  required_argument, 0, 'm'},
+            {"move-reverse",  required_argument, 0, 'M'},
             {"preset",  required_argument, 0, 'p'},
             {"add_preset",  no_argument, 0, 'P'},
             {"remove_preset",  required_argument, 0, 'R'},
@@ -153,7 +191,7 @@ int main(int argc, char ** argv)
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        c = getopt_long (argc, argv, "t:s:l:v:i:r:b:m:p:PR:C:f:S:Txdh",
+        c = getopt_long (argc, argv, "t:s:l:v:i:r:a:E:N:O:c:o:I:b:B:n:m:M:p:PR:C:f:S:TxXdh",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -162,10 +200,13 @@ int main(int argc, char ** argv)
 
         switch (c) {
         case 't':
-            if (strcasecmp("on", optarg) == 0) {
-                switch_on = SWITCH_ON;
-            } else if (strcasecmp("off", optarg) == 0) {
+            if ((strcasecmp("off", optarg) == 0) || (strcasecmp("no", optarg) == 0)) {
                 switch_on = SWITCH_OFF;
+            } else if ((strcasecmp("on", optarg) == 0) || (strcasecmp("yes", optarg) == 0)) {
+                switch_on = SWITCH_ON;
+            } else {
+                print_usage(argv[0]);
+                exit(EXIT_FAILURE);
             }
             break;
 
@@ -176,14 +217,20 @@ int main(int argc, char ** argv)
                 sensitivity = SENSITIVITY_MEDIUM;
             } else if (strcasecmp("high", optarg) == 0) {
                 sensitivity = SENSITIVITY_HIGH;
+            } else {
+                print_usage(argv[0]);
+                exit(EXIT_FAILURE);
             }
             break;
 
         case 'l':
-            if (strcasecmp("off", optarg) == 0) {
+            if ((strcasecmp("off", optarg) == 0) || (strcasecmp("no", optarg) == 0)) {
                 led = LED_OFF;
-            } else if (strcasecmp("on", optarg) == 0) {
+            } else if ((strcasecmp("on", optarg) == 0) || (strcasecmp("yes", optarg) == 0)) {
                 led = LED_ON;
+            } else {
+                print_usage(argv[0]);
+                exit(EXIT_FAILURE);
             }
             break;
 
@@ -192,30 +239,156 @@ int main(int argc, char ** argv)
                 save = SAVE_ALWAYS;
             } else if (strcasecmp("detect", optarg) == 0) {
                 save = SAVE_DETECT;
+            } else {
+                print_usage(argv[0]);
+                exit(EXIT_FAILURE);
             }
             break;
 
         case 'i':
-            if (strcasecmp("off", optarg) == 0) {
+            if ((strcasecmp("off", optarg) == 0) || (strcasecmp("no", optarg) == 0)) {
                 ir = IR_OFF;
-            } else if (strcasecmp("on", optarg) == 0) {
+            } else if ((strcasecmp("on", optarg) == 0) || (strcasecmp("yes", optarg) == 0)) {
                 ir = IR_ON;
+            } else {
+                print_usage(argv[0]);
+                exit(EXIT_FAILURE);
             }
             break;
 
         case 'r':
-            if (strcasecmp("off", optarg) == 0) {
+            if ((strcasecmp("off", optarg) == 0) || (strcasecmp("no", optarg) == 0)) {
                 rotate = ROTATE_OFF;
-            } else if (strcasecmp("on", optarg) == 0) {
+            } else if ((strcasecmp("on", optarg) == 0) || (strcasecmp("yes", optarg) == 0)) {
                 rotate = ROTATE_ON;
+            } else {
+                print_usage(argv[0]);
+                exit(EXIT_FAILURE);
+            }
+            break;
+
+        case '1':
+            setalertallowstate_human = 1;
+            break;
+
+        case 'a':
+            if ((strcasecmp("off", optarg) == 0) || (strcasecmp("no", optarg) == 0)) {
+                aihumandetection = AI_HUMAN_DETECTION_OFF;
+            } else if ((strcasecmp("on", optarg) == 0) || (strcasecmp("yes", optarg) == 0)) {
+                aihumandetection = AI_HUMAN_DETECTION_ON;
+            } else {
+                print_usage(argv[0]);
+                exit(EXIT_FAILURE);
+            }
+            break;
+
+        case 'E':
+            if ((strcasecmp("off", optarg) == 0) || (strcasecmp("no", optarg) == 0)) {
+                aivehicledetection = AI_VEHICLE_DETECTION_OFF;
+            } else if ((strcasecmp("on", optarg) == 0) || (strcasecmp("yes", optarg) == 0)) {
+                aivehicledetection = AI_VEHICLE_DETECTION_ON;
+            } else {
+                print_usage(argv[0]);
+                exit(EXIT_FAILURE);
+            }
+            break;
+
+        case 'N':
+            if ((strcasecmp("off", optarg) == 0) || (strcasecmp("no", optarg) == 0)) {
+                aianimaldetection = AI_ANIMAL_DETECTION_OFF;
+            } else if ((strcasecmp("on", optarg) == 0) || (strcasecmp("yes", optarg) == 0)) {
+                aianimaldetection = AI_ANIMAL_DETECTION_ON;
+            } else {
+                print_usage(argv[0]);
+                exit(EXIT_FAILURE);
+            }
+            break;
+
+        case 'O':
+            if ((strcasecmp("off", optarg) == 0) || (strcasecmp("no", optarg) == 0)) {
+                aimotiondetection = AI_MOTION_DETECTION_OFF;
+            } else if ((strcasecmp("on", optarg) == 0) || (strcasecmp("yes", optarg) == 0)) {
+                aimotiondetection = AI_MOTION_DETECTION_ON;
+            } else {
+                print_usage(argv[0]);
+                exit(EXIT_FAILURE);
+            }
+            break;
+
+        case 'c':
+            if ((strcasecmp("off", optarg) == 0) || (strcasecmp("no", optarg) == 0)) {
+                facedetection = FACE_DETECTION_OFF;
+            } else if ((strcasecmp("on", optarg) == 0) || (strcasecmp("yes", optarg) == 0)) {
+                facedetection = FACE_DETECTION_ON;
+            } else {
+                print_usage(argv[0]);
+                exit(EXIT_FAILURE);
+            }
+            break;
+
+        case 'o':
+            if ((strcasecmp("off", optarg) == 0) || (strcasecmp("no", optarg) == 0)) {
+                motiontracking = MOTION_TRACKING_OFF;
+            } else if ((strcasecmp("on", optarg) == 0) || (strcasecmp("yes", optarg) == 0)) {
+                motiontracking = MOTION_TRACKING_ON;
+            } else {
+                print_usage(argv[0]);
+                exit(EXIT_FAILURE);
+            }
+            break;
+
+        case 'I':
+            if ((strcasecmp("off", optarg) == 0) || (strcasecmp("no", optarg) == 0)) {
+                mic = MIC_OFF;
+            } else if ((strcasecmp("on", optarg) == 0) || (strcasecmp("yes", optarg) == 0)) {
+                mic = MIC_ON;
+            } else {
+                print_usage(argv[0]);
+                exit(EXIT_FAILURE);
             }
             break;
 
         case 'b':
-            if (strcasecmp("off", optarg) == 0) {
+            if ((strcasecmp("off", optarg) == 0) || (strcasecmp("no", optarg) == 0)) {
+                sounddetection = SOUND_DETECTION_OFF;
+            } else if ((strcasecmp("on", optarg) == 0) || (strcasecmp("yes", optarg) == 0)) {
+                sounddetection = SOUND_DETECTION_ON;
+            } else {
+                print_usage(argv[0]);
+                exit(EXIT_FAILURE);
+            }
+            break;
+
+        case 'B':
+            if ((strcasecmp("off", optarg) == 0) || (strcasecmp("no", optarg) == 0)) {
                 babycrying = BABYCRYING_OFF;
-            } else if (strcasecmp("on", optarg) == 0) {
+            } else if ((strcasecmp("on", optarg) == 0) || (strcasecmp("yes", optarg) == 0)) {
                 babycrying = BABYCRYING_ON;
+            }
+            break;
+
+        case 'n':
+            if (strcasecmp("30", optarg) == 0) {
+                soundsensitivity = SOUND_SENS_30;
+            } else if (strcasecmp("35", optarg) == 0) {
+                soundsensitivity = SOUND_SENS_35;
+            } else if (strcasecmp("40", optarg) == 0) {
+                soundsensitivity = SOUND_SENS_40;
+            } else if (strcasecmp("45", optarg) == 0) {
+                soundsensitivity = SOUND_SENS_45;
+            } else if (strcasecmp("50", optarg) == 0) {
+                soundsensitivity = SOUND_SENS_50;
+            } else if (strcasecmp("60", optarg) == 0) {
+                soundsensitivity = SOUND_SENS_60;
+            } else if (strcasecmp("70", optarg) == 0) {
+                soundsensitivity = SOUND_SENS_70;
+            } else if (strcasecmp("80", optarg) == 0) {
+                soundsensitivity = SOUND_SENS_80;
+            } else if (strcasecmp("90", optarg) == 0) {
+                soundsensitivity = SOUND_SENS_90;
+            } else {
+                print_usage(argv[0]);
+                exit(EXIT_FAILURE);
             }
             break;
 
@@ -230,6 +403,26 @@ int main(int argc, char ** argv)
                 move = MOVE_UP;
             } else if (strcasecmp("stop", optarg) == 0) {
                 move = MOVE_STOP;
+            } else {
+                print_usage(argv[0]);
+                exit(EXIT_FAILURE);
+            }
+            break;
+
+        case 'M':
+            if (strcasecmp("right", optarg) == 0) {
+                move = MOVE_LEFT;
+            } else if (strcasecmp("left", optarg) == 0) {
+                move = MOVE_RIGHT;
+            } else if (strcasecmp("down", optarg) == 0) {
+                move = MOVE_UP;
+            } else if (strcasecmp("up", optarg) == 0) {
+                move = MOVE_DOWN;
+            } else if (strcasecmp("stop", optarg) == 0) {
+                move = MOVE_STOP;
+            } else {
+                print_usage(argv[0]);
+                exit(EXIT_FAILURE);
             }
             break;
 
@@ -276,14 +469,17 @@ int main(int argc, char ** argv)
             break;
 
         case 'C':
-            if (strcasecmp("off", optarg) == 0) {
+            if ((strcasecmp("off", optarg) == 0) || (strcasecmp("no", optarg) == 0)) {
                 cruise = CRUISE_OFF;
-            } else if (strcasecmp("on", optarg) == 0) {
+            } else if ((strcasecmp("on", optarg) == 0) || (strcasecmp("yes", optarg) == 0)) {
                 cruise = CRUISE_ON;
             } else if (strcasecmp("presets", optarg) == 0) {
                 cruise = CRUISE_PRESETS;
             } else if (strcasecmp("360", optarg) == 0) {
                 cruise = CRUISE_360;
+            } else {
+                print_usage(argv[0]);
+                exit(EXIT_FAILURE);
             }
             break;
 
@@ -327,7 +523,7 @@ int main(int argc, char ** argv)
             break;
 
         case 'x':
-            xxx = 1;
+            xxx_0 = 1;
             break;
 
         case 'h':
@@ -393,10 +589,82 @@ int main(int argc, char ** argv)
         mq_send(ipc_mq, IPC_ROTATE_ON, sizeof(IPC_ROTATE_ON) - 1, 0);
     }
 
+    if (setalertallowstate_human == 1) {
+        mq_send(ipc_mq, IPC_SET_ALERT_ALLOW_STATE_HUMAN, sizeof(IPC_SET_ALERT_ALLOW_STATE_HUMAN) - 1, 0);
+    }
+
+    if (aihumandetection == AI_HUMAN_DETECTION_OFF) {
+        mq_send(ipc_mq, IPC_AI_HUMAN_DETECTION_OFF, sizeof(IPC_AI_HUMAN_DETECTION_OFF) - 1, 0);
+    } else if (aihumandetection == AI_HUMAN_DETECTION_ON) {
+        mq_send(ipc_mq, IPC_AI_HUMAN_DETECTION_ON, sizeof(IPC_AI_HUMAN_DETECTION_ON) - 1, 0);
+    }
+
+    if (aivehicledetection == AI_VEHICLE_DETECTION_OFF) {
+        mq_send(ipc_mq, IPC_AI_VEHICLE_DETECTION_OFF, sizeof(IPC_AI_VEHICLE_DETECTION_OFF) - 1, 0);
+    } else if (aivehicledetection == AI_VEHICLE_DETECTION_ON) {
+        mq_send(ipc_mq, IPC_AI_VEHICLE_DETECTION_ON, sizeof(IPC_AI_VEHICLE_DETECTION_ON) - 1, 0);
+    }
+
+    if (aianimaldetection == AI_ANIMAL_DETECTION_OFF) {
+        mq_send(ipc_mq, IPC_AI_ANIMAL_DETECTION_OFF, sizeof(IPC_AI_ANIMAL_DETECTION_OFF) - 1, 0);
+    } else if (aianimaldetection == AI_ANIMAL_DETECTION_ON) {
+        mq_send(ipc_mq, IPC_AI_ANIMAL_DETECTION_ON, sizeof(IPC_AI_ANIMAL_DETECTION_ON) - 1, 0);
+    }
+
+    if (aimotiondetection == AI_MOTION_DETECTION_OFF) {
+        mq_send(ipc_mq, IPC_AI_MOTION_DETECTION_OFF, sizeof(IPC_AI_MOTION_DETECTION_OFF) - 1, 0);
+    } else if (aimotiondetection == AI_MOTION_DETECTION_ON) {
+        mq_send(ipc_mq, IPC_AI_MOTION_DETECTION_ON, sizeof(IPC_AI_MOTION_DETECTION_ON) - 1, 0);
+    }
+
+    if (facedetection == FACE_DETECTION_OFF) {
+        mq_send(ipc_mq, IPC_FACE_DETECTION_OFF, sizeof(IPC_FACE_DETECTION_OFF) - 1, 0);
+    } else if (facedetection == FACE_DETECTION_ON) {
+        mq_send(ipc_mq, IPC_FACE_DETECTION_ON, sizeof(IPC_FACE_DETECTION_ON) - 1, 0);
+    }
+
+    if (motiontracking == MOTION_TRACKING_OFF) {
+        mq_send(ipc_mq, IPC_MOTION_TRACKING_OFF, sizeof(IPC_MOTION_TRACKING_OFF) - 1, 0);
+    } else if (motiontracking == MOTION_TRACKING_ON) {
+        mq_send(ipc_mq, IPC_MOTION_TRACKING_ON, sizeof(IPC_MOTION_TRACKING_ON) - 1, 0);
+    }
+
+    if (mic == MIC_OFF) {
+        mq_send(ipc_mq, IPC_MIC_OFF, sizeof(IPC_MIC_OFF) - 1, 0);
+    } else if (mic == MIC_ON) {
+        mq_send(ipc_mq, IPC_MIC_ON, sizeof(IPC_MIC_ON) - 1, 0);
+    }
+
+    if (sounddetection == SOUND_DETECTION_OFF) {
+        mq_send(ipc_mq, IPC_SOUND_DETECTION_OFF, sizeof(IPC_SOUND_DETECTION_OFF) - 1, 0);
+    } else if (sounddetection == SOUND_DETECTION_ON) {
+        mq_send(ipc_mq, IPC_SOUND_DETECTION_ON, sizeof(IPC_SOUND_DETECTION_ON) - 1, 0);
+    }
+
     if (babycrying == BABYCRYING_OFF) {
         mq_send(ipc_mq, IPC_BABYCRYING_OFF, sizeof(IPC_BABYCRYING_OFF) - 1, 0);
     } else if (babycrying == BABYCRYING_ON) {
         mq_send(ipc_mq, IPC_BABYCRYING_ON, sizeof(IPC_BABYCRYING_ON) - 1, 0);
+    }
+
+    if (soundsensitivity == SOUND_SENS_30) {
+        mq_send(ipc_mq, IPC_SOUND_SENS_30, sizeof(IPC_SOUND_SENS_30) - 1, 0);
+    } else if (soundsensitivity == SOUND_SENS_35) {
+        mq_send(ipc_mq, IPC_SOUND_SENS_35, sizeof(IPC_SOUND_SENS_35) - 1, 0);
+    } else if (soundsensitivity == SOUND_SENS_40) {
+        mq_send(ipc_mq, IPC_SOUND_SENS_40, sizeof(IPC_SOUND_SENS_40) - 1, 0);
+    } else if (soundsensitivity == SOUND_SENS_45) {
+        mq_send(ipc_mq, IPC_SOUND_SENS_45, sizeof(IPC_SOUND_SENS_45) - 1, 0);
+    } else if (soundsensitivity == SOUND_SENS_50) {
+        mq_send(ipc_mq, IPC_SOUND_SENS_50, sizeof(IPC_SOUND_SENS_50) - 1, 0);
+    } else if (soundsensitivity == SOUND_SENS_60) {
+        mq_send(ipc_mq, IPC_SOUND_SENS_60, sizeof(IPC_SOUND_SENS_60) - 1, 0);
+    } else if (soundsensitivity == SOUND_SENS_70) {
+        mq_send(ipc_mq, IPC_SOUND_SENS_70, sizeof(IPC_SOUND_SENS_70) - 1, 0);
+    } else if (soundsensitivity == SOUND_SENS_80) {
+        mq_send(ipc_mq, IPC_SOUND_SENS_80, sizeof(IPC_SOUND_SENS_80) - 1, 0);
+    } else if (soundsensitivity == SOUND_SENS_90) {
+        mq_send(ipc_mq, IPC_SOUND_SENS_90, sizeof(IPC_SOUND_SENS_90) - 1, 0);
     }
 
     if (move == MOVE_RIGHT) {
@@ -441,8 +709,12 @@ int main(int argc, char ** argv)
         } else if (cruise == CRUISE_ON) {
             mq_send(ipc_mq, IPC_CRUISE_ON, sizeof(IPC_CRUISE_ON) - 1, 0);
         } else if (cruise == CRUISE_PRESETS) {
+            mq_send(ipc_mq, IPC_CRUISE_ON, sizeof(IPC_CRUISE_ON) - 1, 0);
+            usleep(100 * 1000);
             mq_send(ipc_mq, IPC_CRUISE_PRESETS, sizeof(IPC_CRUISE_PRESETS) - 1, 0);
         } else if (cruise == CRUISE_360) {
+            mq_send(ipc_mq, IPC_CRUISE_ON, sizeof(IPC_CRUISE_ON) - 1, 0);
+            usleep(100 * 1000);
             mq_send(ipc_mq, IPC_CRUISE_360, sizeof(IPC_CRUISE_360) - 1, 0);
         }
     }
@@ -513,7 +785,7 @@ int main(int argc, char ** argv)
         mq_send(ipc_mq, IPC_MOTION_STOP, sizeof(IPC_MOTION_STOP) - 1, 0);
     }
 
-    if (xxx == 1) {
+    if (xxx_0 == 1) {
         mq_send(ipc_mq, IPC_XXX_0, sizeof(IPC_XXX_0) - 1, 0);
     }
 
