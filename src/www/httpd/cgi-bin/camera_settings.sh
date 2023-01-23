@@ -39,9 +39,6 @@ do
         continue
     fi
     CONF_LAST=$CONF
-    CONF_UPPER="$(echo $CONF | tr '[a-z]' '[A-Z]')"
-
-    sed -i "s/^\(${CONF_UPPER}\s*=\s*\).*$/\1${VAL}/" $CONF_FILE
 
     if [ "$CONF" == "switch_on" ] ; then
         if [ "$VAL" == "no" ] ; then
@@ -61,9 +58,9 @@ do
         fi
     elif [ "$CONF" == "baby_crying_detect" ] ; then
         if [ "$VAL" == "no" ] ; then
-            ipc_cmd -b off
+            ipc_cmd -B off
         else
-            ipc_cmd -b on
+            ipc_cmd -B on
         fi
     elif [ "$CONF" == "led" ] ; then
         if [ "$VAL" == "no" ] ; then
@@ -84,7 +81,7 @@ do
             ipc_cmd -r on
         fi
     elif [ "$CONF" == "cruise" ] ; then
-        if [ "$VAL" == "off" ]; then
+        if [ "$VAL" == "no" ]; then
             ipc_cmd -C off
         elif [ "$VAL" == "presets" ]; then
             ipc_cmd -C on
@@ -96,7 +93,7 @@ do
             ipc_cmd -C 360
         fi
     fi
-    sleep 1
+    sleep 0.5
 done
 
 printf "Content-type: application/json\r\n\r\n"
