@@ -53,7 +53,7 @@ BABY_CRYING_DETECT=no
 LED=no
 ROTATE=no
 IR=yes
-CRUISE=off"
+CRUISE=no"
 
 PARMS3="
 MQTT_IP=0.0.0.0
@@ -80,6 +80,9 @@ MQTT_RETAIN_MOTION=0
 MQTT_RETAIN_MOTION_IMAGE=0
 MQTT_RETAIN_MOTION_FILES=0"
 
+if [ ! -f $SYSTEM_CONF_FILE ]; then
+    touch $SYSTEM_CONF_FILE
+fi
 for i in $PARMS1
 do
     if [ ! -z "$i" ]; then
@@ -91,6 +94,9 @@ do
     fi
 done
 
+if [ ! -f $CAMERA_CONF_FILE ]; then
+    touch $CAMERA_CONF_FILE
+fi
 for i in $PARMS2
 do
     if [ ! -z "$i" ]; then
@@ -102,6 +108,9 @@ do
     fi
 done
 
+if [ ! -f $MQTTV4_CONF_FILE ]; then
+    touch $MQTTV4_CONF_FILE
+fi
 for i in $PARMS3
 do
     if [ ! -z "$i" ]; then
