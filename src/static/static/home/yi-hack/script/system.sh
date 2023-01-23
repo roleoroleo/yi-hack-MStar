@@ -144,6 +144,16 @@ if [[ $(get_config DISABLE_CLOUD) == "no" ]] ; then
     )
 else
     (
+        while read -r line
+        do
+            echo "127.0.0.1    $line" >> /etc/hosts
+        done < $YI_HACK_PREFIX/script/blacklist/url
+
+        while read -r line
+        do
+            route add -host $line reject
+        done < $YI_HACK_PREFIX/script/blacklist/ip
+
         if [ $(get_config RTSP_AUDIO) != "no" ]; then
             touch /tmp/audio_fifo.requested
             touch /tmp/audio_fifo_mono_8khz.requested
@@ -163,22 +173,6 @@ else
         if [[ $(get_config REC_WITHOUT_CLOUD) == "yes" ]] ; then
             ./mp4record &
         fi
-
-        echo "127.0.0.1    api.eu.xiaoyi.com" >> /etc/hosts
-        echo "127.0.0.1    api.us.xiaoyi.com" >> /etc/hosts
-        echo "127.0.0.1    api.xiaoyi.com.tw" >> /etc/hosts
-        echo "127.0.0.1    log.eu.xiaoyi.com" >> /etc/hosts
-        echo "127.0.0.1    log.us.xiaoyi.com" >> /etc/hosts
-        echo "127.0.0.1    log.xiaoyi.com.tw" >> /etc/hosts
-        route add -host 47.251.52.14 reject
-        route add -host 47.90.241.246 reject
-        route add -host 47.74.131.238 reject
-        route add -host 47.74.208.204 reject
-        route add -host 47.90.203.190 reject
-        route add -host 47.254.18.99 reject
-        route add -host 47.88.59.209 reject
-        route add -host 47.90.240.160 reject
-        route add -host 47.74.255.9 reject
     )
 fi
 
