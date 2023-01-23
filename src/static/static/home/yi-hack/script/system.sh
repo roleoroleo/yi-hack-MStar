@@ -206,6 +206,7 @@ fi
 mqttv4 &
 if [[ $(get_config MQTT) == "yes" ]] ; then
     mqtt-config &
+    /home/yi-hack/script/conf2mqtt.sh &
 fi
 
 sleep 5
