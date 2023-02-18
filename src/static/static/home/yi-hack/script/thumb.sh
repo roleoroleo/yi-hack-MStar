@@ -89,14 +89,16 @@ checkFiles ()
 		BASE_NAME=$(lbasename "$file")
 		if [ ! -f $BASE_NAME.jpg ]; then
 			minimp4_yi -t 1 $file $BASE_NAME.h26x
-			if [ $? -lt 0 ]; then
+			if [ $? -ne 0 ]; then
 				logAdd "[ERROR] checkFiles: demux mp4 FAILED - [${file}]."
+				rm -f $BASE_NAME.h26x
 				return 0
 			fi
 			imggrabber -f $BASE_NAME.h26x -r low -w > $BASE_NAME.jpg
-			if [ $? -lt 0 ]; then
+			if [ $? -ne 0 ]; then
 				logAdd "[ERROR] checkFiles: create jpg FAILED - [${file}]."
 				rm -f $BASE_NAME.h26x
+				rm -f $BASE_NAME.jpg
 				return 0
 			fi
 			rm -f $BASE_NAME.h26x
@@ -132,9 +134,7 @@ serviceMain ()
 			chmod -R 0755 "${FOLDER_TO_WATCH}"
 		fi
 		#
-#		if [[ $(get_config FTP_UPLOAD) == "yes" ]] ; then
-			checkFiles
-#		fi
+		checkFiles
 		#
 		if [ "${1}" = "--one-shot" ]; then
 			break
