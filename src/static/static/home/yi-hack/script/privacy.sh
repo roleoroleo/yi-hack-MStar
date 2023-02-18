@@ -17,7 +17,8 @@ start_rtsp()
 stop_rtsp()
 {
     killall wd_rtsp.sh
-    killall $RTSP_DAEMON
+    killall rtsp_server_yi
+    killall rRTSPServer
     killall h264grabber
 }
 
