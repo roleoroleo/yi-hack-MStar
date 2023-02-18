@@ -167,6 +167,7 @@ else
         if [[ $(get_config REC_WITHOUT_CLOUD) == "yes" ]] ; then
             ./mp4record &
         fi
+        ./cloud &
     )
 fi
 
