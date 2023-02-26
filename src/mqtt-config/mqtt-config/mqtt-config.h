@@ -13,6 +13,7 @@
 
 #define MQTT_CONF_FILE    "/home/yi-hack/etc/mqttv4.conf"
 #define CONF_FILE_PATH    "/home/yi-hack/etc"
+#define CONF2MQTT_SCRIPT  "/home/yi-hack/script/conf2mqtt.sh"
 
 typedef struct
 {
