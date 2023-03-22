@@ -120,6 +120,7 @@ if [[ $(get_config DISABLE_CLOUD) == "no" ]] ; then
         cd /home/app
         killall dispatch
         LD_PRELOAD=/home/yi-hack/lib/ipc_multiplex.so ./dispatch &
+        sleep 2
         LD_LIBRARY_PATH="/home/yi-hack/lib:/lib:/home/lib:/home/ms:/home/app/locallib" ./rmm &
         sleep 4
         dd if=/tmp/audio_fifo of=/dev/null bs=1 count=8192
@@ -158,6 +159,7 @@ else
         cd /home/app
         killall dispatch
         LD_PRELOAD=/home/yi-hack/lib/ipc_multiplex.so ./dispatch &
+        sleep 2
         LD_LIBRARY_PATH="/home/yi-hack/lib:/lib:/home/lib:/home/ms:/home/app/locallib" ./rmm &
         sleep 4
         dd if=/tmp/audio_fifo of=/dev/null bs=1 count=8192
