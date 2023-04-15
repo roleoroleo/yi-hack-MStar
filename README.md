@@ -128,6 +128,7 @@ Currently this project supports only the following cameras:
 | **Yi 1080p Home BFUS** | 4.5.0* | y203c | - |
 | **Yi 1080p Dome 6FUS** | 4.6.0* | h201c | Thanks to @skylarhays |
 | **Yi 1080p Dome BFUS** | 4.6.0* | h201c | Thanks to @skylarhays |
+| **Yi 1080p Dome 4FCN** | 4.6.0* | h201c | - |
 | **Yi 1080p Home 4FUS** | 4.2.0* | y25 | - |
 | **Yi 1080p Home 9FUS** | 4.2.0* | y25 | - |
 | **XiaoYi Camera Y3 9FCN**| 4.2.0* | y25 | - |
