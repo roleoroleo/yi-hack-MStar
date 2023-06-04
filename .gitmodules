@@ -31,3 +31,6 @@
 [submodule "src/sftp-server/openssh-portable"]
 	path = src/sftp-server/openssh-portable
 	url = https://github.com/openssh/openssh-portable
+[submodule "src/onvif_simple_server/onvif_simple_server"]
+	path = src/onvif_simple_server/onvif_simple_server
+	url = http://github.com/roleoroleo/onvif_simple_server
