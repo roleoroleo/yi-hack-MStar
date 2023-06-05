@@ -13,5 +13,7 @@ tar xvf "${ARCHIVE}"
 cd "${BUILD_FOLDER}"
 
 patch -p1 < ../gzdef.patch
+patch -p1 < ../onvif.patch
+patch -p1 < ../auth.patch
 
 cp ../.config ./ || exit 1

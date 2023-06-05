@@ -82,7 +82,8 @@ if [[ x$(get_config USERNAME) != "x" ]] ; then
     USERNAME=$(get_config USERNAME)
     PASSWORD=$(get_config PASSWORD)
     ONVIF_USERPWD="user=$USERNAME\npassword=$PASSWORD"
-    echo "/:$USERNAME:$PASSWORD" > /tmp/httpd.conf
+    echo "/onvif::" > /tmp/httpd.conf
+    echo "/:$USERNAME:$PASSWORD" >> /tmp/httpd.conf
 fi
 
 PASSWORD_MD5='$1$$qRPK7m23GJusamGpoGLby/'
@@ -99,12 +100,8 @@ case $(get_config RTSP_PORT) in
     ''|*[!0-9]*) RTSP_PORT=554 ;;
     *) RTSP_PORT=$(get_config RTSP_PORT) ;;
 esac
-case $(get_config ONVIF_PORT) in
-    ''|*[!0-9]*) ONVIF_PORT=80 ;;
-    *) ONVIF_PORT=$(get_config ONVIF_PORT) ;;
-esac
 case $(get_config HTTPD_PORT) in
-    ''|*[!0-9]*) HTTPD_PORT=8080 ;;
+    ''|*[!0-9]*) HTTPD_PORT=80 ;;
     *) HTTPD_PORT=$(get_config HTTPD_PORT) ;;
 esac
 
@@ -216,10 +213,6 @@ if [[ $HTTPD_PORT != "80" ]] ; then
     D_HTTPD_PORT=:$HTTPD_PORT
 fi
 
-if [[ $ONVIF_PORT != "80" ]] ; then
-    D_ONVIF_PORT=:$ONVIF_PORT
-fi
-
 if [[ $(get_config ONVIF_WM_SNAPSHOT) == "yes" ]] ; then
     WATERMARK="&watermark=yes"
 fi
@@ -311,18 +304,21 @@ SERIAL_NUMBER=$(dd status=none bs=1 count=20 skip=661 if=/tmp/mmap.info | tr '\0
 HW_ID=$(dd status=none bs=1 count=4 skip=661 if=/tmp/mmap.info | tr '\0' '0' | cut -c1-4)
 
 if [[ $(get_config ONVIF) == "yes" ]] ; then
-    ONVIF_SRVD_CONF="/tmp/onvif_srvd.conf"
+    ONVIF_SRVD_CONF="/tmp/onvif_simple_server.conf"
 
-    echo "pid_file=/var/run/onvif_srvd.pid" > $ONVIF_SRVD_CONF
-    echo "model=Yi Hack" >> $ONVIF_SRVD_CONF
+    echo "model=Yi Hack" > $ONVIF_SRVD_CONF
     echo "manufacturer=Yi" >> $ONVIF_SRVD_CONF
     echo "firmware_ver=$YI_HACK_VER" >> $ONVIF_SRVD_CONF
     echo "hardware_id=$HW_ID" >> $ONVIF_SRVD_CONF
     echo "serial_num=$SERIAL_NUMBER" >> $ONVIF_SRVD_CONF
     echo "ifs=wlan0" >> $ONVIF_SRVD_CONF
-    echo "port=$ONVIF_PORT" >> $ONVIF_SRVD_CONF
-    echo "scope=onvif://www.onvif.org/Profile/S" >> $ONVIF_SRVD_CONF
+    echo "port=$HTTPD_PORT" >> $ONVIF_SRVD_CONF
+    echo "scope=onvif://www.onvif.org/Profile/Streaming" >> $ONVIF_SRVD_CONF
     echo "" >> $ONVIF_SRVD_CONF
+    if [ ! -z $ONVIF_USERPWD ]; then
+        echo -e $ONVIF_USERPWD >> $ONVIF_SRVD_CONF
+        echo "" >> $ONVIF_SRVD_CONF
+    fi
     if [ ! -z $ONVIF_PROFILE_0 ]; then
         echo "#Profile 0" >> $ONVIF_SRVD_CONF
         echo -e $ONVIF_PROFILE_0 >> $ONVIF_SRVD_CONF
@@ -331,10 +327,6 @@ if [[ $(get_config ONVIF) == "yes" ]] ; then
     if [ ! -z $ONVIF_PROFILE_1 ]; then
         echo "#Profile 1" >> $ONVIF_SRVD_CONF
         echo -e $ONVIF_PROFILE_1 >> $ONVIF_SRVD_CONF
-        echo "" >> $ONVIF_SRVD_CONF
-    fi
-    if [ ! -z $ONVIF_USERPWD ]; then
-        echo -e $ONVIF_USERPWD >> $ONVIF_SRVD_CONF
         echo "" >> $ONVIF_SRVD_CONF
     fi
 
@@ -349,10 +341,10 @@ if [[ $(get_config ONVIF) == "yes" ]] ; then
         echo "move_preset=/home/yi-hack/bin/ipc_cmd -p %t" >> $ONVIF_SRVD_CONF
     fi
 
-    onvif_srvd --conf_file $ONVIF_SRVD_CONF
+    onvif_simple_server --conf_file $ONVIF_SRVD_CONF
 
     if [[ $(get_config ONVIF_WSDD) == "yes" ]] ; then
-        wsdd --pid_file /var/run/wsdd.pid --if_name wlan0 --type tdn:NetworkVideoTransmitter --xaddr "http://%s$D_ONVIF_PORT" --scope "onvif://www.onvif.org/name/Unknown onvif://www.onvif.org/Profile/Streaming"
+        wsd_simple_server --pid_file /var/run/wsd_simple_server.pid --if_name wlan0 --xaddr "http://%s$D_HTTPD_PORT/onvif/device_service"
     fi
 fi
 

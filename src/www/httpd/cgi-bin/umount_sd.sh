@@ -2,8 +2,8 @@
 
 YI_HACK_PREFIX="/home/yi-hack"
 
-killall wsdd
-killall onvif_srvd
+killall wsd_simple_server
+killall onvif_simple_server
 killall wd_rtsp.sh
 killall rRTSPServer
 killall rtsp_server_yi

@@ -10,15 +10,9 @@
 [submodule "src/proxychains-ng/proxychains-ng"]
 	path = src/proxychains-ng/proxychains-ng
 	url = https://github.com/rofl0r/proxychains-ng
-[submodule "src/onvif_srvd/onvif_srvd"]
-	path = src/onvif_srvd/onvif_srvd
-	url = https://github.com/roleoroleo/onvif_srvd
 [submodule "src/mqtt/mqttv4"]
 	path = src/mqtt/mqttv4
 	url = https://github.com/roleoroleo/mqttv4
-[submodule "src/wsdd/wsdd"]
-	path = src/wsdd/wsdd
-	url = https://github.com/KoynovStas/wsdd
 [submodule "src/rtsp_server_yi/RtspServer"]
 	path = src/rtsp_server_yi/RtspServer
 	url = https://github.com/roleoroleo/RtspServer
