@@ -178,8 +178,8 @@ if [ ! -L $TMP_DIR/rootfs/bin/iperf ]; then
 fi
 echo "done!"
 
-# Patching resolve.conf in init.sh
-echo -n ">>> Patching resolve.conf in init.sh... "
+# Patching resolv.conf in init.sh
+echo -n ">>> Patching resolv.conf in init.sh... "
 sed -i 's/^\trm \/etc\/resolv.conf/#\trm \/etc\/resolv.conf/g' $TMP_DIR/home/app/init.sh
 sed -i 's/^\tln -s \/tmp\/resolv.conf \/etc\/resolv.conf/#\tln -s \/tmp\/resolv.conf \/etc\/resolv.conf/g' $TMP_DIR/home/app/init.sh
 echo "done!"

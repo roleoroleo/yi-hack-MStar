@@ -76,7 +76,7 @@ fi
 
 $YI_HACK_PREFIX/script/check_conf.sh
 
-hostname -F /etc/hostname
+hostname -F $YI_HACK_PREFIX/etc/hostname
 
 if [[ x$(get_config USERNAME) != "x" ]] ; then
     USERNAME=$(get_config USERNAME)
@@ -355,7 +355,7 @@ mkdir -p /var/spool/cron/crontabs/
 if [ ! -z "$CRONTAB" ]; then
     echo -e "$CRONTAB" > /var/spool/cron/crontabs/root
 fi
-if [[ $(get_config SNAPSHOT_VIDEO) == "yes" ]] ; then
+if [[ $(get_config SNAPSHOT) == "yes" ]] && [[ $(get_config SNAPSHOT_VIDEO) == "yes" ]]; then
     echo "* * * * * /home/yi-hack/script/thumb.sh cron" >> /var/spool/cron/crontabs/root
 fi
 if [ "$FREE_SPACE" != "0" ]; then

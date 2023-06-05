@@ -5,11 +5,11 @@ YI_PREFIX="/home/app"
 
 ARCHIVE_FILE="$YI_HACK_PREFIX/yi-hack.7z"
 
-files=`find $YI_PREFIX -maxdepth 1 -name "*.7z"`
-if [ ${#files[@]} -gt 0 ]; then
-	/home/base/tools/7za x "$YI_PREFIX/*.7z" -y -o$YI_PREFIX
-	rm $YI_PREFIX/*.7z
-fi
+#files=`find $YI_PREFIX -maxdepth 1 -name "*.7z"`
+#if [ ${#files[@]} -gt 0 ]; then
+#	/home/base/tools/7za x "$YI_PREFIX/*.7z" -y -o$YI_PREFIX
+#	rm $YI_PREFIX/*.7z
+#fi
 
 if [ -f $ARCHIVE_FILE ]; then
 	/home/base/tools/7za x $ARCHIVE_FILE -y -o$YI_HACK_PREFIX
