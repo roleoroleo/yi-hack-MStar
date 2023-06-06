@@ -90,7 +90,7 @@ for i in $PARMS1
 do
     if [ ! -z "$i" ]; then
         PAR=$(echo "$i" | cut -d= -f1)
-        MATCH=$(cat $SYSTEM_CONF_FILE | grep $PAR)
+        MATCH=$(cat $SYSTEM_CONF_FILE | grep ^$PAR=)
         if [ -z "$MATCH" ]; then
             echo "$i" >> $SYSTEM_CONF_FILE
         fi
@@ -104,7 +104,7 @@ for i in $PARMS2
 do
     if [ ! -z "$i" ]; then
         PAR=$(echo "$i" | cut -d= -f1)
-        MATCH=$(cat $CAMERA_CONF_FILE | grep $PAR)
+        MATCH=$(cat $CAMERA_CONF_FILE | grep ^$PAR=)
         if [ -z "$MATCH" ]; then
             echo "$i" >> $CAMERA_CONF_FILE
         fi
@@ -118,7 +118,7 @@ for i in $PARMS3
 do
     if [ ! -z "$i" ]; then
         PAR=$(echo "$i" | cut -d= -f1)
-        MATCH=$(cat $MQTTV4_CONF_FILE | grep $PAR)
+        MATCH=$(cat $MQTTV4_CONF_FILE | grep ^$PAR=)
         if [ -z "$MATCH" ]; then
             echo "$i" >> $MQTTV4_CONF_FILE
         fi
