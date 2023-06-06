@@ -139,6 +139,10 @@ start_onvif()
     echo "port=$HTTPD_PORT" >> $ONVIF_SRVD_CONF
     echo "scope=onvif://www.onvif.org/Profile/Streaming" >> $ONVIF_SRVD_CONF
     echo "" >> $ONVIF_SRVD_CONF
+    if [ ! -z $ONVIF_USERPWD ]; then
+        echo -e $ONVIF_USERPWD >> $ONVIF_SRVD_CONF
+        echo "" >> $ONVIF_SRVD_CONF
+    fi
     if [ ! -z $ONVIF_PROFILE_0 ]; then
         echo "#Profile 0" >> $ONVIF_SRVD_CONF
         echo -e $ONVIF_PROFILE_0 >> $ONVIF_SRVD_CONF
@@ -147,10 +151,6 @@ start_onvif()
     if [ ! -z $ONVIF_PROFILE_1 ]; then
         echo "#Profile 1" >> $ONVIF_SRVD_CONF
         echo -e $ONVIF_PROFILE_1 >> $ONVIF_SRVD_CONF
-        echo "" >> $ONVIF_SRVD_CONF
-    fi
-    if [ ! -z $ONVIF_USERPWD ]; then
-        echo -e $ONVIF_USERPWD >> $ONVIF_SRVD_CONF
         echo "" >> $ONVIF_SRVD_CONF
     fi
 

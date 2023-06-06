@@ -16,6 +16,7 @@
 #include <errno.h>
 #include "set_tz_offset.h"
 
+int debug;
 mqd_t ipc_mq;
 
 void dump_string(char *source_file, const char *func, int line, char *text, ...)
@@ -81,7 +82,6 @@ int cloud_send_msg(mqd_t mqfd, MSG_TYPE msg_type, char *payload, int payload_len
     return fsMsgRet;
 }
 
-/* Only positive numbers */
 int str2int(char *value)
 {
     char *endptr;
@@ -131,7 +131,8 @@ int main(int argc, char **argv)
 
     char value[1024] = {0};
     int ivalue;
-    int debug = 0;
+
+    debug = 0;
 
     while (1) {
         static struct option long_options[] =

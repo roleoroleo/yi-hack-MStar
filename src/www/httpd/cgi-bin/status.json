@@ -54,6 +54,6 @@ printf "\"%s\":\"%s\",\n" "netmask"         "$NETMASK"
 printf "\"%s\":\"%s\",\n" "gateway"         "$GATEWAY"
 printf "\"%s\":\"%s\",\n" "mac_addr"        "$MAC_ADDR"
 printf "\"%s\":\"%s\",\n" "wlan_essid"      "$WLAN_ESSID"
-printf "\"%s\":\"%s\"\n" "wlan_strength"   "$WLAN_STRENGTH"
+printf "\"%s\":\"%s\"\n"  "wlan_strength"   "$WLAN_STRENGTH"
 
 printf "}"

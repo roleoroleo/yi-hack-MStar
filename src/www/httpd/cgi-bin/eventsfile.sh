@@ -36,6 +36,8 @@ if ! $(validateQueryString $QUERY_STRING); then
     exit
 fi
 
+DIR="none"
+
 CONF="$(echo $QUERY_STRING | cut -d'=' -f1)"
 VAL="$(echo $QUERY_STRING | cut -d'=' -f2)"
 
