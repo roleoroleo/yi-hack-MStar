@@ -25,3 +25,6 @@
 [submodule "src/onvif_simple_server/onvif_simple_server"]
 	path = src/onvif_simple_server/onvif_simple_server
 	url = http://github.com/roleoroleo/onvif_simple_server
+[submodule "src/mjpeg-avi/mjpeg-avi"]
+	path = src/mjpeg-avi/mjpeg-avi
+	url = https://github.com/Ricardicus/mjpeg-avi
