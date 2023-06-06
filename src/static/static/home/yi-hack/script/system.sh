@@ -29,6 +29,26 @@ start_buffer()
     ipc_cmd -x
 }
 
+log()
+{
+    if [ "$DEBUG_LOG" == "yes" ]; then
+        echo $1 >> /tmp/sd/hack_debug.log
+
+        if [ "$2" == "1" ]; then
+            echo "" >> /tmp/sd/hack_debug.log
+            ps >> /tmp/sd/hack_debug.log
+            echo "" >> /tmp/sd/hack_debug.log
+            free >> /tmp/sd/hack_debug.log
+            echo "" >> /tmp/sd/hack_debug.log
+        fi
+    fi
+}
+
+DEBUG_LOG=$(get_config DEBUG_LOG)
+rm -f /tmp/sd/hack_debug.log
+
+log "Starting system.sh"
+
 export PATH=$PATH:/home/base/tools:/home/yi-hack/bin:/home/yi-hack/sbin:/tmp/sd/yi-hack/bin:/tmp/sd/yi-hack/sbin
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/lib:/home/yi-hack/lib:/tmp/sd/yi-hack/lib
 
@@ -79,6 +99,7 @@ $YI_HACK_PREFIX/script/check_conf.sh
 hostname -F $YI_HACK_PREFIX/etc/hostname
 
 if [[ x$(get_config USERNAME) != "x" ]] ; then
+    log "Setting username and password"
     USERNAME=$(get_config USERNAME)
     PASSWORD=$(get_config PASSWORD)
     ONVIF_USERPWD="user=$USERNAME\npassword=$PASSWORD"
@@ -88,6 +109,7 @@ fi
 
 PASSWORD_MD5='$1$$qRPK7m23GJusamGpoGLby/'
 if [[ x$(get_config SSH_PASSWORD) != "x" ]] ; then
+    log "Setting SSH password"
     SSH_PASSWORD=$(get_config SSH_PASSWORD)
     PASSWORD_MD5="$(echo "${SSH_PASSWORD}" | mkpasswd --method=MD5 --stdin)"
 fi
@@ -105,6 +127,7 @@ case $(get_config HTTPD_PORT) in
     *) HTTPD_PORT=$(get_config HTTPD_PORT) ;;
 esac
 
+log "Starting yi processes" 1
 if [[ $(get_config DISABLE_CLOUD) == "no" ]] ; then
     (
         if [ $(get_config RTSP_AUDIO) != "no" ]; then
@@ -170,9 +193,12 @@ else
     )
 fi
 
+log "Yi processes started successfully" 1
+
 [ -f /etc/TZ ] && export TZ=`cat /etc/TZ`
 
 if [[ $(get_config HTTPD) == "yes" ]] ; then
+    log "Starting http"
     httpd -p $HTTPD_PORT -h $YI_HACK_PREFIX/www/ -c /tmp/httpd.conf
 fi
 
@@ -181,6 +207,7 @@ if [[ $(get_config TELNETD) == "yes" ]] ; then
 fi
 
 if [[ $(get_config FTPD) == "yes" ]] ; then
+    log "Starting ftp"
     if [[ $(get_config BUSYBOX_FTPD) == "yes" ]] ; then
         tcpsvd -vE 0.0.0.0 21 ftpd -w &
     else
@@ -189,14 +216,17 @@ if [[ $(get_config FTPD) == "yes" ]] ; then
 fi
 
 if [[ $(get_config SSHD) == "yes" ]] ; then
+    log "Starting sshd"
     dropbear -R
 fi
 
 if [[ $(get_config NTPD) == "yes" ]] ; then
+    log "Starting ntp"
     # Wait until all the other processes have been initialized
     sleep 5 && ntpd -p $(get_config NTP_SERVER) &
 fi
 
+log "Starting mqtt services"
 mqttv4 &
 if [[ $(get_config MQTT) == "yes" ]] ; then
     mqtt-config &
@@ -226,6 +256,7 @@ if [[ $(get_config SNAPSHOT_LOW) == "yes" ]] ; then
 fi
 
 if [[ $(get_config RTSP) == "yes" ]] ; then
+    log "Starting rtsp"
     RTSP_DAEMON="rRTSPServer"
     RTSP_AUDIO_COMPRESSION=$(get_config RTSP_AUDIO)
     NR_LEVEL=$(get_config RTSP_AUDIO_NR_LEVEL)
@@ -304,6 +335,8 @@ SERIAL_NUMBER=$(dd status=none bs=1 count=20 skip=661 if=/tmp/mmap.info | tr '\0
 HW_ID=$(dd status=none bs=1 count=4 skip=661 if=/tmp/mmap.info | tr '\0' '0' | cut -c1-4)
 
 if [[ $(get_config ONVIF) == "yes" ]] ; then
+    log "Starting onvif"
+
     ONVIF_SRVD_CONF="/tmp/onvif_simple_server.conf"
 
     echo "model=Yi Hack" > $ONVIF_SRVD_CONF
@@ -348,6 +381,7 @@ if [[ $(get_config ONVIF) == "yes" ]] ; then
     fi
 fi
 
+log "Starting crontab"
 # Add crontab
 CRONTAB=$(get_config CRONTAB)
 FREE_SPACE=$(get_config FREE_SPACE)
@@ -418,6 +452,9 @@ fi
 
 unset TZ
 
+log "Starting custom startup.sh"
 if [ -f "/tmp/sd/yi-hack/startup.sh" ]; then
     /tmp/sd/yi-hack/startup.sh
 fi
+
+log "system.sh completed" 1
