@@ -57,10 +57,10 @@ Apart from RTSP, snapshot and ONVIF, all the features are copied from the TheCry
     - Synology Surveillance Station
   - Snapshot service - allows to get a jpg with a web request.
   Gets the latest yuv image from the kernel buffer and converts it to jpg.
-    - http://IP-CAM:8080/cgi-bin/snapshot.sh?res=low        (select resolution: low or high)
-    - http://IP-CAM:8080/cgi-bin/snapshot.sh                (default high)
+    - http://IP-CAM/cgi-bin/snapshot.sh?res=low        (select resolution: low or high)
+    - http://IP-CAM/cgi-bin/snapshot.sh                (default high)
   - MQTT - Motion detection and baby crying detection through mqtt protocol.
-  - Web server - web configutation interface (port 8080).
+  - Web server - web configutation interface.
   - SSH server - dropbear.
   - Telnet server - busybox.
   - FTP server.
@@ -174,7 +174,7 @@ If not, check the other projects related to Yi cams:
 
 8. Blue light should come ON indicating that your WiFi connection has been successful (if not disable using app).
 
-9. Go in the browser and access the web interface of the camera as a website (http://IP-CAM:8080) where IP-CAM is the IP address of your cam and you can find it using the mobile app (Camera Settings --> Network Info --> IP Address). If the mobile app can't be paired, you may look for the IP on your router's portal (see connected devices).
+9. Go in the browser and access the web interface of the camera as a website (http://IP-CAM) where IP-CAM is the IP address of your cam and you can find it using the mobile app (Camera Settings --> Network Info --> IP Address). If the mobile app can't be paired, you may look for the IP on your router's portal (see connected devices).
 
 10. Done.
 
