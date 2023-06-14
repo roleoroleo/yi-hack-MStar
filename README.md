@@ -60,7 +60,7 @@ Apart from RTSP, snapshot and ONVIF, all the features are copied from the TheCry
     - http://IP-CAM/cgi-bin/snapshot.sh?res=low        (select resolution: low or high)
     - http://IP-CAM/cgi-bin/snapshot.sh                (default high)
   - MQTT - Motion detection and baby crying detection through mqtt protocol.
-  - Web server - web configutation interface.
+  - Web server - web configuration interface.
   - SSH server - dropbear.
   - Telnet server - busybox.
   - FTP server.
