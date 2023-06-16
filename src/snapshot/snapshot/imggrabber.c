@@ -31,7 +31,7 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <getopt.h>
-
+#include <errno.h>
 #include <jpeglib.h>
 
 #ifdef HAVE_AV_CONFIG_H
@@ -475,10 +475,13 @@ int main(int argc, char **argv)
 {
     int model = GENERIC;
     int c;
+    int errno;
+    char *endptr;
     const char memDevice[] = "/dev/mem";
     char file[256];
     int resolution = RESOLUTION_HIGH;
     int watermark = 0;
+    int priority = 0;
     int width, height;
     FILE *fPtr, *fLen, *fHF;
     int fMem;
@@ -512,6 +515,7 @@ int main(int argc, char **argv)
             {"file",      required_argument, 0, 'f'},
             {"resolution",  required_argument, 0, 'r'},
             {"watermark",  no_argument, 0, 'w'},
+            {"priority",  required_argument, 0, 'p'},
             {"debug",  no_argument, 0, 'd'},
             {"help",  no_argument, 0, 'h'},
             {0, 0, 0, 0}
@@ -519,7 +523,7 @@ int main(int argc, char **argv)
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        c = getopt_long (argc, argv, "m:f:r:wdh",
+        c = getopt_long (argc, argv, "m:f:r:wp:dh",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -553,6 +557,25 @@ int main(int argc, char **argv)
             watermark = 1;
             break;
 
+        case 'p':
+            errno = 0;    /* To distinguish success/failure after call */
+            priority = strtol(optarg, &endptr, 10);
+
+            /* Check for various possible errors */
+            if ((errno == ERANGE && (priority == LONG_MAX || priority == LONG_MIN)) || (errno != 0 && priority == 0)) {
+                print_usage(argv[0]);
+                exit(EXIT_FAILURE);
+            }
+            if (endptr == optarg) {
+                print_usage(argv[0]);
+                exit(EXIT_FAILURE);
+            }
+            if ((priority > 19) || (priority < -20)) {
+                print_usage(argv[0]);
+                exit(EXIT_FAILURE);
+            }
+            break;
+
         case 'd':
             fprintf (stderr, "debug on\n");
             debug = 1;
@@ -576,7 +599,8 @@ int main(int argc, char **argv)
     if (debug) fprintf(stderr, "Starting program\n");
 
     // Set low priority
-    setpriority(PRIO_PROCESS, 0, 10);
+    if (debug) fprintf(stderr, "Setting process priority to %d\n", priority);
+    setpriority(PRIO_PROCESS, 0, priority);
 
     // Check if snapshot is disabled
     if (access("/tmp/snapshot.disabled", F_OK ) == 0 ) {
