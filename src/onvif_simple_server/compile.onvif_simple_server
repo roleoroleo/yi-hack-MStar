@@ -37,9 +37,7 @@ cp ./onvif_simple_server ../_install/www/onvif || exit 1
 ln -s onvif_simple_server ../_install/www/onvif/device_service
 ln -s onvif_simple_server ../_install/www/onvif/media_service
 ln -s onvif_simple_server ../_install/www/onvif/ptz_service
-ln -s onvif_simple_server ../_install/www/onvif/events_service
 cp -R ./device_service_files ../_install/www/onvif
-cp -R ./events_service_files ../_install/www/onvif
 cp -R ./generic_files ../_install/www/onvif
 cp -R ./media_service_files ../_install/www/onvif
 cp -R ./ptz_service_files ../_install/www/onvif
