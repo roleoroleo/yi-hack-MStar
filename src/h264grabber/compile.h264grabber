@@ -27,7 +27,7 @@ make || exit 1
 mkdir -p ../_install/bin || exit 1
 
 cp ./h264grabber ../_install/bin || exit 1
-cp ./h264grabber2 ../_install/bin || exit 1
+#cp ./h264grabber2 ../_install/bin || exit 1
 
 ${STRIP} ../_install/bin/* || exit 1
 
