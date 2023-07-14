@@ -175,7 +175,7 @@ stop_onvif()
 
 start_wsdd()
 {
-    wsd_simple_server --pid_file /var/run/wsd_simple_server.pid --if_name wlan0 --xaddr "http://%s$D_HTTPD_PORT/onvif/device_service"
+    wsd_simple_server --pid_file /var/run/wsd_simple_server.pid --if_name wlan0 --xaddr "http://%s$D_HTTPD_PORT/onvif/device_service" -m yi_hack -n Yi
 }
 
 stop_wsdd()
