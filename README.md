@@ -9,7 +9,7 @@
 </p>
 
 # Custom firmware for Yi camera based on MStar platform
-This firmware is completely based on the work done by TheCrypt0
+This firmware is based on the work done by TheCrypt0
 https://github.com/TheCrypt0/yi-hack-v4
 It's a clone made for Yi cameras based on MStar platform.
 
@@ -18,47 +18,65 @@ It's a clone made for Yi cameras based on MStar platform.
 I have no time to support the project, so feel free to clone/fork this git and modify it as you want.
 
 ## Table of Contents
+- [Table of Contents](#table-of-contents)
+- [Installation](#installation)
 - [Contributing](#contributing-and-bug-reports)
 - [Features](#features)
 - [RTSP Server](#rtsp-server)
 - [Performance](#performance)
 - [Supported cameras](#supported-cameras)
 - [Is my cam supported?](#is-my-cam-supported)
-- [Getting started](#getting-started)
 - [Home Assistant integration](#home-assistant-integration)
 - [Build your own firmware](#build-your-own-firmware)
 - [Unbricking](#unbricking)
+- [License](#license)
 - [Acknowledgments](#acknowledgments)
-- [Donation](#donation)
 - [Disclaimer](#disclaimer)
+- [Donation](#donation)
+
+## Installation
+
+### Install Procedure
+1. Check if your cam is supported in the "Supported cameras" section and note the file prefix.
+2. Format an SD Card as FAT32. It's recommended to format the card in the camera using the camera's native format function. If the card is already formatted, remove all the files.
+3. Download the latest release from [the Releases page](https://github.com/roleoroleo/yi-hack-MStar/releases) based on the file prefix.
+4. Extract the contents of the archive to the root of your SD card (for example home_y203c and sys_y203c).
+5. Insert the SD Card and reboot the camera.
+6. The yellow light will come ON and flash for roughly 30 seconds, which means the firmware is being flashed successfully. The camera will boot up.
+7. The yellow light will come ON again for the final stage of flashing. This will take up to 2 minutes.
+8. Blue light should come ON indicating that your WiFi connection has been successful (if not disable using app).
+9. Go in the browser and access the web interface of the camera as a website (http://IP-CAM) where IP-CAM is the IP address of your cam and you can find it using the mobile app (Camera Settings --> Network Info --> IP Address). If the mobile app can't be paired, you may look for the IP on your router's portal (see connected devices).
+10. Done.
+
+### Online Update Procedure
+1. Go to the "Maintenance" web page
+2. Check if a new release is available
+3. Click "Upgrade Firmware"
+4. Wait for cam reboot
+
+
+### Optional Utilities 
+Several [optional untilies](https://github.com/roleoroleo/yi-hack-utils) are avaiable, some supporting experimental features like text-to-speech.
+
 
 ## Contributing and Bug Reports
 See [CONTRIBUTING](CONTRIBUTING.md)
 
+---
+
 ## Features
-This firmware contains the following features.
-Apart from RTSP, snapshot and ONVIF, all the features are copied from the TheCrypt0 project.
+This custom firmware contains features replicated from the [yi-hack-MStar](https://github.com/roleoroleo/yi-hack-MStar) project and similar to the [yi-hack-v4](https://github.com/TheCrypt0/yi-hack-v4) project.
 
 - FEATURES
-  - RTSP server - allows a RTSP stream of the video (high and/or low resolution) but without audio.
+  - RTSP server - allows a RTSP stream of the video (high and/or low resolution) and audio (thanks to @PieVo for the work on MStar platform).
     - rtsp://IP-CAM/ch0_0.h264             (high res)
-    - rtsp://IP-CAM:8554/ch0_1.h264        (low res)
+    - rtsp://IP-CAM/ch0_1.h264             (low res)
+    - rtsp://IP-CAM/ch0_2.h264             (only audio)
   - ONVIF server (with support for h264 stream, snapshot, ptz, presets and WS-Discovery) - standardized interfaces for IP cameras.
-  
-    ONVIF compatible devices/software:
-    - Onvif Device Manager
-    - Hikvision
-    - Qnap Surveillance Station
-    - Xiongmai based DVR
-    - Home Assistant
-    - Onvifer (Android app)
-  
-    Beta testing devices/software:
-    - Synology Surveillance Station
   - Snapshot service - allows to get a jpg with a web request.
-  Gets the latest yuv image from the kernel buffer and converts it to jpg.
-    - http://IP-CAM/cgi-bin/snapshot.sh?res=low        (select resolution: low or high)
-    - http://IP-CAM/cgi-bin/snapshot.sh                (default high)
+    - http://IP-CAM/cgi-bin/snapshot.sh?res=low&watermark=yes        (select resolution: low or high, and watermark: yes or no)
+    - http://IP-CAM/cgi-bin/snapshot.sh                              (default high without watermark)
+  - Timelapse feature
   - MQTT - Motion detection and baby crying detection through mqtt protocol.
   - Web server - web configuration interface.
   - SSH server - dropbear.
@@ -72,13 +90,18 @@ Apart from RTSP, snapshot and ONVIF, all the features are copied from the TheCry
     - camera on/off
     - video saving mode
     - detection sensitivity
+    - motion detections (it depends on your cam and your plan)
     - baby crying detection
     - status led
     - ir led
     - rotate
+    - ...
   - Management of motion detect events and videos through a web page.
-  - PTZ support through a web page.
+  - View recorded video through a web page (thanks to @BenjaminFaal).
+  - PTZ support through a web page (if the cam supports it).
+  - PTZ presets.
   - The possibility to disable all the cloud features.
+  - Swap File on SD.
   - Online firmware upgrade.
   - Load/save/reset configuration.
 
@@ -93,8 +116,6 @@ I was inspired by the following topic:
 - @andy2301 - [Ideas for the RSTP rtsp and rtsp2301](https://github.com/xmflsct/yi-hack-1080p/issues/5#issuecomment-294326131)
 
 The RTSP server code derives from live555 - http://www.live555.com/ and from the archive rtsp2303_srcbin_20170414-1630.zip posted in the link above.
-
-There is a known problem with ffmpeg, see https://github.com/roleoroleo/yi-hack-MStar/issues/36 for details.
 
 ### RTSP audio support (many thanks to @PieVo for adding it)
 The datapath of the audio is as follows:
@@ -147,7 +168,6 @@ So, USE AT YOUR OWN RISK.
 
 **Do not try to force the fw loading renaming the files**
 
-
 ## Is my cam supported?
 If you want to know if your cam is supported, please check the serial number (first 4 letters) and the firmware version.
 If both numbers appear in the same row in the table above, your cam is supported.
@@ -156,35 +176,27 @@ If not, check the other projects related to Yi cams:
 - https://github.com/roleoroleo/yi-hack-Allwinner
 - https://github.com/roleoroleo/yi-hack-Allwinner-v2
 
-
-## Getting Started
-1. Check that you have a correct Xiaomi Yi camera.
-
-2. Get a microSD card, 16gb or less, and format it by selecting File System as FAT32.
-
-3. Get the correct firmware files for your camera from the releases section (https://github.com/roleoroleo/yi-hack-6FUS_4.5.0/releases).
-
-4. Decompress it and save both files (for example home_y203c and sys_y203c) on root path of microSD card.
-
-5. Remove power to the camera, insert the microSD card, turn the power back ON.
-
-6. The yellow light will come ON and flash for roughly 30 seconds, which means the firmware is being flashed successfully. The camera will boot up.
-
-7. The yellow light will come ON again for the final stage of flashing. This will take up to 2 minutes.
-
-8. Blue light should come ON indicating that your WiFi connection has been successful (if not disable using app).
-
-9. Go in the browser and access the web interface of the camera as a website (http://IP-CAM) where IP-CAM is the IP address of your cam and you can find it using the mobile app (Camera Settings --> Network Info --> IP Address). If the mobile app can't be paired, you may look for the IP on your router's portal (see connected devices).
-
-10. Done.
-
 ## Home Assistant integration
-Are you using Home Assistant?
+Are you using Home Assistant? Do you want to integrate your cam? Try these custom integrations:
+- https://github.com/roleoroleo/yi-hack_ha_integration
+- https://github.com/AlexxIT/WebRTC
 
-Do you want to integrate your cam?
-
-Try this custom integration:
-https://github.com/roleoroleo/yi-hack_ha_integration
+You can also use the [web services](https://github.com/roleoroleo/yi-hack-MStar/wiki/Web-services-description) in Home Assistant -- here's one way to do that. (This example requires the nanotts optional utility to be installed on the camera.) Set up a rest_command in your configuration.yaml to call one of the [web services](https://github.com/roleoroleo/yi-hack-MStar/wiki/Web-services-description). 
+```
+rest_command:
+  camera_announce:
+    url: http://[camera address]/cgi-bin/speak.sh?lang={{language}}&voldb={{volume}}
+    method: POST
+    payload: "{{message}}"
+```
+Create an automation and use yaml in the action to send data to the web service. 
+```
+service: rest_command.camera_announce
+data:
+  language: en-US
+  message: "All your base are belong to us."
+  volume: '-8'
+``` 
 
 ## Build your own firmware
 If you want to build your own firmware, clone this git and compile using a linux machine.
@@ -208,16 +220,20 @@ If your camera doesn't start repeat the hack as described above (with a lower/hi
 You can use the same procedure even if you have a backup copy of the original partitions.
 If the bootloader works correctly the camera will restart.
 
+----
+
+## License
+[GPLv3](https://choosealicense.com/licenses/gpl-3.0/)
+
 ## Acknowledgments
 Special thanks to the following people for the previous projects I started from.
 - @TheCrypt0 - [https://github.com/TheCrypt0/yi-hack-v4](https://github.com/TheCrypt0/yi-hack-v4)
 - @andy2301 - [Ideas for the RTSP](https://github.com/xmflsct/yi-hack-1080p/issues/5#issuecomment-298093437)
 - All the people who worked on the previous projects "yi-hack".
 
+## DISCLAIMER
+**I AM NOT RESPONSIBLE FOR ANY USE OR DAMAGE THIS SOFTWARE MAY CAUSE. THIS IS INTENDED FOR EDUCATIONAL PURPOSES ONLY. USE AT YOUR OWN RISK.**
+
 ## Donation
 If you like this project, you can buy me a beer :) 
 [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=JBYXDMR24FW7U&currency_code=EUR&source=url)
-
----
-### DISCLAIMER
-**I AM NOT RESPONSIBLE FOR ANY USE OR DAMAGE THIS SOFTWARE MAY CAUSE. THIS IS INTENDED FOR EDUCATIONAL PURPOSES ONLY. USE AT YOUR OWN RISK.**
