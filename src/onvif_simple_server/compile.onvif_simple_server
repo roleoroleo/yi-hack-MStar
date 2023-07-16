@@ -27,7 +27,7 @@ cd ..
 cd onvif_simple_server || exit 1
 
 make clean
-CFLAGS="-std=c99" make || exit 1
+make || exit 1
 
 mkdir -p ../_install/www/onvif || exit 1
 mkdir -p ../_install/bin || exit 1
