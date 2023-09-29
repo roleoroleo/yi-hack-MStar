@@ -142,7 +142,8 @@ if [[ $(get_config DISABLE_CLOUD) == "no" ]] ; then
         LD_PRELOAD=/home/yi-hack/lib/ipc_multiplex.so ./dispatch &
         sleep 3
         if [ $(get_config TIME_OSD) == "yes" ]; then
-            echo -ne '\x01\x00\x00\x00' | dd of=/tmp/mmap.info bs=1 seek=0 count=4 conv=notrunc
+            # Enable time osd
+            set_tz_offset -c osd -o on
         fi
         LD_LIBRARY_PATH="/home/yi-hack/lib:/lib:/home/lib:/home/ms:/home/app/locallib" ./rmm &
         sleep 4
@@ -184,7 +185,8 @@ else
         LD_PRELOAD=/home/yi-hack/lib/ipc_multiplex.so ./dispatch &
         sleep 3
         if [ $(get_config TIME_OSD) == "yes" ]; then
-            echo -ne '\x01\x00\x00\x00' | dd of=/tmp/mmap.info bs=1 seek=0 count=4 conv=notrunc
+            # Enable time osd
+            set_tz_offset -c osd -o on
         fi
         LD_LIBRARY_PATH="/home/yi-hack/lib:/lib:/home/lib:/home/ms:/home/app/locallib" ./rmm &
         sleep 4
@@ -385,6 +387,13 @@ if [[ $(get_config ONVIF) == "yes" ]] ; then
     if [[ $(get_config ONVIF_WSDD) == "yes" ]] ; then
         wsd_simple_server --pid_file /var/run/wsd_simple_server.pid --if_name wlan0 --xaddr "http://%s$D_HTTPD_PORT/onvif/device_service" -m yi_hack -n Yi
     fi
+fi
+
+if [[ $(get_config TIME_OSD) == "yes" ]] ; then
+    # Set timezone for time osd
+    TZP=$(date +%z)
+    TZP_SET=$(echo ${TZP:0:1} ${TZP:1:2} ${TZP:3:2} | awk '{ print ($1$2*3600+$3*60) }')
+    set_tz_offset -c tz_offset_osd -m $MODEL_SUFFIX -f 0 -v $TZP_SET
 fi
 
 log "Starting crontab"
