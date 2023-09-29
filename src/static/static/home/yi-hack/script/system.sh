@@ -140,7 +140,10 @@ if [[ $(get_config DISABLE_CLOUD) == "no" ]] ; then
         cd /home/app
         killall dispatch
         LD_PRELOAD=/home/yi-hack/lib/ipc_multiplex.so ./dispatch &
-        sleep 2
+        sleep 3
+        if [ $(get_config TIME_OSD) == "yes" ]; then
+            echo -ne '\x01\x00\x00\x00' | dd of=/tmp/mmap.info bs=1 seek=0 count=4 conv=notrunc
+        fi
         LD_LIBRARY_PATH="/home/yi-hack/lib:/lib:/home/lib:/home/ms:/home/app/locallib" ./rmm &
         sleep 4
         dd if=/tmp/audio_fifo of=/dev/null bs=1 count=8192
@@ -179,7 +182,10 @@ else
         cd /home/app
         killall dispatch
         LD_PRELOAD=/home/yi-hack/lib/ipc_multiplex.so ./dispatch &
-        sleep 2
+        sleep 3
+        if [ $(get_config TIME_OSD) == "yes" ]; then
+            echo -ne '\x01\x00\x00\x00' | dd of=/tmp/mmap.info bs=1 seek=0 count=4 conv=notrunc
+        fi
         LD_LIBRARY_PATH="/home/yi-hack/lib:/lib:/home/lib:/home/ms:/home/app/locallib" ./rmm &
         sleep 4
         dd if=/tmp/audio_fifo of=/dev/null bs=1 count=8192
