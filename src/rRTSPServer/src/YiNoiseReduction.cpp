@@ -20,6 +20,7 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 
 #include "YiNoiseReduction.hh"
 #include "WAVAudioFifoSource.hh"
+#include "misc.hh"
 
 // Level defines the ammount of noise reduction. On YiHome1080 6FUS is was set to 30.
 YiNoiseReduction*

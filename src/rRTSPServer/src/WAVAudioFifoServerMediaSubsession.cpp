@@ -24,6 +24,7 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 #include "aLawAudioFilter.hh"
 #include "SimpleRTPSink.hh"
 #include "YiNoiseReduction.hh"
+#include "misc.hh"
 
 WAVAudioFifoServerMediaSubsession* WAVAudioFifoServerMediaSubsession
 ::createNew(UsageEnvironment& env, StreamReplicator* replicator, Boolean reuseFirstSource, int convertToxLaw) {

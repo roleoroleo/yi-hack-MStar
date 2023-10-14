@@ -21,7 +21,7 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 #include "ADTSFromWAVAudioFifoSource.hh"
 #include "InputFile.hh"
 #include "GroupsockHelper.hh"
-#include "presentationTime.hh"
+#include "misc.hh"
 #include "fdk-aac/aacenc_lib.h"
 
 #include <fcntl.h>
