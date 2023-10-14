@@ -26,7 +26,7 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 
 #include <fcntl.h>
 
-//#define DEBUG 1
+extern int debug;
 
 ////////// ADTSFromWAVAudioFifoSource //////////
 
@@ -40,50 +40,43 @@ static unsigned const samplingFrequencyTable[16] = {
 ADTSFromWAVAudioFifoSource*
 ADTSFromWAVAudioFifoSource::createNew(UsageEnvironment& env, char const* fileName) {
     FILE* fid = NULL;
-    int ErrorStatus;
 
     do {
-#ifdef DEBUG
-        fprintf(stderr, "Creating new ADTSFromWAVAudioFifoSource\n");
-#endif
+        if (debug & 2) fprintf(stderr, "%lld - ADTSFromWAVAudioFifoSource - Creating new ADTSFromWAVAudioFifoSource\n", current_timestamp());
         fid = OpenInputFile(env, fileName);
         if (fid == NULL) break;
 
-/*
-        // Set non blocking
-        if (fcntl(fileno(fid), F_SETFL, O_NONBLOCK) != 0) {
-            fclose(fid);
-            break;
-        };
-*/
         // Set a static profile
         u_int8_t profile = 1;
         // Set a static sampling_frequency_index
         u_int8_t sampling_frequency_index = 11;
         // Set a static channel_configuration
         u_int8_t channel_configuration = 1;
-#ifdef DEBUG
-        fprintf(stderr, "Setting profile: profile %d, "
-            "sampling_frequency_index %d => samplingFrequency %d, "
-            "channel_configuration %d\n",
-            profile,
-            sampling_frequency_index, samplingFrequencyTable[sampling_frequency_index],
-            channel_configuration);
-#endif
+
+        if (debug & 2) {
+            fprintf(stderr, "%lld - ADTSFromWAVAudioFifoSource - Setting profile: profile %d, "
+                "sampling_frequency_index %d => samplingFrequency %d, "
+                "channel_configuration %d\n",
+                current_timestamp(), profile,
+                sampling_frequency_index, samplingFrequencyTable[sampling_frequency_index],
+                channel_configuration);
+        }
+
         return new ADTSFromWAVAudioFifoSource(env, fid, profile,
                                    sampling_frequency_index, channel_configuration);
     } while (0);
 
     // An error occurred:
     CloseInputFile(fid);
+
     return NULL;
 }
 
 ADTSFromWAVAudioFifoSource
 ::ADTSFromWAVAudioFifoSource(UsageEnvironment& env, FILE* fid, u_int8_t profile,
                       u_int8_t samplingFrequencyIndex, u_int8_t channelConfiguration)
-    : FramedSource(env) {
-    fFid = fid;
+    : FramedSource(env), fFid(fid), fHaveStartedReading(False), fInputBufferSize(0) {
+
     fSamplingFrequency = samplingFrequencyTable[samplingFrequencyIndex];
     fNumChannels = channelConfiguration == 0 ? 2 : channelConfiguration;
     fuSecsPerFrame
@@ -95,15 +88,13 @@ ADTSFromWAVAudioFifoSource
     audioSpecificConfig[0] = (audioObjectType<<3) | (samplingFrequencyIndex>>1);
     audioSpecificConfig[1] = (samplingFrequencyIndex<<7) | (channelConfiguration<<3);
     sprintf(fConfigStr, "%02X%02X", audioSpecificConfig[0], audioSpecificConfig[1]);
-#ifdef DEBUG
-    fprintf(stderr, "Read config: audioObjectType %d, samplingFrequencyIndex %d, channelConfiguration %d\n", audioObjectType, samplingFrequencyIndex, channelConfiguration);
-#endif
+    if (debug & 2) fprintf(stderr, "%lld - ADTSFromWAVAudioFifoSource - Read config: audioObjectType %d, samplingFrequencyIndex %d, channelConfiguration %d\n", current_timestamp(), audioObjectType, samplingFrequencyIndex, channelConfiguration);
 
     // Open encoder
     fHAacEncoder = NULL;
     int ErrorStatus = aacEncOpen(&fHAacEncoder, 0, 0);
     if (ErrorStatus != AACENC_OK) {
-        fprintf(stderr, "Error opening encoder\n");
+        fprintf(stderr, "%lld - ADTSFromWAVAudioFifoSource - Error opening encoder\n", current_timestamp());
         return;
     }
 
@@ -118,7 +109,7 @@ ADTSFromWAVAudioFifoSource
     // Init encoder
     ErrorStatus = aacEncEncode(fHAacEncoder, NULL, NULL, NULL, NULL);
     if (ErrorStatus != AACENC_OK) {
-        fprintf(stderr, "Error initializing encoder\n");
+        fprintf(stderr, "%lld - ADTSFromWAVAudioFifoSource - Error initializing encoder\n", current_timestamp());
         return;
     }
 
@@ -155,17 +146,20 @@ ADTSFromWAVAudioFifoSource
 
     fPermanentOutputBufferSize = 0;
 
-#ifdef DEBUG
-    fprintf(stderr, "inargs.numInSamples %d\n", fInargs.numInSamples);
-    fprintf(stderr, "encInfo.inputChannels %d\n", fEncInfo.inputChannels);
-    fprintf(stderr, "encInfo.frameLength %d\n", fEncInfo.frameLength);
-    fprintf(stderr, "sizeof(INT_PCM) %d\n", sizeof(INT_PCM));
-    fprintf(stderr, "SAMPLE_BITS %d\n", SAMPLE_BITS);
-    fprintf(stderr, "encInfo.inputChannels * encInfo.frameLength %d\n", fEncInfo.inputChannels * fEncInfo.frameLength);
-    fprintf(stderr, "FDKmin(encInfo.inputChannels * encInfo.frameLength, sizeof(inputBuffer) / sizeof(INT_PCM) - inargs.numInSamples) %d\n",
-                FDKmin(fEncInfo.inputChannels * fEncInfo.frameLength, sizeof(fInputBuffer) / sizeof(INT_PCM) - fInargs.numInSamples));
-    fprintf(stderr, "encInfo.frameLength %d\n", fEncInfo.frameLength);
-#endif
+    if (debug & 2) {
+        fprintf(stderr, "%lld - ADTSFromWAVAudioFifoSource - inargs.numInSamples %d\n", current_timestamp(), fInargs.numInSamples);
+        fprintf(stderr, "%lld - ADTSFromWAVAudioFifoSource - encInfo.inputChannels %d\n", current_timestamp(), fEncInfo.inputChannels);
+        fprintf(stderr, "%lld - ADTSFromWAVAudioFifoSource - encInfo.frameLength %d\n", current_timestamp(), fEncInfo.frameLength);
+        fprintf(stderr, "%lld - ADTSFromWAVAudioFifoSource - sizeof(INT_PCM) %d\n", current_timestamp(), sizeof(INT_PCM));
+        fprintf(stderr, "%lld - ADTSFromWAVAudioFifoSource - SAMPLE_BITS %d\n", current_timestamp(), SAMPLE_BITS);
+        fprintf(stderr, "%lld - ADTSFromWAVAudioFifoSource - encInfo.inputChannels * encInfo.frameLength %d\n", current_timestamp(), fEncInfo.inputChannels * fEncInfo.frameLength);
+        fprintf(stderr, "%lld - ADTSFromWAVAudioFifoSource - FDKmin(encInfo.inputChannels * encInfo.frameLength, sizeof(inputBuffer) / sizeof(INT_PCM) - inargs.numInSamples) %d\n",
+                current_timestamp(), FDKmin(fEncInfo.inputChannels * fEncInfo.frameLength, sizeof(fInputBuffer) / sizeof(INT_PCM) - fInargs.numInSamples));
+    }
+
+    // All future reads (of audio samples) from the file will be asynchronous:
+    if (!makeSocketNonBlocking(fileno(fFid)))
+        fprintf(stderr, "%lld - ADTSFromWAVAudioFifoSource - Error setting socket non blocking\n", current_timestamp());
 }
 
 ADTSFromWAVAudioFifoSource::~ADTSFromWAVAudioFifoSource() {
@@ -173,39 +167,84 @@ ADTSFromWAVAudioFifoSource::~ADTSFromWAVAudioFifoSource() {
     CloseInputFile(fFid);
 }
 
+void ADTSFromWAVAudioFifoSource::doStopGettingFrames() {
+    fHaveStartedReading = False;
+}
+
+void ADTSFromWAVAudioFifoSource::doGetNextFrameTask(void* clientData) {
+    ADTSFromWAVAudioFifoSource *source = (ADTSFromWAVAudioFifoSource *) clientData;
+    source->doGetNextFrameEx();
+}
+
+void ADTSFromWAVAudioFifoSource::doGetNextFrameEx() {
+    doGetNextFrame();
+}
+
 void ADTSFromWAVAudioFifoSource::doGetNextFrame() {
 
-    int numInSamples;
+    Boolean isFirstReading = !fHaveStartedReading;
+    if (!fHaveStartedReading) {
+        if (debug & 2) fprintf(stderr, "%lld: ADTSFromWAVAudioFifoSource - doGetNextFrame() 1st start\n", current_timestamp());
+        fHaveStartedReading = True;
+    }
+
+    int numInBytes;
     int ErrorStatus;
+    int numToRead;
 
     // Feed input buffer with 1 frame
     // PCM 16 bit, 8KHz, mono = 2048 bytes to read per frame
     // 1 aac frame every 128 ms
-    numInSamples = fread((UCHAR *) fInputBuffer,
-                sizeof(INT_PCM),
-                fEncInfo.inputChannels * fEncInfo.frameLength,
-                fFid);
-    if (numInSamples == -1) {
-        fprintf(stderr, "End of file reached\n");
+    numToRead = sizeof(INT_PCM) * (fEncInfo.inputChannels * fEncInfo.frameLength - fInputBufferSize);
+    if (debug & 2) fprintf(stderr, "%lld: ADTSFromWAVAudioFifoSource - starting read\n", current_timestamp());
+    numInBytes = read(fileno(fFid),
+                 ((UCHAR *) fInputBuffer) + sizeof(INT_PCM) * fInputBufferSize,
+                 numToRead);
+    if (debug & 2) fprintf(stderr, "%lld: ADTSFromWAVAudioFifoSource - read completed\n", current_timestamp());
+    if (numInBytes <= -1) {
+        // TODO
+        fprintf(stderr, "%lld: ADTSFromWAVAudioFifoSource - error reading file, try again later\n", current_timestamp());
+        // Trick to avoid segfault with StreamReplicator
+        if (isFirstReading) {
+            nextTask() = envir().taskScheduler().scheduleDelayedTask(0,
+                    (TaskFunc*)FramedSource::afterGetting, this);
+        } else {
+            nextTask() = envir().taskScheduler().scheduleDelayedTask(fuSecsPerFrame/4,
+                    (TaskFunc*) ADTSFromWAVAudioFifoSource::doGetNextFrameTask, this);
+        }
+        return;
+    }
+    fInputBufferSize += (numInBytes / sizeof(INT_PCM));
+    if (fInputBufferSize != sizeof(fInputBuffer) / sizeof(INT_PCM)) {
+        fprintf(stderr, "%lld: ADTSFromWAVAudioFifoSource - buffer not full, read again later\n", current_timestamp());
+        // Trick to avoid segfault with StreamReplicator
+        if (isFirstReading) {
+            nextTask() = envir().taskScheduler().scheduleDelayedTask(0,
+                    (TaskFunc*)FramedSource::afterGetting, this);
+        } else {
+            nextTask() = envir().taskScheduler().scheduleDelayedTask(fuSecsPerFrame/4,
+                    (TaskFunc*) ADTSFromWAVAudioFifoSource::doGetNextFrameTask, this);
+        }
         return;
     }
 
-    fInargs.numInSamples = numInSamples;
-#ifdef DEBUG
-    fprintf(stderr, "fInargs.numInSamples %d\n", fInargs.numInSamples);
-    fprintf(stderr, "fOutargs.numInSamples %d\n", fOutargs.numInSamples);
-#endif
+    fInargs.numInSamples = fInputBufferSize;
+    fInputBufferSize = 0;
+    if (debug & 2) {
+        fprintf(stderr, "%lld: ADTSFromWAVAudioFifoSource - fInargs.numInSamples %d\n", current_timestamp(), fInargs.numInSamples);
+        fprintf(stderr, "%lld: ADTSFromWAVAudioFifoSource - fOutargs.numInSamples %d\n", current_timestamp(), fOutargs.numInSamples);
+    }
 
     // Encode input samples
     ErrorStatus = aacEncEncode(fHAacEncoder, &fInBufDesc, &fOutBufDesc, &fInargs, &fOutargs);
-#ifdef DEBUG
-    fprintf(stderr, "ErrorStatus %d\n", ErrorStatus);
+    if (debug & 2) {
+        fprintf(stderr, "%lld: ADTSFromWAVAudioFifoSource - ErrorStatus %d\n", current_timestamp(), ErrorStatus);
 
-    fprintf(stderr, "fInargs.numInSamples %d\n", fInargs.numInSamples);
-    fprintf(stderr, "fOutargs.numInSamples %d\n", fOutargs.numInSamples);
+        fprintf(stderr, "%lld: ADTSFromWAVAudioFifoSource - fInargs.numInSamples %d\n", current_timestamp(), fInargs.numInSamples);
+        fprintf(stderr, "%lld: ADTSFromWAVAudioFifoSource - fOutargs.numInSamples %d\n", current_timestamp(), fOutargs.numInSamples);
 
-    fprintf(stderr, "outargs.numOutBytes %d\n", fOutargs.numOutBytes);
-#endif
+        fprintf(stderr, "%lld: ADTSFromWAVAudioFifoSource - outargs.numOutBytes %d\n", current_timestamp(), fOutargs.numOutBytes);
+    }
     if (fOutargs.numOutBytes > 0) {
 
         // Begin by reading the 7-byte fixed_variable headers:
@@ -216,11 +255,11 @@ void ADTSFromWAVAudioFifoSource::doGetNextFrame() {
         Boolean protection_absent = headers[1]&0x01;
         u_int16_t frame_length
             = ((headers[3]&0x03)<<11) | (headers[4]<<3) | ((headers[5]&0xE0)>>5);
-#ifdef DEBUG
-        u_int16_t syncword = (headers[0]<<4) | (headers[1]>>4);
-        fprintf(stderr, "Read frame: syncword 0x%x, protection_absent %d, frame_length %d\n", syncword, protection_absent, frame_length);
-        if (syncword != 0xFFF) fprintf(stderr, "WARNING: Bad syncword!\n");
-#endif
+        if (debug & 2) {
+            u_int16_t syncword = (headers[0]<<4) | (headers[1]>>4);
+            fprintf(stderr, "%lld: ADTSFromWAVAudioFifoSource - Read frame: syncword 0x%x, protection_absent %d, frame_length %d\n", current_timestamp(), syncword, protection_absent, frame_length);
+            if (syncword != 0xFFF) fprintf(stderr, "%lld: ADTSFromWAVAudioFifoSource - WARNING: Bad syncword!\n", current_timestamp());
+        }
         unsigned numBytesToRead
             = frame_length > 7 ? frame_length - 7 : 0;
 
@@ -246,9 +285,8 @@ void ADTSFromWAVAudioFifoSource::doGetNextFrame() {
         memmove(fTo, fPermanentOutputBuffer, fFrameSize);
         if (fNumTruncatedBytes > 0) {
             memmove(fPermanentOutputBuffer, &fPermanentOutputBuffer[fFrameSize], fNumTruncatedBytes);
-#ifdef DEBUG
-            fprintf(stderr, "End of buffer: fFrameSize %d, fNumTruncatedBytes %d\n", fFrameSize, fNumTruncatedBytes);
-#endif
+
+            if (debug & 2) fprintf(stderr, "%lld: ADTSFromWAVAudioFifoSource - End of buffer: fFrameSize %d, fNumTruncatedBytes %d\n", current_timestamp(), fFrameSize, fNumTruncatedBytes);
         }
         fPermanentOutputBufferSize -= fFrameSize;
     }

@@ -29,57 +29,62 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 
 class ADTSFromWAVAudioFifoSource: public FramedSource {
 public:
-  static ADTSFromWAVAudioFifoSource* createNew(UsageEnvironment& env,
+    static ADTSFromWAVAudioFifoSource* createNew(UsageEnvironment& env,
 				       char const* fileName);
 
-  unsigned samplingFrequency() const { return fSamplingFrequency; }
-  unsigned numChannels() const { return fNumChannels; }
-  char const* configStr() const { return fConfigStr; }
+    unsigned samplingFrequency() const { return fSamplingFrequency; }
+    unsigned numChannels() const { return fNumChannels; }
+    char const* configStr() const { return fConfigStr; }
+    static void doGetNextFrameTask(void *clientData);
+    void doGetNextFrameEx();
 
 private:
-  ADTSFromWAVAudioFifoSource(UsageEnvironment& env, FILE* fid, u_int8_t profile,
+    ADTSFromWAVAudioFifoSource(UsageEnvironment& env, FILE* fid, u_int8_t profile,
 		      u_int8_t samplingFrequencyIndex, u_int8_t channelConfiguration);
-	// called only by createNew()
+		      // called only by createNew()
 
-  virtual ~ADTSFromWAVAudioFifoSource();
-
-private:
-  // redefined virtual functions:
-  virtual void doGetNextFrame();
+    virtual ~ADTSFromWAVAudioFifoSource();
 
 private:
-  FILE *fFid;
-  unsigned fSamplingFrequency;
-  unsigned fNumChannels;
-  unsigned fuSecsPerFrame;
-  char fConfigStr[5];
+    // redefined virtual functions:
+    virtual void doGetNextFrame();
+    virtual void doStopGettingFrames();
 
-  // fdk-aac
-  HANDLE_AACENCODER fHAacEncoder;
-  AACENC_InfoStruct fEncInfo;
+private:
+    FILE *fFid;
+    unsigned fSamplingFrequency;
+    unsigned fNumChannels;
+    unsigned fuSecsPerFrame;
+    char fConfigStr[5];
+    Boolean fHaveStartedReading;
 
-  INT_PCM fInputBuffer[2048];
-  UCHAR fAncillaryBuffer[50];
-  AACENC_MetaData fMetaDataSetup;
-  UCHAR fOutputBuffer[1024];
+    // fdk-aac
+    HANDLE_AACENCODER fHAacEncoder;
+    AACENC_InfoStruct fEncInfo;
 
-  UCHAR fPermanentOutputBuffer[1024];
-  UINT fPermanentOutputBufferSize;
+    INT_PCM fInputBuffer[1024];
+    UINT fInputBufferSize;
+    UCHAR fAncillaryBuffer[50];
+    AACENC_MetaData fMetaDataSetup;
+    UCHAR fOutputBuffer[1024];
 
-  void *fInBuffer[3];
-  INT fInBufferIds[3];
-  INT fInBufferSize[3];
-  INT fInBufferElSize[3];
-  void *fOutBuffer[1];
-  INT fOutBufferIds[1];
-  INT fOutBufferSize[1];
-  INT fOutBufferElSize[1];
+    UCHAR fPermanentOutputBuffer[1024];
+    UINT fPermanentOutputBufferSize;
 
-  AACENC_BufDesc fInBufDesc;
-  AACENC_BufDesc fOutBufDesc;
+    void *fInBuffer[3];
+    INT fInBufferIds[3];
+    INT fInBufferSize[3];
+    INT fInBufferElSize[3];
+    void *fOutBuffer[1];
+    INT fOutBufferIds[1];
+    INT fOutBufferSize[1];
+    INT fOutBufferElSize[1];
 
-  AACENC_InArgs fInargs;
-  AACENC_OutArgs fOutargs;
+    AACENC_BufDesc fInBufDesc;
+    AACENC_BufDesc fOutBufDesc;
+
+    AACENC_InArgs fInargs;
+    AACENC_OutArgs fOutargs;
 };
 
 #endif

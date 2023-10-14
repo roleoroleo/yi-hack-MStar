@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 roleo.
+ * Copyright (c) 2023 roleo.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,6 +29,7 @@
 #include "aLawAudioFilter.hh"
 
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <getopt.h>
 #include <errno.h>
 #include <limits.h>
@@ -42,6 +43,7 @@
 #define CODEC_H264 0
 #define CODEC_H265 1
 
+int debug = 0;
 UsageEnvironment* env;
 
 // To make the second and subsequent client for each stream reuse the same
@@ -53,6 +55,14 @@ Boolean reuseFirstSource = True;
 // (e.g., to reduce network bandwidth),
 // change the following "False" to "True":
 Boolean iFramesOnly = False;
+
+long long current_timestamp() {
+    struct timeval te;
+    gettimeofday(&te, NULL); // get current time
+    long long milliseconds = te.tv_sec*1000LL + te.tv_usec/1000; // calculate mi
+
+    return milliseconds;
+}
 
 StreamReplicator* startReplicatorStream(const char* inputAudioFileName, int convertToxLaw, unsigned int nr_level) {
     // Create a single WAVAudioFifo source that will be replicated for mutliple streams
@@ -154,8 +164,8 @@ void print_usage(char *progname)
     fprintf(stderr, "\t\tset username\n");
     fprintf(stderr, "\t-w PASSWORD, --password PASSWORD\n");
     fprintf(stderr, "\t\tset password\n");
-    fprintf(stderr, "\t-d,      --debug\n");
-    fprintf(stderr, "\t\tenable debug\n");
+    fprintf(stderr, "\t-d DEBUG, --debug DEBUG\n");
+    fprintf(stderr, "\t\t0 none, 1 grabber, 2 rtsp library or 3 both\n");
     fprintf(stderr, "\t-h,      --help\n");
     fprintf(stderr, "\t\tprint this help\n");
 }
@@ -180,7 +190,6 @@ int main(int argc, char** argv)
     int convertToxLaw = WA_PCMU;
     int port = 554;
     int nr_level = 0;
-    int debug = 0;
 
     memset(user, 0, sizeof(user));
     memset(pwd, 0, sizeof(pwd));
@@ -196,7 +205,7 @@ int main(int argc, char** argv)
             {"nr_level",  required_argument, 0, 'n'},
             {"user",  required_argument, 0, 'u'},
             {"password",  required_argument, 0, 'w'},
-            {"debug",  no_argument, 0, 'd'},
+            {"debug",  required_argument, 0, 'd'},
             {"help",  no_argument, 0, 'h'},
             {0, 0, 0, 0}
         };
@@ -300,8 +309,22 @@ int main(int argc, char** argv)
             break;
 
         case 'd':
-            fprintf (stderr, "debug on\n");
-            debug = 1;
+            errno = 0;    /* To distinguish success/failure after call */
+            debug = strtol(optarg, &endptr, 10);
+
+            /* Check for various possible errors */
+            if ((errno == ERANGE && (debug == LONG_MAX || debug == LONG_MIN)) || (errno != 0 && debug == 0)) {
+                print_usage(argv[0]);
+                exit(EXIT_FAILURE);
+            }
+            if (endptr == optarg) {
+                print_usage(argv[0]);
+                exit(EXIT_FAILURE);
+            }
+            if ((debug < 0) || (debug > 3)) {
+                print_usage(argv[0]);
+                exit(EXIT_FAILURE);
+            }
             break;
 
         case 'h':
@@ -376,8 +399,8 @@ int main(int argc, char** argv)
     }
 
     str = getenv("RRTSP_DEBUG");
-    if (str != NULL) {
-        debug = 1;
+    if ((str != NULL) && (sscanf (str, "%i", &nm) == 1) && (nm >= 0)) {
+        debug = nm;
     }
 
     str = getenv("RRTSP_USER");

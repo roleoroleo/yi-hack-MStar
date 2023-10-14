@@ -25,24 +25,22 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 #include "FramedFilter.hh"
 #include "misc.hh"
 
-//#define DEBUG 1
+extern int debug;
 
 ADTSFromWAVAudioFifoServerMediaSubsession*
 ADTSFromWAVAudioFifoServerMediaSubsession::createNew(UsageEnvironment& env,
 					     StreamReplicator* replicator,
 					     Boolean reuseFirstSource) {
-  return new ADTSFromWAVAudioFifoServerMediaSubsession(env, replicator, reuseFirstSource);
+    return new ADTSFromWAVAudioFifoServerMediaSubsession(env, replicator, reuseFirstSource);
 }
 
 ADTSFromWAVAudioFifoServerMediaSubsession
 ::ADTSFromWAVAudioFifoServerMediaSubsession(UsageEnvironment& env,
 				    StreamReplicator* replicator, Boolean reuseFirstSource)
-  : OnDemandServerMediaSubsession(env, reuseFirstSource),
-    fReplicator(replicator) {
+    : OnDemandServerMediaSubsession(env, reuseFirstSource),
+      fReplicator(replicator) {
 
-#ifdef DEBUG
-  printf("New ADTSFromWAVAudioFifoServerMediaSubsession\n");
-#endif
+    if (debug & 2) fprintf(stderr, "%lld: ADTSFromWAVAudioFifoServerMediaSubsession - New ADTSFromWAVAudioFifoServerMediaSubsession\n", current_timestamp());
 }
 
 ADTSFromWAVAudioFifoServerMediaSubsession
@@ -51,52 +49,40 @@ ADTSFromWAVAudioFifoServerMediaSubsession
 
 FramedSource* ADTSFromWAVAudioFifoServerMediaSubsession
 ::createNewStreamSource(unsigned /*clientSessionId*/, unsigned& estBitrate) {
-#ifdef DEBUG
-      printf("ADTSFromWAVAudioFifoServerMediaSubsession createNewStreamSource\n");
-#endif
-  FramedSource* resultSource = NULL;
-  ADTSFromWAVAudioFifoSource* originalSource = NULL;
-  FramedFilter* previousSource = (FramedFilter*)fReplicator->inputSource();
-  estBitrate = 32; // kbps, estimate
-
-  // Iterate back into the filter chain until a source is found that 
-  // has a sample frequency and expected to be a ADTSFromWAVAudioFifoSource.
-  for (int x = 0; x < 10; x++) {
-#ifdef DEBUG
-    printf("x = %d\n", x);
-#endif
-    if (((ADTSFromWAVAudioFifoSource*)(previousSource))->samplingFrequency() > 0) {
-#ifdef DEBUG
-      printf("ADTSFromWAVAudioFifoSource found at x = %d\n", x);
-#endif
-      originalSource = (ADTSFromWAVAudioFifoSource*)(previousSource);
-      break;
-    }
-    previousSource = (FramedFilter*)previousSource->inputSource();
-  }
-#ifdef DEBUG
-  printf("fReplicator->inputSource() = %p\n", originalSource);
-#endif
-  resultSource = fReplicator->createStreamReplica();
-
-  if (resultSource == NULL) {
-    printf("Failed to create stream replica\n");
-    Medium::close(resultSource);
-    return NULL;
-  }
-  else {
-    fSamplingFrequency = originalSource->samplingFrequency();
-    fNumChannels = originalSource->numChannels();
-    memcpy(fConfigStr, originalSource->configStr(), 5);
-
-#ifdef DEBUG
-    printf("Original source samplingFrequency: %d numChannels: %d configStr: %s\n",
-            originalSource->samplingFrequency(), originalSource->numChannels(), originalSource->configStr());
-#endif
-
+    if (debug & 2) fprintf(stderr, "%lld: ADTSFromWAVAudioFifoServerMediaSubsession - ADTSFromWAVAudioFifoServerMediaSubsession createNewStreamSource\n", current_timestamp());
+    FramedSource* resultSource = NULL;
+    ADTSFromWAVAudioFifoSource* originalSource = NULL;
+    FramedFilter* previousSource = (FramedFilter*)fReplicator->inputSource();
     estBitrate = 32; // kbps, estimate
-    return resultSource;
-  }
+
+    // Iterate back into the filter chain until a source is found that 
+    // has a sample frequency and expected to be a ADTSFromWAVAudioFifoSource.
+    for (int x = 0; x < 10; x++) {
+        if (((ADTSFromWAVAudioFifoSource*)(previousSource))->samplingFrequency() > 0) {
+            if (debug & 2) fprintf(stderr, "%lld: ADTSFromWAVAudioFifoServerMediaSubsession - ADTSFromWAVAudioFifoSource found at x = %d\n", current_timestamp(), x);
+            originalSource = (ADTSFromWAVAudioFifoSource*)(previousSource);
+            break;
+        }
+        previousSource = (FramedFilter*)previousSource->inputSource();
+    }
+    if (debug & 2) fprintf(stderr, "%lld: ADTSFromWAVAudioFifoServerMediaSubsession - fReplicator->inputSource() = %p\n", current_timestamp(), originalSource);
+    resultSource = fReplicator->createStreamReplica();
+
+    if (resultSource == NULL) {
+        fprintf(stderr, "%lld: ADTSFromWAVAudioFifoServerMediaSubsession - Failed to create stream replica\n", current_timestamp());
+        Medium::close(resultSource);
+        return NULL;
+    } else {
+        fSamplingFrequency = originalSource->samplingFrequency();
+        fNumChannels = originalSource->numChannels();
+        memcpy(fConfigStr, originalSource->configStr(), 5);
+
+        if (debug & 2) fprintf(stderr, "%lld: ADTSFromWAVAudioFifoServerMediaSubsession - Original source samplingFrequency: %d numChannels: %d configStr: %s\n",
+                           current_timestamp(), originalSource->samplingFrequency(), originalSource->numChannels(), originalSource->configStr());
+
+        estBitrate = 32; // kbps, estimate
+        return resultSource;
+    }
 }
 
 RTPSink* ADTSFromWAVAudioFifoServerMediaSubsession
@@ -104,15 +90,16 @@ RTPSink* ADTSFromWAVAudioFifoServerMediaSubsession
 		   unsigned char rtpPayloadTypeIfDynamic,
 		   FramedSource* /*inputSource*/) {
 
-#ifdef DEBUG
-        fprintf(stderr, "samplingFrequency %d\nconfigStr %s\nnumChannels %d\n",
-            fSamplingFrequency,
-            fConfigStr,
-            fNumChannels);
-#endif
-  return MPEG4GenericRTPSink::createNew(envir(), rtpGroupsock,
-					rtpPayloadTypeIfDynamic,
-					fSamplingFrequency,
-					"audio", "AAC-hbr", fConfigStr,
-					fNumChannels);
+    if (debug & 2) {
+        fprintf(stderr, "%lld: ADTSFromWAVAudioFifoServerMediaSubsession - samplingFrequency %d\nconfigStr %s\nnumChannels %d\n",
+                current_timestamp(),
+                fSamplingFrequency,
+                fConfigStr,
+                fNumChannels);
+    }
+    return MPEG4GenericRTPSink::createNew(envir(), rtpGroupsock,
+					  rtpPayloadTypeIfDynamic,
+					  fSamplingFrequency,
+					  "audio", "AAC-hbr", fConfigStr,
+					  fNumChannels);
 }
