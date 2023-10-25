@@ -60,6 +60,9 @@ $YI_HACK_PREFIX/bin/mosquitto_sub -v -h $HOST -t $TOPIC | while read -r SUBSCRIB
         baby_crying_detect)
             IPC_OPT="-b"
         ;;
+        sound_detection)
+            IPC_OPT="-b"
+        ;;
         led)
             IPC_OPT="-l"
         ;;

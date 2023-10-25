@@ -50,6 +50,9 @@ MOTION_STOP_MSG=$(get_config MOTION_STOP_MSG)
 
 BABY_CRYING_MSG=$(get_config BABY_CRYING_MSG)
 
+TOPIC_SOUND_DETECTION=$(get_config TOPIC_SOUND_DETECTION)
+SOUND_DETECTION_MSG=$(get_config SOUND_DETECTION_MSG)
+
 TOPIC_MOTION_IMAGE=$(get_config TOPIC_MOTION_IMAGE)
 
 HOST=$MQTT_IP
@@ -258,6 +261,17 @@ MQTT_RETAIN_MOTION=$(get_config MQTT_RETAIN_MOTION)
 # fi
 CONTENT='{"availability_topic":"'$MQTT_PREFIX'/'$TOPIC_BIRTH_WILL'","payload_available":"'$BIRTH_MSG'","payload_not_available":"'$WILL_MSG'","device":'$DEVICE_DETAILS', "qos": "'$MQTT_QOS'", '$RETAIN' "device_class":"sound","state_topic":"'$MQTT_PREFIX'/'$TOPIC_MOTION'","name":"'$UNIQUE_NAME'","unique_id":"'$UNIQUE_ID'","payload_on":"'$BABY_CRYING_MSG'","off_delay":60, "platform": "mqtt"}'
 mqtt_publish
+# Sound Detection
+hass_topic "binary_sensor" "sound_detection" "Sound Detection"
+MQTT_RETAIN_SOUND_DETECTION=$(get_config MQTT_RETAIN_SOUND_DETECTION)
+#Don't know why... ..Home Assistant don't allow retain for Sensor and Binary Sensor
+# if [ "$MQTT_RETAIN_SOUND_DETECTION" == "1" ]; then
+#    RETAIN='"retain":true, '
+# else
+    RETAIN=""
+# fi
+CONTENT='{"availability_topic":"'$MQTT_PREFIX'/'$TOPIC_BIRTH_WILL'","payload_available":"'$BIRTH_MSG'","payload_not_available":"'$WILL_MSG'","device":'$DEVICE_DETAILS', "qos": "'$MQTT_QOS'", '$RETAIN' "device_class":"sound","state_topic":"'$MQTT_PREFIX'/'$TOPIC_SOUND_DETECTION'","name":"'$UNIQUE_NAME'","unique_id":"'$UNIQUE_ID'","payload_on":"'$SOUND_DETECTION_MSG'","off_delay":60, "platform": "mqtt"}'
+mqtt_publish
 # Motion Detection Image
 hass_topic "camera" "motion_detection_image" "Motion Detection Image"
 MQTT_RETAIN_MOTION_IMAGE=$(get_config MQTT_RETAIN_MOTION_IMAGE)
@@ -292,6 +306,12 @@ if [ "$MQTT_ADV_CAMERA_SETTING_ENABLE" == "yes" ]; then
     # Baby Crying Detection
     hass_setup_switch "BABY_CRYING_DETECT" "Baby crying detect" "music-note" $MQTT_ADV_CAMERA_SETTING_TOPIC "config"
     mqtt_publish
+    # Sound Detection
+    hass_setup_switch "SOUND_DETECTION" "Sound Detection" "music-note" $MQTT_ADV_CAMERA_SETTING_TOPIC "config"
+    mqtt_publish
+    # Sound detection sensitivity
+    hass_setup_number "SOUND_SENSITIVITY" "Sound Detection sensitivity" "account-voice" $MQTT_ADV_CAMERA_SETTING_TOPIC 30 90 5 "slider" "config"
+    mqtt_publish
     # Led
     hass_setup_switch "LED" "Status Led" "led-on" $MQTT_ADV_CAMERA_SETTING_TOPIC "config"
     mqtt_publish
@@ -302,7 +322,7 @@ if [ "$MQTT_ADV_CAMERA_SETTING_ENABLE" == "yes" ]; then
     hass_setup_switch "ROTATE" "Rotate" "rotate-right" $MQTT_ADV_CAMERA_SETTING_TOPIC "config"
     mqtt_publish
 else
-    for ITEM in SWITCH_ON BABY_CRYING_DETECT LED IR ROTATE; do
+    for ITEM in SWITCH_ON BABY_CRYING_DETECT SOUND_DETECTION LED IR ROTATE; do
         hass_topic "switch" "$ITEM"
         $YI_HACK_PREFIX/bin/mosquitto_pub $HA_QOS $HA_RETAIN -h $HOST -t $TOPIC -n
     done
