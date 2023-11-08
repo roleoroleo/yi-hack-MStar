@@ -1,6 +1,7 @@
 #!/bin/sh
 
 CONF_FILE="etc/system.conf"
+CAMERA_CONF_FILE="etc/camera.conf"
 
 YI_HACK_PREFIX="/home/yi-hack"
 MODEL_SUFFIX=$(cat /home/yi-hack/model_suffix)
