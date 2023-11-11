@@ -322,7 +322,7 @@ if [ "$ACTION" == "start" ] ; then
         mqtt-config > /dev/null &
     elif [ "$NAME" == "mp4record" ]; then
         cd /home/app
-        ./mp4record >/dev/null &
+        ./mp4record > /dev/null &
     elif [ "$NAME" == "all" ]; then
         start_rtsp
         start_onvif
@@ -331,7 +331,7 @@ if [ "$ACTION" == "start" ] ; then
         mqttv4 > /dev/null &
         mqtt-config > /dev/null &
         cd /home/app
-        ./mp4record >/dev/null &
+        ./mp4record > /dev/null &
     fi
 elif [ "$ACTION" == "stop" ] ; then
     if [ "$NAME" == "rtsp" ]; then

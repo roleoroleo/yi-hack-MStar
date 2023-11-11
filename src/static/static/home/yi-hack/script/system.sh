@@ -106,6 +106,7 @@ if [[ x$(get_config USERNAME) != "x" ]] ; then
     ONVIF_USERPWD="user=$USERNAME\npassword=$PASSWORD"
     echo "/onvif::" > /tmp/httpd.conf
     echo "/:$USERNAME:$PASSWORD" >> /tmp/httpd.conf
+    chmod 0600 /tmp/httpd.conf
 fi
 
 PASSWORD_MD5='$1$$qRPK7m23GJusamGpoGLby/'
