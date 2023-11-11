@@ -1,21 +1,17 @@
 OBJECTS_C = ipc_cmd.o
 OBJECTS_R = ipc_read.o
 OBJECTS_N = ipc_notify.o
+OBJECTS_2 = ipc2file.o
 LIBS = -lrt
+LIBS_2 = -lrt -lpthread
 
-all: ipc_cmd ipc_read ipc_notify ipc_multiplex.so
+all: ipc_cmd ipc_read ipc_notify ipc2file ipc_multiplex.so
 
-ipc_cmd.o: ipc_cmd.c $(HEADERS)
-	$(CC) -c $< -D_GNU_SOURCE -std=c99 -fPIC -Os -o $@
-
-ipc_read.o: ipc_read.c $(HEADERS)
-	$(CC) -c $< -D_GNU_SOURCE -std=c99 -fPIC -Os -o $@
-
-ipc_notify.o: ipc_notify.c $(HEADERS)
-	$(CC) -c $< -D_GNU_SOURCE -std=c99 -fPIC -Os -o $@
+%o: %c $(HEADERS)
+	$(CC) -c $< -D_GNU_SOURCE -fPIC -Os -o $@
 
 ipc_multiplex.so: ipc_multiplex.c $(HEADERS)
-	$(CC) $< -D_GNU_SOURCE -std=c99 -fPIC -Os -shared -o $@
+	$(CC) $< -D_GNU_SOURCE -fPIC -Os -shared -o $@
 
 ipc_cmd: $(OBJECTS_C)
 	$(CC) $(OBJECTS_C) $(LIBS) -fPIC -Os -o $@
@@ -29,13 +25,19 @@ ipc_notify: $(OBJECTS_N)
 	$(CC) $(OBJECTS_N) $(LIBS) -fPIC -Os -o $@
 	$(STRIP) $@
 
+ipc2file: $(OBJECTS_2)
+	$(CC) $(OBJECTS_2) $(LIBS_2) -fPIC -Os -o $@
+	$(STRIP) $@
+
 .PHONY: clean
 
 clean:
 	rm -f ipc_cmd
 	rm -f ipc_read
 	rm -f ipc_notify
+	rm -f ipc2file
 	rm -f ipc_multiplex.so
 	rm -f $(OBJECTS_C)
 	rm -f $(OBJECTS_R)
 	rm -f $(OBJECTS_N)
+	rm -f $(OBJECTS_2)
