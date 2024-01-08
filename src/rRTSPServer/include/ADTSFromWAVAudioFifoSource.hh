@@ -45,10 +45,14 @@ private:
 
     virtual ~ADTSFromWAVAudioFifoSource();
 
+  static void fileReadableHandler(ADTSFromWAVAudioFifoSource* source, int mask);
+  void doReadFromFile();
+
 private:
     // redefined virtual functions:
     virtual void doGetNextFrame();
     virtual void doStopGettingFrames();
+    void cleanFifo();
 
 private:
     FILE *fFid;

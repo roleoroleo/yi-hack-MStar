@@ -62,14 +62,44 @@ ADTSFromWAVAudioFifoSource::createNew(UsageEnvironment& env, char const* fileNam
                 channel_configuration);
         }
 
-        return new ADTSFromWAVAudioFifoSource(env, fid, profile,
+        ADTSFromWAVAudioFifoSource *newSource = new ADTSFromWAVAudioFifoSource(env, fid, profile,
                                    sampling_frequency_index, channel_configuration);
+        newSource->cleanFifo();
+
+        if (debug & 2) fprintf(stderr, "%lld: ADTSFrinWAVAudioFifoSource - ADTSFromWAVAudioFifoSource created\n", current_timestamp());
+
+        return newSource;
     } while (0);
 
     // An error occurred:
     CloseInputFile(fid);
 
     return NULL;
+}
+
+void ADTSFromWAVAudioFifoSource::cleanFifo() {
+    int flags;
+
+    if (debug & 2) fprintf(stderr, "%lld: ADTSFromWAVAudioFifoSource - cleaning fifo\n", current_timestamp());
+
+    if (fFid == NULL) return;
+
+    // Set non blocking
+    if ((flags = fcntl(fileno(fFid), F_GETFL, 0)) < 0) {
+        return;
+    };
+    if (fcntl(fileno(fFid), F_SETFL, flags | O_NONBLOCK) != 0) {
+        return;
+    };
+
+    // Clean fifo content
+    unsigned char null[4];
+    while (read(fileno(fFid), null, sizeof(null)) > 0) {}
+
+    // Restore old blocking
+    if (fcntl(fileno(fFid), F_SETFL, flags) != 0) {
+        return;
+    }
 }
 
 ADTSFromWAVAudioFifoSource
@@ -164,30 +194,46 @@ ADTSFromWAVAudioFifoSource
 
 ADTSFromWAVAudioFifoSource::~ADTSFromWAVAudioFifoSource() {
     aacEncClose(&fHAacEncoder);
+
+    if (fFid == NULL) return;
+
+    envir().taskScheduler().turnOffBackgroundReadHandling(fileno(fFid));
+
     CloseInputFile(fFid);
 }
 
+void ADTSFromWAVAudioFifoSource::doGetNextFrame() {
+    if (feof(fFid)) {
+        handleClosure();
+        return;
+    }
+
+    fFrameSize = 0; // until it's set later
+    if (!fHaveStartedReading) {
+        if (debug & 2) fprintf(stderr, "%lld: ADTSFromWAVAudioFifoSource - doGetNextFrame() 1st start\n", current_timestamp());
+//        cleanFifo();
+        // Await readable data from the file:
+        envir().taskScheduler().turnOnBackgroundReadHandling(fileno(fFid),
+                (TaskScheduler::BackgroundHandlerProc*)&fileReadableHandler, this);
+        fHaveStartedReading = True;
+    }
+}
+
 void ADTSFromWAVAudioFifoSource::doStopGettingFrames() {
+    envir().taskScheduler().unscheduleDelayedTask(nextTask());
+    envir().taskScheduler().turnOffBackgroundReadHandling(fileno(fFid));
     fHaveStartedReading = False;
 }
 
-void ADTSFromWAVAudioFifoSource::doGetNextFrameTask(void* clientData) {
-    ADTSFromWAVAudioFifoSource *source = (ADTSFromWAVAudioFifoSource *) clientData;
-    source->doGetNextFrameEx();
-}
-
-void ADTSFromWAVAudioFifoSource::doGetNextFrameEx() {
-    doGetNextFrame();
-}
-
-void ADTSFromWAVAudioFifoSource::doGetNextFrame() {
-
-    Boolean isFirstReading = !fHaveStartedReading;
-    if (!fHaveStartedReading) {
-        if (debug & 2) fprintf(stderr, "%lld: ADTSFromWAVAudioFifoSource - doGetNextFrame() 1st start\n", current_timestamp());
-        fHaveStartedReading = True;
+void ADTSFromWAVAudioFifoSource::fileReadableHandler(ADTSFromWAVAudioFifoSource* source, int /*mask*/) {
+    if (!source->isCurrentlyAwaitingData()) {
+        source->doStopGettingFrames(); // we're not ready for the data yet
+        return;
     }
+    source->doReadFromFile();
+}
 
+void ADTSFromWAVAudioFifoSource::doReadFromFile() {
     int numInBytes;
     int ErrorStatus;
     int numToRead;
@@ -200,31 +246,21 @@ void ADTSFromWAVAudioFifoSource::doGetNextFrame() {
     numInBytes = read(fileno(fFid),
                  ((UCHAR *) fInputBuffer) + sizeof(INT_PCM) * fInputBufferSize,
                  numToRead);
-    if (debug & 2) fprintf(stderr, "%lld: ADTSFromWAVAudioFifoSource - read completed\n", current_timestamp());
+    if (debug & 2) fprintf(stderr, "%lld: ADTSFromWAVAudioFifoSource - read completed %d/%d bytes\n", current_timestamp(), numInBytes, sizeof(fInputBuffer));
     if (numInBytes <= -1) {
         // TODO
         fprintf(stderr, "%lld: ADTSFromWAVAudioFifoSource - error reading file, try again later\n", current_timestamp());
-        // Trick to avoid segfault with StreamReplicator
-        if (isFirstReading) {
-            nextTask() = envir().taskScheduler().scheduleDelayedTask(0,
-                    (TaskFunc*)FramedSource::afterGetting, this);
-        } else {
-            nextTask() = envir().taskScheduler().scheduleDelayedTask(fuSecsPerFrame/4,
-                    (TaskFunc*) ADTSFromWAVAudioFifoSource::doGetNextFrameTask, this);
-        }
+        fFrameSize = 0;
+        fNumTruncatedBytes = 0;
+//        FramedSource::afterGetting(this);
         return;
     }
     fInputBufferSize += (numInBytes / sizeof(INT_PCM));
     if (fInputBufferSize != sizeof(fInputBuffer) / sizeof(INT_PCM)) {
         fprintf(stderr, "%lld: ADTSFromWAVAudioFifoSource - buffer not full, read again later\n", current_timestamp());
-        // Trick to avoid segfault with StreamReplicator
-        if (isFirstReading) {
-            nextTask() = envir().taskScheduler().scheduleDelayedTask(0,
-                    (TaskFunc*)FramedSource::afterGetting, this);
-        } else {
-            nextTask() = envir().taskScheduler().scheduleDelayedTask(fuSecsPerFrame/4,
-                    (TaskFunc*) ADTSFromWAVAudioFifoSource::doGetNextFrameTask, this);
-        }
+        fFrameSize = 0;
+        fNumTruncatedBytes = 0;
+//        FramedSource::afterGetting(this);
         return;
     }
 
@@ -314,7 +350,8 @@ void ADTSFromWAVAudioFifoSource::doGetNextFrame() {
 
     fDurationInMicroseconds = fuSecsPerFrame;
 
-    // Switch to another task, and inform the reader that he has data:
-    nextTask() = envir().taskScheduler().scheduleDelayedTask(0,
-                                (TaskFunc*)FramedSource::afterGetting, this);
+    // Inform the reader that he has data:
+    // Because the file read was done from the event loop, we can call the
+    // 'after getting' function directly, without risk of infinite recursion:
+    FramedSource::afterGetting(this);
 }
