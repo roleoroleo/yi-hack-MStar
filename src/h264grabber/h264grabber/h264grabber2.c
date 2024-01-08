@@ -15,7 +15,7 @@
  */
 
 /*
- * Dump h264 content from /dev/fshare_frame_buffer to stdout
+ * Dump h264 and aac content from /dev/shm/fshare_frame_buffer to stdout or fifo
  */
 
 #define _GNU_SOURCE
@@ -26,49 +26,108 @@
 #include <stdint.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 #include <time.h>
 #include <unistd.h>
 #include <sys/mman.h>
 #include <sys/time.h>
-#include <sys/resource.h>
+
 #include <getopt.h>
 #include <signal.h>
+#include <pthread.h>
 
-#define BUF_OFFSET 228
-#define BUF_SIZE 1786086
+#define BUF_OFFSET 230 //228
 #define FRAME_HEADER_SIZE 19
-
-#define MILLIS_25 25000
 
 #define RESOLUTION_NONE 0
 #define RESOLUTION_LOW  360
 #define RESOLUTION_HIGH 1080
+#define RESOLUTION_BOTH 1440
+
+#define TYPE_NONE 0
+#define TYPE_LOW  360
+#define TYPE_HIGH 1080
+#define TYPE_AAC 65521
 
 #define BUFFER_FILE "/dev/fshare_frame_buf"
+#define BUFFER_SHM "fshare_frame_buf"
 
 #define FIFO_NAME_LOW "/tmp/h264_low_fifo"
 #define FIFO_NAME_HIGH "/tmp/h264_high_fifo"
+#define FIFO_NAME_AAC  "/tmp/aac_audio_fifo"
 
-unsigned char IDR[]               = {0x65, 0xB8};
-unsigned char NAL_START[]         = {0x00, 0x00, 0x00, 0x01};
-unsigned char IDR_START[]         = {0x00, 0x00, 0x00, 0x01, 0x65, 0x88};
-unsigned char PFR_START[]         = {0x00, 0x00, 0x00, 0x01, 0x41};
-unsigned char SPS_START[]         = {0x00, 0x00, 0x00, 0x01, 0x67};
-unsigned char PPS_START[]         = {0x00, 0x00, 0x00, 0x01, 0x68};
-unsigned char N06_START[]         = {0x00, 0x00, 0x00, 0x01, 0x06};
-unsigned char N06F02C_START[]     = {0x00, 0x00, 0x00, 0x01, 0x06, 0xF0, 0x2C};
-unsigned char N06F002_START[]     = {0x00, 0x00, 0x00, 0x01, 0x06, 0xF0, 0x02};
-unsigned char SPS_640X360[]       = {0x00, 0x00, 0x00, 0x01, 0x67, 0x4D, 0x00, 0x14,
+#define CODEC_NONE 0
+#define CODEC_H264 264
+#define CODEC_H265 265
+
+struct __attribute__((__packed__)) frame_header {
+    uint32_t len;
+    uint16_t counter;
+    uint32_t time;
+    uint16_t type;
+    uint16_t stream_counter;
+};
+
+struct __attribute__((__packed__)) frame_header_19 {
+    uint32_t len;
+    uint16_t counter;
+    uint16_t type;
+    uint32_t u1;
+    uint32_t time;
+    uint16_t stream_counter;
+    uint8_t u2;
+};
+
+struct stream_type_s {
+    int codec_low;
+    int codec_high;
+    int sps_type_low;
+    int sps_type_high;
+    int vps_type_low;
+    int vps_type_high;
+};
+
+int buf_offset;
+int buf_size;
+int frame_header_size;
+struct stream_type_s stream_type;
+
+unsigned char IDR4[]                = {0x65, 0xB8};
+unsigned char NALx_START[]          = {0x00, 0x00, 0x00, 0x01};
+unsigned char IDR4_START[]          = {0x00, 0x00, 0x00, 0x01, 0x65, 0x88};
+unsigned char IDR5_START[]          = {0x00, 0x00, 0x00, 0x01, 0x26};
+unsigned char PFR4_START[]          = {0x00, 0x00, 0x00, 0x01, 0x41};
+unsigned char PFR5_START[]          = {0x00, 0x00, 0x00, 0x01, 0x02};
+unsigned char SPS4_START[]          = {0x00, 0x00, 0x00, 0x01, 0x67};
+unsigned char SPS5_START[]          = {0x00, 0x00, 0x00, 0x01, 0x42};
+unsigned char PPS4_START[]          = {0x00, 0x00, 0x00, 0x01, 0x68};
+unsigned char PPS5_START[]          = {0x00, 0x00, 0x00, 0x01, 0x44};
+unsigned char VPS5_START[]          = {0x00, 0x00, 0x00, 0x01, 0x40};
+unsigned char N06_START[]           = {0x00, 0x00, 0x00, 0x01, 0x06};
+unsigned char N06F02C_START[]       = {0x00, 0x00, 0x00, 0x01, 0x06, 0xF0, 0x2C};
+unsigned char N06F002_START[]       = {0x00, 0x00, 0x00, 0x01, 0x06, 0xF0, 0x02};
+
+unsigned char SPS4_640X360[]        = {0x00, 0x00, 0x00, 0x01, 0x67, 0x4D, 0x00, 0x14,
                                        0x96, 0x54, 0x05, 0x01, 0x7B, 0xCB, 0x37, 0x01,
                                        0x01, 0x01, 0x02};
-unsigned char SPS_1920X1080[]     = {0x00, 0x00, 0x00, 0x01, 0x67, 0x4D, 0x00, 0x20,
+unsigned char SPS4_640X360_TI[]     = {0x00, 0x00, 0x00, 0x01, 0x67, 0x4D, 0x00, 0x14,
+                                       0x96, 0x54, 0x05, 0x01, 0x7B, 0xCB, 0x37, 0x01,
+                                       0x01, 0x01, 0x40, 0x00, 0x00, 0x7D, 0x00, 0x00,
+                                       0x13, 0x88, 0x21};
+unsigned char SPS4_1920X1080[]      = {0x00, 0x00, 0x00, 0x01, 0x67, 0x4D, 0x00, 0x20,
                                        0x96, 0x54, 0x03, 0xC0, 0x11, 0x2F, 0x2C, 0xDC,
                                        0x04, 0x04, 0x04, 0x08};
+unsigned char SPS4_1920X1080_TI[]   = {0x00, 0x00, 0x00, 0x01, 0x67, 0x4D, 0x00, 0x20,
+                                       0x96, 0x54, 0x03, 0xC0, 0x11, 0x2F, 0x2C, 0xDC,
+                                       0x04, 0x04, 0x05, 0x00, 0x00, 0x03, 0x01, 0xF4,
+                                       0x00, 0x00, 0x4E, 0x20, 0x84};
 
 unsigned char *addr;                      /* Pointer to shared memory region (header) */
 int resolution;
-int fifo = 0;
-int debug = 0;                            /* Set to 1 to debug this .c */
+int audio;
+int sps_timing_info;
+int fifo;
+int debug;
 
 long long current_timestamp() {
     struct timeval te; 
@@ -87,22 +146,22 @@ unsigned char *cb_memmem(unsigned char *src, int src_len, unsigned char *what, i
         p = (unsigned char*) memmem(src, src_len, what, what_len);
     } else {
         // From src to the end of the buffer
-        p = (unsigned char*) memmem(src, addr + BUF_SIZE - src, what, what_len);
+        p = (unsigned char*) memmem(src, addr + buf_size - src, what, what_len);
         if (p == NULL) {
             // And from the start of the buffer size src_len
-            p = (unsigned char*) memmem(addr + BUF_OFFSET, src + src_len - (addr + BUF_OFFSET), what, what_len);
+            p = (unsigned char*) memmem(addr + buf_offset, src + src_len - (addr + buf_offset), what, what_len);
         }
     }
     return p;
 }
-
+/*
 unsigned char *cb_memmem_snal(unsigned char *src, int src_len)
 {
     unsigned char *idx1, *idx2, *idx3, *ret;
     unsigned char *tmp_idx1, *tmp_idx2, *tmp_idx3;
 
-    idx1 = cb_memmem(src, src_len, SPS_START, sizeof(SPS_START));
-    idx2 = cb_memmem(src, src_len, PPS_START, sizeof(PPS_START));
+    idx1 = cb_memmem(src, src_len, SPS4_START, sizeof(SPS4_START));
+    idx2 = cb_memmem(src, src_len, PPS4_START, sizeof(PPS4_START));
     idx3 = cb_memmem(src, src_len, N06_START, sizeof(N06_START));
 
     if ((idx1 == NULL) && (idx2 == NULL) && (idx3 == NULL)) {
@@ -111,30 +170,30 @@ unsigned char *cb_memmem_snal(unsigned char *src, int src_len)
 
     if (idx1 == NULL) {
         // Move forward enough
-        tmp_idx1 = idx1 + (10 * BUF_SIZE);
+        tmp_idx1 = idx1 + (10 * buf_size);
     } else {
         if (idx1 < src) {
-            tmp_idx1 = idx1 + BUF_SIZE;
+            tmp_idx1 = idx1 + buf_size;
         } else {
             tmp_idx1 = idx1;
         }
     }
     if (idx2 == NULL) {
         // Move forward enough
-        tmp_idx2 = idx2 + (10 * BUF_SIZE);
+        tmp_idx2 = idx2 + (10 * buf_size);
     } else {
         if (idx2 < src) {
-            tmp_idx2 = idx2 + BUF_SIZE;
+            tmp_idx2 = idx2 + buf_size;
         } else {
             tmp_idx2 = idx2;
         }
     }
     if (idx3 == NULL) {
         // Move forward enough
-        tmp_idx3 = idx3 + (10 * BUF_SIZE);
+        tmp_idx3 = idx3 + (10 * buf_size);
     } else {
         if (idx3 < src) {
-            tmp_idx3 = idx3 + BUF_SIZE;
+            tmp_idx3 = idx3 + buf_size;
         } else {
             tmp_idx3 = idx3;
         }
@@ -156,14 +215,14 @@ unsigned char *cb_memmem_snal(unsigned char *src, int src_len)
 
     return ret;
 }
-
+*/
 unsigned char *cb_move(unsigned char *buf, int offset)
 {
     buf += offset;
-    if ((offset > 0) && (buf > addr + BUF_SIZE))
-        buf -= (BUF_SIZE - BUF_OFFSET);
-    if ((offset < 0) && (buf < addr + BUF_OFFSET))
-        buf += (BUF_SIZE - BUF_OFFSET);
+    if ((offset > 0) && (buf > addr + buf_size))
+        buf -= (buf_size - buf_offset);
+    if ((offset < 0) && (buf < addr + buf_offset))
+        buf += (buf_size - buf_offset);
 
     return buf;
 }
@@ -173,10 +232,10 @@ int cb_memcmp(unsigned char *str1, unsigned char *str2, size_t n)
 {
     int ret;
 
-    if (str2 + n > addr + BUF_SIZE) {
-        ret = memcmp(str1, str2, addr + BUF_SIZE - str2);
+    if (str2 + n > addr + buf_size) {
+        ret = memcmp(str1, str2, addr + buf_size - str2);
         if (ret != 0) return ret;
-        ret = memcmp(str1 + (addr + BUF_SIZE - str2), addr + BUF_OFFSET, n - (addr + BUF_SIZE - str2));
+        ret = memcmp(str1 + (addr + buf_size - str2), addr + buf_offset, n - (addr + buf_size - str2));
     } else {
         ret = memcmp(str1, str2, n);
     }
@@ -187,11 +246,38 @@ int cb_memcmp(unsigned char *str1, unsigned char *str2, size_t n)
 // The second argument is the circular buffer
 void cb2s_memcpy(unsigned char *dest, unsigned char *src, size_t n)
 {
-    if (src + n > addr + BUF_SIZE) {
-        memcpy(dest, src, addr + BUF_SIZE - src);
-        memcpy(dest + (addr + BUF_SIZE - src), addr + BUF_OFFSET, n - (addr + BUF_SIZE - src));
+    if (src + n > addr + buf_size) {
+        memcpy(dest, src, addr + buf_size - src);
+        memcpy(dest + (addr + buf_size - src), addr + buf_offset, n - (addr + buf_size - src));
     } else {
         memcpy(dest, src, n);
+    }
+}
+
+// The second argument is the circular buffer
+void cb2s_headercpy(unsigned char *dest, unsigned char *src, size_t n)
+{
+    struct frame_header *fh = (struct frame_header *) dest;
+    struct frame_header_19 fh19;
+    unsigned char *fp = NULL;
+
+    if (n == sizeof(fh19)) {
+        fp = (unsigned char *) &fh19;
+    }
+    if (fp == NULL) return;
+
+    if (src + n > addr + buf_size) {
+        memcpy(fp, src, addr + buf_size - src);
+        memcpy(fp + (addr + buf_size - src), addr + buf_offset, n - (addr + buf_size - src));
+    } else {
+        memcpy(fp, src, n);
+    }
+    if (n == sizeof(fh19)) {
+        fh->len = fh19.len;
+        fh->counter = fh19.counter;
+        fh->time = fh19.time;
+        fh->type = fh19.type;
+        fh->stream_counter = fh19.stream_counter;
     }
 }
 
@@ -200,46 +286,71 @@ void sigpipe_handler(int unused)
     // Do nothing
 }
 
+void* unlock_fifo_thread(void *data)
+{
+    int fd;
+    char *fifo_name = data;
+    unsigned char buffer_fifo[1024];
+
+    fd = open(fifo_name, O_RDONLY);
+    read(fd, buffer_fifo, 1024);
+    close(fd);
+
+    return NULL;
+}
+
 void print_usage(char *progname)
 {
-    fprintf(stderr, "\nUsage: %s [-r RES] [-d]\n\n", progname);
+    fprintf(stderr, "\nUsage: %s [-r RES] [-s] [-f] [-d]\n\n", progname);
     fprintf(stderr, "\t-r RES, --resolution RES\n");
-    fprintf(stderr, "\t\tset resolution: LOW or HIGH (default HIGH)\n");
+    fprintf(stderr, "\t\tset resolution: LOW, HIGH, BOTH or NONE (default HIGH)\n");
+    fprintf(stderr, "\t-a, --audio\n");
+    fprintf(stderr, "\t\tenable audio\n");
+    fprintf(stderr, "\t-s, --sti\n");
+    fprintf(stderr, "\t\tdon't overwrite SPS timing info (default overwrite)\n");
     fprintf(stderr, "\t-f, --fifo\n");
     fprintf(stderr, "\t\tenable fifo output\n");
     fprintf(stderr, "\t-d, --debug\n");
     fprintf(stderr, "\t\tenable debug\n");
-    fprintf(stderr, "\t-h, --help\n");
-    fprintf(stderr, "\t\tprint this help\n");
 }
 
 int main(int argc, char **argv) {
-    unsigned char *buf_idx_1, *buf_idx_2;
-    unsigned char *buf_idx_w, *buf_idx_tmp;
+    unsigned char *buf_idx, *buf_idx_cur, *buf_idx_end, *buf_idx_end_prev;
     unsigned char *buf_idx_start = NULL;
-    unsigned char *sps_addr;
-    int sps_len;
-    FILE *fFid;
-    FILE *fOut = stdout;
-
-    int frame_res, frame_len, frame_counter = -1;
-    int frame_counter_last_valid = -1;
-    int frame_counter_invalid = 0;
-
-    int i, c;
-    int write_enable = 0;
-    int sps_sync = 0;
-
+    FILE *fFS, *fOut, *fOutLow = NULL, *fOutHigh = NULL, *fOutAac = NULL;
+    int fshm;
     mode_t mode = 0755;
 
+    int frame_type = TYPE_NONE;
+    int frame_len = 0;
+    int frame_counter = -1;
+    int frame_counter_last_valid_low = -1;
+    int frame_counter_last_valid_high = -1;
+    int frame_counter_last_valid_audio = -1;
+
+    int i, n, c;
+    int write_enable = 0;
+    int frame_sync = 0;
+
+    struct frame_header fhs[10];
+    unsigned char* fhs_addr[10];
+    uint32_t last_counter;
+
     resolution = RESOLUTION_HIGH;
+    audio = 0;
+    sps_timing_info = 1;
     fifo = 0;
     debug = 0;
+
+    buf_offset = BUF_OFFSET;
+    frame_header_size = FRAME_HEADER_SIZE;
 
     while (1) {
         static struct option long_options[] =
         {
             {"resolution",  required_argument, 0, 'r'},
+            {"audio",  no_argument, 0, 'a'},
+            {"sti",  no_argument, 0, 's'},
             {"fifo",  no_argument, 0, 'f'},
             {"debug",  no_argument, 0, 'd'},
             {"help",  no_argument, 0, 'h'},
@@ -248,7 +359,7 @@ int main(int argc, char **argv) {
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        c = getopt_long (argc, argv, "r:fdh",
+        c = getopt_long (argc, argv, "r:afsdh",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -261,7 +372,19 @@ int main(int argc, char **argv) {
                 resolution = RESOLUTION_LOW;
             } else if (strcasecmp("high", optarg) == 0) {
                 resolution = RESOLUTION_HIGH;
+            } else if (strcasecmp("both", optarg) == 0) {
+                resolution = RESOLUTION_BOTH;
+            } else if (strcasecmp("none", optarg) == 0) {
+                resolution = RESOLUTION_NONE;
             }
+            break;
+
+        case 'a':
+            audio = 1;
+            break;
+
+        case 's':
+            sps_timing_info = 0;
             break;
 
         case 'f':
@@ -289,231 +412,423 @@ int main(int argc, char **argv) {
         }
     }
 
-    setpriority(PRIO_PROCESS, 0, -10);
-
-    sps_addr = SPS_1920X1080;
-    sps_len = sizeof(SPS_1920X1080);
-    if (resolution == RESOLUTION_LOW) {
-        sps_addr = SPS_640X360;
-        sps_len = sizeof(SPS_640X360);
-    } else if (resolution == RESOLUTION_HIGH) {
-        sps_addr = SPS_1920X1080;
-        sps_len = sizeof(SPS_1920X1080);
+    if (fifo == 0) {
+        if (resolution == RESOLUTION_BOTH) {
+            fprintf(stderr, "Both resolution are not supported with output to stdout\n");
+            fprintf(stderr, "Use fifo or run two processes\n");
+            return -2;
+        } else if ((resolution != RESOLUTION_NONE) && (audio == 1)) {
+            fprintf(stderr, "Both video and audio are not supported with output to stdout\n");
+            fprintf(stderr, "Use fifo or run two processes\n");
+            return -2;
+        }
     }
-    sps_addr = SPS_START;
-    sps_len = sizeof(SPS_START);
+
+    fFS = fopen(BUFFER_FILE, "r");
+    if ( fFS == NULL ) {
+        fprintf(stderr, "Could not get size of %s\n", BUFFER_FILE);
+        return -3;
+    }
+    fseek(fFS, 0, SEEK_END);
+    buf_size = ftell(fFS) - 2;
+    fclose(fFS);
+    if (debug) fprintf(stderr, "The size of the buffer is %d\n", buf_size);
 
     // Opening an existing file
-    fFid = fopen(BUFFER_FILE, "r") ;
-    if ( fFid == NULL ) {
-        fprintf(stderr, "could not open file %s\n", BUFFER_FILE) ;
-        return -1;
+    fshm = shm_open(BUFFER_SHM, O_RDWR, 0);
+    if ( fshm == -1 ) {
+        fprintf(stderr, "Error - could not open file %s\n", BUFFER_FILE) ;
+        return -5;
     }
 
     // Map file to memory
-    addr = (unsigned char*) mmap(NULL, BUF_SIZE, PROT_READ, MAP_SHARED, fileno(fFid), 0);
+    addr = (unsigned char*) mmap(NULL, buf_size, PROT_READ | PROT_WRITE, MAP_SHARED, fshm, 0);
     if (addr == MAP_FAILED) {
-        fprintf(stderr, "error mapping file %s\n", BUFFER_FILE);
-        fclose(fFid);
-        return -2;
+        fprintf(stderr, "Error - mapping file %s\n", BUFFER_FILE);
+        close(fshm);
+        return -5;
     }
-    if (debug) fprintf(stderr, "mapping file %s, size %d, to %08x\n", BUFFER_FILE, BUF_SIZE, (unsigned int) addr);
+    if (debug) fprintf(stderr, "Mapping file %s, size %d, to %08x\n", BUFFER_FILE, buf_size, (unsigned int) addr);
 
     // Closing the file
-    if (debug) fprintf(stderr, "closing the file %s\n", BUFFER_FILE) ;
-    fclose(fFid) ;
+    if (debug) fprintf(stderr, "Closing the file %s\n", BUFFER_FILE) ;
+    close(fshm);
 
+    // Opening/setting output file
     if (fifo == 0) {
         char stdoutbuf[262144];
 
         if (setvbuf(stdout, stdoutbuf, _IOFBF, sizeof(stdoutbuf)) != 0) {
             fprintf(stderr, "Error setting stdout buffer\n");
         }
-        fOut = stdout;
+        if (resolution == RESOLUTION_LOW) {
+            fOutLow = stdout;
+        } else if (resolution == RESOLUTION_HIGH) {
+            fOutHigh = stdout;
+        }
     } else {
+        pthread_t unlock_low_thread, unlock_high_thread, unlock_aac_thread;
+
         sigaction(SIGPIPE, &(struct sigaction){{sigpipe_handler}}, NULL);
 
-        if (resolution == RESOLUTION_LOW) {
-            if (debug) fprintf(stderr, "opening fifo %s\n", FIFO_NAME_LOW) ;
+        if ((resolution == RESOLUTION_LOW) || (resolution == RESOLUTION_BOTH)) {
             unlink(FIFO_NAME_LOW);
             if (mkfifo(FIFO_NAME_LOW, mode) < 0) {
                 fprintf(stderr, "mkfifo failed for file %s\n", FIFO_NAME_LOW);
-                return -1;
+                return -6;
             }
-            fOut = fopen(FIFO_NAME_LOW, "w");
-            if (fOut == NULL) {
+            if(pthread_create(&unlock_low_thread, NULL, unlock_fifo_thread, (void *) FIFO_NAME_LOW)) {
+                fprintf(stderr, "Error creating thread\n");
+                return -6;
+            }
+            pthread_detach(unlock_low_thread);
+            fOutLow = fopen(FIFO_NAME_LOW, "w");
+            if (fOutLow == NULL) {
                 fprintf(stderr, "Error opening fifo %s\n", FIFO_NAME_LOW);
-                return -1;
+                return -6;
             }
-        } else if (resolution == RESOLUTION_HIGH) {
-            if (debug) fprintf(stderr, "opening fifo %s\n", FIFO_NAME_HIGH) ;
+        }
+        if ((resolution == RESOLUTION_HIGH) || (resolution == RESOLUTION_BOTH)) {
             unlink(FIFO_NAME_HIGH);
             if (mkfifo(FIFO_NAME_HIGH, mode) < 0) {
                 fprintf(stderr, "mkfifo failed for file %s\n", FIFO_NAME_HIGH);
-                return -1;
+                return -6;
             }
-            fOut = fopen(FIFO_NAME_HIGH, "w");
-            if (fOut == NULL) {
+            if(pthread_create(&unlock_high_thread, NULL, unlock_fifo_thread, (void *) FIFO_NAME_HIGH)) {
+                fprintf(stderr, "Error creating thread\n");
+                return -6;
+            }
+            pthread_detach(unlock_high_thread);
+            fOutHigh = fopen(FIFO_NAME_HIGH, "w");
+            if (fOutHigh == NULL) {
                 fprintf(stderr, "Error opening fifo %s\n", FIFO_NAME_HIGH);
-                return -1;
+                return -6;
             }
         }
+
+        if (audio == 1) {
+            unlink(FIFO_NAME_AAC);
+            if (mkfifo(FIFO_NAME_AAC, mode) < 0) {
+                fprintf(stderr, "mkfifo failed for file %s\n", FIFO_NAME_AAC);
+                return -6;
+            }
+            if(pthread_create(&unlock_aac_thread, NULL, unlock_fifo_thread, (void *) FIFO_NAME_AAC)) {
+                fprintf(stderr, "Error creating thread\n");
+                return -6;
+            }
+            pthread_detach(unlock_aac_thread);
+            fOutAac = fopen(FIFO_NAME_AAC, "w");
+            if (fOutAac == NULL) {
+                fprintf(stderr, "Error opening fifo %s\n", FIFO_NAME_AAC);
+                return -6;
+            }
+        }
+
+        fprintf(stderr, "fifo started\n");
     }
 
     memcpy(&i, addr + 16, sizeof(i));
-    buf_idx_w = addr + BUF_OFFSET + i;
-    buf_idx_1 = buf_idx_w;
+    buf_idx = addr + buf_offset + i;
+    buf_idx_cur = buf_idx;
+    memcpy(&i, addr + 4, sizeof(i));
+    buf_idx_end = buf_idx + i;
+    if (buf_idx_end >= addr + buf_size) buf_idx_end -= (buf_size - buf_offset);
+    buf_idx_end_prev = buf_idx_end;
+    last_counter = 0;
 
     if (debug) fprintf(stderr, "starting capture main loop\n");
 
     // Infinite loop
     while (1) {
         memcpy(&i, addr + 16, sizeof(i));
-        buf_idx_w = addr + BUF_OFFSET + i;
-//        if (debug) fprintf(stderr, "buf_idx_w: %08x\n", (unsigned int) buf_idx_w);
-        buf_idx_tmp = cb_memmem_snal(buf_idx_1, buf_idx_w - buf_idx_1);
-        if (buf_idx_tmp == NULL) {
-            usleep(MILLIS_25);
+        buf_idx = addr + buf_offset + i;
+        memcpy(&i, addr + 4, sizeof(i));
+        buf_idx_end = buf_idx + i;
+        if (buf_idx_end >= addr + buf_size) buf_idx_end -= (buf_size - buf_offset);
+        // Check if the header is ok
+        memcpy(&i, addr + 12, sizeof(i));
+        if (buf_idx_end != addr + buf_offset + i) {
+            usleep(1000);
             continue;
-        } else {
-            buf_idx_1 = buf_idx_tmp;
         }
-//        if (debug) fprintf(stderr, "found buf_idx_1: %08x\n", (unsigned int) buf_idx_1);
 
-        if (cb_memcmp(N06F002_START, buf_idx_1, sizeof(N06F002_START)) == 0) {
-            buf_idx_tmp += 10;
-        }
-//        buf_idx_tmp = cb_memmem(buf_idx_1 + 1, buf_idx_w - (buf_idx_1 + 1), NAL_START, sizeof(NAL_START));
-        buf_idx_tmp = cb_memmem_snal(buf_idx_tmp + 1, buf_idx_w - (buf_idx_tmp + 1));
-        if (buf_idx_tmp == NULL) {
-            usleep(MILLIS_25);
+        if (buf_idx_end == buf_idx_end_prev) {
+            usleep(10000);
             continue;
-        } else {
-            buf_idx_2 = buf_idx_tmp;
         }
-//        if (debug) fprintf(stderr, "found buf_idx_2: %08x\n", (unsigned int) buf_idx_2);
 
-        if ((write_enable) && (sps_sync)) {
-//            if (debug) fprintf(stderr, "%lld: writing frame n. %d - len %d\n", current_timestamp(), frame_counter, frame_len);
-            if (buf_idx_start + frame_len > addr + BUF_SIZE) {
-                fwrite(buf_idx_start, 1, addr + BUF_SIZE - buf_idx_start, fOut);
-                fwrite(addr + BUF_OFFSET, 1, frame_len - (addr + BUF_SIZE - buf_idx_start), fOut);
-            } else {
-                fwrite(buf_idx_start, 1, frame_len, fOut);
+        buf_idx_cur = buf_idx_end_prev;
+        frame_sync = 1;
+        i = 0;
+
+        while (buf_idx_cur != buf_idx_end) {
+            cb2s_headercpy((unsigned char *) &fhs[i], buf_idx_cur, frame_header_size);
+            // Check the len
+            if (fhs[i].len > buf_size - buf_offset - frame_header_size) {
+                frame_sync = 0;
+                break;
+            }
+            fhs_addr[i] = buf_idx_cur;
+            buf_idx_cur = cb_move(buf_idx_cur, fhs[i].len + frame_header_size);
+            i++;
+            // Check if the sync is lost
+            if (i == 10) {
+                frame_sync = 0;
+                break;
             }
         }
 
-        if (cb_memcmp(sps_addr, buf_idx_1, sps_len) == 0) {
-            // SPS frame
-            write_enable = 1;
-            sps_sync = 1;
-            buf_idx_1 = cb_move(buf_idx_1, - (6 + FRAME_HEADER_SIZE));
-            if (buf_idx_1[7] == 8) {
-                frame_res = RESOLUTION_LOW;
-            } else if (buf_idx_1[7] == 4) {
-                frame_res = RESOLUTION_HIGH;
-            } else {
-                frame_res = RESOLUTION_NONE;
-            }
-            if (frame_res == resolution) {
-                cb2s_memcpy((unsigned char *) &frame_len, buf_idx_1, 4);
-                frame_len -= 6;                                                              // -6 only for SPS
-                frame_counter = (int) buf_idx_1[16] + (int) buf_idx_1[17] * 256;
-                if ((frame_counter - frame_counter_last_valid > 20) ||
-                            ((frame_counter < frame_counter_last_valid) && (frame_counter - frame_counter_last_valid > -65515))) {
 
-                    if (debug) fprintf(stderr, "%lld: incorrect frame counter - frame_counter: %d - frame_counter_last_valid: %d\n",
-                                current_timestamp(), frame_counter, frame_counter_last_valid);
-                    frame_counter_invalid++;
-                    // Check if sync is lost
-                    if (frame_counter_invalid > 40) {
-                        if (debug) fprintf(stderr, "%lld: sync lost\n", current_timestamp());
-                        frame_counter_last_valid = frame_counter;
-                        frame_counter_invalid = 0;
-                    } else {
-                        write_enable = 0;
+        if (frame_sync == 0) {
+            buf_idx_end_prev = buf_idx_end;
+            usleep(10000);
+            continue;
+        }
+
+        n = i;
+        // Ignore last frame, it could be corrupted
+        if (n > 1) {
+            buf_idx_end_prev = fhs_addr[n - 1];
+            n--;
+        } else {
+            usleep(10000);
+            continue;
+        }
+
+        if (n > 0) {
+            if (fhs[0].counter != last_counter + 1) {
+                fprintf(stderr, "%lld: warning - %d frame(s) lost\n",
+                            current_timestamp(), fhs[0].counter - (last_counter + 1));
+            }
+            last_counter = fhs[n - 1].counter;
+        }
+
+        for (i = 0; i < n; i++) {
+            buf_idx_cur = fhs_addr[i];
+            frame_len = fhs[i].len;
+            // If SPS
+            if (fhs[i].type & 0x0002) {
+                buf_idx_cur = cb_move(buf_idx_cur, frame_header_size + 6);
+                frame_len -= 6;
+
+                // Autodetect stream type (only the 1st time)
+                if ((stream_type.codec_low  == CODEC_NONE) && (fhs[i].type & 0x0800)) {
+                    if (cb_memcmp(SPS4_640X360, buf_idx_cur, sizeof(SPS4_640X360)) == 0) {
+                        stream_type.codec_low = CODEC_H264;
+                        stream_type.sps_type_low = 0x0101;
+                    } else if (cb_memcmp(SPS4_START, buf_idx_cur, sizeof(SPS4_START)) == 0) {
+                        stream_type.codec_low = CODEC_H264;
+                        stream_type.sps_type_low = 0x0000;
+                    } else if (cb_memcmp(SPS5_START, buf_idx_cur, sizeof(SPS5_START)) == 0) {
+                        stream_type.codec_low = CODEC_H265;
+                        stream_type.sps_type_low = 0x0000;
                     }
-                } else {
-                    frame_counter_invalid = 0;
-                    frame_counter_last_valid = frame_counter;
+                    if ((debug) && (stream_type.codec_low != CODEC_NONE)) fprintf(stderr, "%lld: low - codec type is %d - sps type is %d\n",
+                            current_timestamp(), stream_type.codec_low, stream_type.sps_type_low);
+                } else if ((stream_type.codec_high  == CODEC_NONE) && (fhs[i].type & 0x0400)) {
+                    if (cb_memcmp(SPS4_1920X1080, buf_idx_cur, sizeof(SPS4_1920X1080)) == 0) {
+                        stream_type.codec_high = CODEC_H264;
+                        stream_type.sps_type_high = 0x0102;
+                    } else if (cb_memcmp(SPS4_START, buf_idx_cur, sizeof(SPS4_START)) == 0) {
+                        stream_type.codec_high = CODEC_H264;
+                        stream_type.sps_type_high = 0x0000;
+                    } else if (cb_memcmp(SPS5_START, buf_idx_cur, sizeof(SPS5_START)) == 0) {
+                        stream_type.codec_high = CODEC_H265;
+                        stream_type.sps_type_high = 0x0000;
+                    }
+                    if ((debug) && (stream_type.codec_high != CODEC_NONE)) fprintf(stderr, "%lld: high - codec type is %d - sps type is %d\n",
+                            current_timestamp(), stream_type.codec_high, stream_type.sps_type_high);
                 }
+            } else {
+                buf_idx_cur = cb_move(buf_idx_cur, frame_header_size);
+            }
+
+            write_enable = 1;
+            frame_counter = fhs[i].stream_counter;
+            if (fhs[i].type & 0x0800) {
+                frame_type = TYPE_LOW;
+            } else if (fhs[i].type & 0x0400) {
+                frame_type = TYPE_HIGH;
+            } else if (fhs[i].type & 0x0100) {
+                frame_type = TYPE_AAC;
+            } else {
+                frame_type = TYPE_NONE;
+            }
+            if ((frame_type == TYPE_LOW) && ((resolution == RESOLUTION_LOW) || (resolution == RESOLUTION_BOTH))) {
+                if ((65536 + frame_counter - frame_counter_last_valid_low) % 65536 > 1) {
+
+                    if (debug) fprintf(stderr, "%lld: warning - %d low res frame(s) lost - frame_counter: %d - frame_counter_last_valid: %d\n",
+                                current_timestamp(), (65536 + frame_counter - frame_counter_last_valid_low - 1) % 65536, frame_counter, frame_counter_last_valid_low);
+                    frame_counter_last_valid_low = frame_counter;
+                } else {
+                    if (debug) {
+                        if (fhs[i].type & 0x0002) {
+                            fprintf(stderr, "%lld: SPS   detected - frame_len: %d - frame_counter: %d - frame_counter_last_valid: %d - resolution: %d\n",
+                                    current_timestamp(), frame_len, frame_counter,
+                                    frame_counter_last_valid_low, frame_type);
+                        } else {
+                            fprintf(stderr, "%lld: frame detected - frame_len: %d - frame_counter: %d - frame_counter_last_valid: %d - resolution: %d\n",
+                                    current_timestamp(), frame_len, frame_counter,
+                                    frame_counter_last_valid_low, frame_type);
+                        }
+                    }
+                    frame_counter_last_valid_low = frame_counter;
+                }
+
+                buf_idx_start = buf_idx_cur;
+            } else if ((frame_type == TYPE_HIGH) && ((resolution == RESOLUTION_HIGH) || (resolution == RESOLUTION_BOTH))) {
+                if ((65536 + frame_counter - frame_counter_last_valid_high) % 65536 > 1) {
+
+                    if (debug) fprintf(stderr, "%lld: warning - %d high res frame(s) lost - frame_counter: %d - frame_counter_last_valid: %d\n",
+                                current_timestamp(), (65536 + frame_counter - frame_counter_last_valid_high - 1) % 65536, frame_counter, frame_counter_last_valid_high);
+                    frame_counter_last_valid_high = frame_counter;
+                } else {
+                    if (debug) {
+                        if (fhs[i].type & 0x0002) {
+                            fprintf(stderr, "%lld: SPS   detected - frame_len: %d - frame_counter: %d - frame_counter_last_valid: %d - resolution: %d\n",
+                                    current_timestamp(), frame_len, frame_counter,
+                                    frame_counter_last_valid_high, frame_type);
+                        } else {
+                            fprintf(stderr, "%lld: frame detected - frame_len: %d - frame_counter: %d - frame_counter_last_valid: %d - resolution: %d\n",
+                                    current_timestamp(), frame_len, frame_counter,
+                                    frame_counter_last_valid_high, frame_type);
+                        }
+                    }
+                    frame_counter_last_valid_high = frame_counter;
+                }
+
+                buf_idx_start = buf_idx_cur;
+            } else if ((frame_type == TYPE_AAC) && (audio == 1)) {
+                if ((65536 + frame_counter - frame_counter_last_valid_audio) % 65536 > 1) {
+                    if (debug) fprintf(stderr, "%lld: warning - %d AAC frame(s) lost - frame_counter: %d - frame_counter_last_valid: %d\n",
+                                current_timestamp(), (65536 + frame_counter - frame_counter_last_valid_audio - 1) % 65536, frame_counter, frame_counter_last_valid_audio);
+                    frame_counter_last_valid_audio = frame_counter;
+                } else {
+                    if (debug) fprintf(stderr, "%lld: frame detected - frame_len: %d - frame_counter: %d - audio AAC\n",
+                                current_timestamp(), frame_len, fhs[i].stream_counter);
+
+                    frame_counter_last_valid_audio = frame_counter;
+                }
+                buf_idx_start = buf_idx_cur;
             } else {
                 write_enable = 0;
             }
-            if (debug) fprintf(stderr, "%lld: SPS   detected - frame_len: %d - frame_counter: %d - frame_counter_last_valid: %d - resolution: %d\n",
-                        current_timestamp(), frame_len, frame_counter,
-                        frame_counter_last_valid, frame_res);
-            buf_idx_1 = cb_move(buf_idx_1, 6 + FRAME_HEADER_SIZE);
-            buf_idx_start = buf_idx_1;
-        } else if ((cb_memcmp(PPS_START, buf_idx_1, sizeof(PPS_START)) == 0) ||
-                    (cb_memcmp(N06_START, buf_idx_1, sizeof(N06_START)) == 0)) {
-            // PPS, IDR and PFR frames
-            write_enable = 1;
-            buf_idx_1 = cb_move(buf_idx_1, -FRAME_HEADER_SIZE);
-            if (buf_idx_1[7] == 8) {
-                frame_res = RESOLUTION_LOW;
-            } else if (buf_idx_1[7] == 4) {
-                frame_res = RESOLUTION_HIGH;
-            } else {
-                frame_res = RESOLUTION_NONE;
-            }
-            if (frame_res == resolution) {
-                cb2s_memcpy((unsigned char *) &frame_len, buf_idx_1, 4);
-                frame_counter = (int) buf_idx_1[16] + (int) buf_idx_1[17] * 256;
-                if ((frame_counter - frame_counter_last_valid > 20) ||
-                            ((frame_counter < frame_counter_last_valid) && (frame_counter - frame_counter_last_valid > -65515))) {
 
-                    if (debug) fprintf(stderr, "%lld: incorrect frame counter - frame_counter: %d - frame_counter_last_valid: %d\n",
-                                current_timestamp(), frame_counter, frame_counter_last_valid);
-                    frame_counter_invalid++;
-                    // Check if sync is lost
-                    if (frame_counter_invalid > 40) {
-                        if (debug) fprintf(stderr, "%lld: sync lost\n", current_timestamp());
-                        frame_counter_last_valid = frame_counter;
-                        frame_counter_invalid = 0;
-                    } else {
-                        write_enable = 0;
-                    }
+            // Send the frame to the ouput buffer
+            if (write_enable) {
+                if ((frame_type == TYPE_LOW) && ((resolution == RESOLUTION_LOW) || (resolution == RESOLUTION_BOTH)) && (stream_type.codec_low != CODEC_NONE)) {
+                    fOut = fOutLow;
+                } else if ((frame_type == TYPE_HIGH) && ((resolution == RESOLUTION_HIGH) || (resolution == RESOLUTION_BOTH)) && (stream_type.codec_high != CODEC_NONE)) {
+                    fOut = fOutHigh;
+                } else if ((frame_type == TYPE_AAC) && (audio == 1)) {
+                    fOut = fOutAac;
                 } else {
-                    int fl = (frame_counter + 65536 - frame_counter_last_valid) % 65536;
-                    if (fl > 1) {
-                        fprintf(stderr, "%lld - %d frame(s) lost\n", current_timestamp(), fl);
-                    }
-                    frame_counter_invalid = 0;
-                    frame_counter_last_valid = frame_counter;
+                    fOut = NULL;
                 }
-            } else {
-                write_enable = 0;
+                if (fOut != NULL) {
+                    if (sps_timing_info) {
+                        // Overwrite SPS or VPS with one that contains timing info at 20 fps
+                        if (fhs[i].type & 0x0002) {
+                            if (frame_type == TYPE_LOW) {
+                                if (stream_type.sps_type_low & 0x0101) {
+                                    fwrite(SPS4_640X360_TI, 1, sizeof(SPS4_640X360_TI), fOut);
+                                } else {
+                                    if (buf_idx_start + frame_len > addr + buf_size) {
+                                        fwrite(buf_idx_start, 1, addr + buf_size - buf_idx_start, fOut);
+                                        fwrite(addr + buf_offset, 1, frame_len - (addr + buf_size - buf_idx_start), fOut);
+                                    } else {
+                                        fwrite(buf_idx_start, 1, frame_len, fOut);
+                                    }
+                                }
+                            } else if (frame_type == TYPE_HIGH) {
+                                if (stream_type.sps_type_high == 0x0102) {
+                                    fwrite(SPS4_1920X1080_TI, 1, sizeof(SPS4_1920X1080_TI), fOut);
+                                } else {
+                                    if (buf_idx_start + frame_len > addr + buf_size) {
+                                        fwrite(buf_idx_start, 1, addr + buf_size - buf_idx_start, fOut);
+                                        fwrite(addr + buf_offset, 1, frame_len - (addr + buf_size - buf_idx_start), fOut);
+                                    } else {
+                                        fwrite(buf_idx_start, 1, frame_len, fOut);
+                                    }
+                                }
+                            } else {
+                                if (buf_idx_start + frame_len > addr + buf_size) {
+                                    fwrite(buf_idx_start, 1, addr + buf_size - buf_idx_start, fOut);
+                                    fwrite(addr + buf_offset, 1, frame_len - (addr + buf_size - buf_idx_start), fOut);
+                                } else {
+                                    fwrite(buf_idx_start, 1, frame_len, fOut);
+                                }
+                            }
+                        } else if (fhs[i].type & 0x0008) {
+                            if (frame_type == TYPE_LOW) {
+                                if (buf_idx_start + frame_len > addr + buf_size) {
+                                    fwrite(buf_idx_start, 1, addr + buf_size - buf_idx_start, fOut);
+                                    fwrite(addr + buf_offset, 1, frame_len - (addr + buf_size - buf_idx_start), fOut);
+                                } else {
+                                    fwrite(buf_idx_start, 1, frame_len, fOut);
+                                }
+                            } else if (frame_type == TYPE_HIGH) {
+                                if (buf_idx_start + frame_len > addr + buf_size) {
+                                    fwrite(buf_idx_start, 1, addr + buf_size - buf_idx_start, fOut);
+                                    fwrite(addr + buf_offset, 1, frame_len - (addr + buf_size - buf_idx_start), fOut);
+                                } else {
+                                    fwrite(buf_idx_start, 1, frame_len, fOut);
+                                }
+                            } else {
+                                if (buf_idx_start + frame_len > addr + buf_size) {
+                                    fwrite(buf_idx_start, 1, addr + buf_size - buf_idx_start, fOut);
+                                    fwrite(addr + buf_offset, 1, frame_len - (addr + buf_size - buf_idx_start), fOut);
+                                } else {
+                                    fwrite(buf_idx_start, 1, frame_len, fOut);
+                                }
+                            }
+                        } else {
+                            if (buf_idx_start + frame_len > addr + buf_size) {
+                                fwrite(buf_idx_start, 1, addr + buf_size - buf_idx_start, fOut);
+                                fwrite(addr + buf_offset, 1, frame_len - (addr + buf_size - buf_idx_start), fOut);
+                            } else {
+                                fwrite(buf_idx_start, 1, frame_len, fOut);
+                            }
+                        }
+                    } else {
+                        if (buf_idx_start + frame_len > addr + buf_size) {
+                            fwrite(buf_idx_start, 1, addr + buf_size - buf_idx_start, fOut);
+                            fwrite(addr + buf_offset, 1, frame_len - (addr + buf_size - buf_idx_start), fOut);
+                        } else {
+                            fwrite(buf_idx_start, 1, frame_len, fOut);
+                        }
+                    }
+                    if (debug) fprintf(stderr, "%lld: writing frame, length %d\n", current_timestamp(), frame_len);
+                }
             }
-            if (debug) fprintf(stderr, "%lld: frame detected - frame_len: %d - frame_counter: %d - frame_counter_last_valid: %d - resolution: %d\n",
-                        current_timestamp(), frame_len, frame_counter,
-                        frame_counter_last_valid, frame_res);
-            buf_idx_1 = cb_move(buf_idx_1, FRAME_HEADER_SIZE);
-            buf_idx_start = buf_idx_1;
-        } else {
-            write_enable = 0;
         }
 
-        buf_idx_1 = buf_idx_2;
+        usleep(25000);
     }
 
     // Unreacheable path
 
-    if (fifo == 1) {
-        if (resolution == RESOLUTION_LOW) {
-            fclose(fOut);
-            unlink(FIFO_NAME_LOW);
-        } else if (resolution == RESOLUTION_HIGH) {
-            fclose(fOut);
-            unlink(FIFO_NAME_HIGH);
-        }
+    // Unmap file from memory
+    if (munmap(addr, buf_size) == -1) {
+        if (debug) fprintf(stderr, "error - unmapping file");
+    } else {
+        if (debug) fprintf(stderr, "unmapping file %s, size %d, from %08x\n", BUFFER_FILE, buf_size, (unsigned int) addr);
     }
 
-    // Unmap file from memory
-    if (munmap(addr, BUF_SIZE) == -1) {
-        if (debug) fprintf(stderr, "error munmapping file");
-    } else {
-        if (debug) fprintf(stderr, "unmapping file %s, size %d, from %08x\n", BUFFER_FILE, BUF_SIZE, (unsigned int) addr);
+    if (fifo == 1) {
+        if ((resolution == RESOLUTION_LOW) || (resolution == RESOLUTION_BOTH)) {
+            fclose(fOutLow);
+            unlink(FIFO_NAME_LOW);
+        }
+        if ((resolution == RESOLUTION_HIGH) || (resolution == RESOLUTION_BOTH)) {
+            fclose(fOutHigh);
+            unlink(FIFO_NAME_HIGH);
+        }
+
+        if (audio == 1) {
+            fclose(fOutAac);
+            unlink(FIFO_NAME_AAC);
+        }
     }
 
     return 0;
