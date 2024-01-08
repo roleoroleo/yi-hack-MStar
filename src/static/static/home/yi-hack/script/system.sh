@@ -346,7 +346,6 @@ HW_ID=$(dd status=none bs=1 count=4 skip=661 if=/tmp/mmap.info | tr '\0' '0' | c
 
 if [[ $(get_config ONVIF) == "yes" ]] ; then
     log "Starting onvif"
-
     ONVIF_SRVD_CONF="/tmp/onvif_simple_server.conf"
 
     echo "model=Yi Hack" > $ONVIF_SRVD_CONF
@@ -376,20 +375,24 @@ if [[ $(get_config ONVIF) == "yes" ]] ; then
     if [[ $MODEL_SUFFIX == "h201c" ]] || [[ $MODEL_SUFFIX == "h305r" ]] || [[ $MODEL_SUFFIX == "y30" ]] || [[ $MODEL_SUFFIX == "h307" ]] ; then
         echo "#PTZ" >> $ONVIF_SRVD_CONF
         echo "ptz=1" >> $ONVIF_SRVD_CONF
+        echo "get_position=/home/yi-hack/bin/ipc_cmd -g" >> $ONVIF_SRVD_CONF
         echo "move_left=/home/yi-hack/bin/ipc_cmd -m left" >> $ONVIF_SRVD_CONF
         echo "move_right=/home/yi-hack/bin/ipc_cmd -m right" >> $ONVIF_SRVD_CONF
         echo "move_up=/home/yi-hack/bin/ipc_cmd -m up" >> $ONVIF_SRVD_CONF
         echo "move_down=/home/yi-hack/bin/ipc_cmd -m down" >> $ONVIF_SRVD_CONF
         echo "move_stop=/home/yi-hack/bin/ipc_cmd -m stop" >> $ONVIF_SRVD_CONF
-        echo "move_preset=/home/yi-hack/bin/ipc_cmd -p %t" >> $ONVIF_SRVD_CONF
-        echo "set_preset=/home/yi-hack/bin/ipc_cmd -P %t" >> $ONVIF_SRVD_CONF
-        echo "set_home_position=/home/yi-hack/bin/ipc_cmd -H" >> $ONVIF_SRVD_CONF
-        echo "remove_preset=/home/yi-hack/bin/ipc_cmd -R %t" >> $ONVIF_SRVD_CONF
+        echo "move_preset=/home/yi-hack/bin/ipc_cmd -p %d" >> $ONVIF_SRVD_CONF
+        echo "set_preset=/home/yi-hack/script/ptz_presets.sh -a add_preset -m %s" >> $ONVIF_SRVD_CONF
+        echo "set_home_position=/home/yi-hack/script/ptz_presets.sh -a set_home_position" >> $ONVIF_SRVD_CONF
+        echo "remove_preset=/home/yi-hack/script/ptz_presets.sh -a del_preset -n %d" >> $ONVIF_SRVD_CONF
+        echo "jump_to_abs=/home/yi-hack/bin/ipc_cmd -j %f,%f" >> $ONVIF_SRVD_CONF
+        echo "jump_to_rel=/home/yi-hack/bin/ipc_cmd -J %f,%f" >> $ONVIF_SRVD_CONF
+        echo "get_presets=/home/yi-hack/script/ptz_presets.sh -a get_presets" >> $ONVIF_SRVD_CONF
         echo "" >> $ONVIF_SRVD_CONF
     fi
 
     echo "#EVENT" >> $ONVIF_SRVD_CONF
-    echo "events=1" >> $ONVIF_SRVD_CONF
+    echo "events=3" >> $ONVIF_SRVD_CONF
     echo "#Event 0" >> $ONVIF_SRVD_CONF
     echo "topic=tns1:VideoSource/MotionAlarm" >> $ONVIF_SRVD_CONF
     echo "source_name=VideoSourceConfigurationToken" >> $ONVIF_SRVD_CONF
@@ -417,8 +420,8 @@ if [[ $(get_config ONVIF) == "yes" ]] ; then
     echo "input_file=/tmp/onvif_notify_server/baby_crying" >> $ONVIF_SRVD_CONF
     echo "#Event 5" >> $ONVIF_SRVD_CONF
     echo "topic=tns1:AudioAnalytics/Audio/DetectedSound" >> $ONVIF_SRVD_CONF
-    echo "source_name=AudioAnalyticsConfigurationToken" >> $ONVIF_SRVD_CONF
-    echo "source_value=AudioAnalyticsToken" >> $ONVIF_SRVD_CONF
+    echo "source_name=VideoSourceConfigurationToken" >> $ONVIF_SRVD_CONF
+    echo "source_value=VideoSourceToken" >> $ONVIF_SRVD_CONF
     echo "input_file=/tmp/onvif_notify_server/sound_detection" >> $ONVIF_SRVD_CONF
 
     chmod 0600 $ONVIF_SRVD_CONF
