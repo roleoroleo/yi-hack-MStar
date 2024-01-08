@@ -67,11 +67,11 @@ char *config_params[PARAM_NUM][PARAM_OPTIONS] = {
     { "camera", "MOTION_TRACKING", "bool", "", "", "", "", "", "ipc_cmd -o %s" },
     { "camera", "CRUISE", "enum", "no", "presets", "360", "", "", "ipc_cmd -C %s" },
 
-    { "ptz", "MOVE", "enum", "right", "left", "down", "up", "stop", "QUERY_STRING=\"action=step&dir=%s\" /tmp/sd/yi-hack/www/cgi-bin/ptz.sh" },
-    { "ptz", "GOTO_PRESET", "int", "0", "7", "", "", "", "/tmp/sd/yi-hack/script/ptz_presets.sh -a go_preset -n %s" },
-    { "ptz", "ADD_PRESET", "string", "", "", "", "", "", "/tmp/sd/yi-hack/script/ptz_presets.sh -a add_preset -m %s" },
-    { "ptz", "SET_HOME_POSITION", "string", "", "", "", "", "", "/tmp/sd/yi-hack/script/ptz_presets.sh -a set_home_position" },
-    { "ptz", "REMOVE_PRESET", "int", "0", "7", "", "", "", "/tmp/sd/yi-hack/script/ptz_presets.sh -a del_preset -n %s" },
+    { "ptz", "MOVE", "enum", "right", "left", "down", "up", "stop", "QUERY_STRING=\"action=step&dir=%s\" /home/yi-hack/www/cgi-bin/ptz.sh" },
+    { "ptz", "GOTO_PRESET", "int", "0", "7", "", "", "", "/home/yi-hack/script/ptz_presets.sh -a go_preset -n %s" },
+    { "ptz", "ADD_PRESET", "string", "", "", "", "", "", "/home/yi-hack/script/ptz_presets.sh -a add_preset -m %s" },
+    { "ptz", "SET_HOME_POSITION", "string", "", "", "", "", "", "/home/yi-hack/script/ptz_presets.sh -a set_home_position" },
+    { "ptz", "REMOVE_PRESET", "int", "0", "7", "", "", "", "/home/yi-hack/script/ptz_presets.sh -a del_preset -n %s" },
 };
 
 int validate_param(char *file, char *key, char *value)
