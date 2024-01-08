@@ -1,8 +1,8 @@
-OBJECTS_C = ipc_cmd.o
+OBJECTS_C = ipc_cmd.o ptz.o
 OBJECTS_R = ipc_read.o
 OBJECTS_N = ipc_notify.o
 OBJECTS_2 = ipc2file.o
-LIBS = -lrt
+LIBS = -lrt -lm
 LIBS_2 = -lrt -lpthread
 
 all: ipc_cmd ipc_read ipc_notify ipc2file ipc_multiplex.so
