@@ -54,9 +54,12 @@ I have no time to support the project, so feel free to clone/fork this git and m
 3. Click "Upgrade Firmware"
 4. Wait for cam reboot
 
+### Manual Update Procedure
+Check the wiki: https://github.com/roleoroleo/yi-hack-MStar/wiki/Manual-firmware-upgrade
 
-### Optional Utilities 
-Several [optional untilies](https://github.com/roleoroleo/yi-hack-utils) are avaiable, some supporting experimental features like text-to-speech.
+
+### Optional Utilities
+Several [optional utilities](https://github.com/roleoroleo/yi-hack-utils) are avaiable, some supporting experimental features like text-to-speech.
 
 
 ## Contributing and Bug Reports
@@ -72,12 +75,13 @@ This custom firmware contains features replicated from the [yi-hack-MStar](https
     - rtsp://IP-CAM/ch0_0.h264             (high res)
     - rtsp://IP-CAM/ch0_1.h264             (low res)
     - rtsp://IP-CAM/ch0_2.h264             (only audio)
-  - ONVIF server (with support for h264 stream, snapshot, ptz, presets and WS-Discovery) - standardized interfaces for IP cameras.
+  - ONVIF server (with support for stream, snapshot, ptz, presets, events and WS-Discovery) - standardized interfaces for IP cameras.
   - Snapshot service - allows to get a jpg with a web request.
     - http://IP-CAM/cgi-bin/snapshot.sh?res=low&watermark=yes        (select resolution: low or high, and watermark: yes or no)
     - http://IP-CAM/cgi-bin/snapshot.sh                              (default high without watermark)
   - Timelapse feature
-  - MQTT - Motion detection and baby crying detection through mqtt protocol.
+  - MQTT events - Motion detection and baby crying detection through mqtt protocol.
+  - MQTT configuration
   - Web server - web configuration interface.
   - SSH server - dropbear.
   - Telnet server - busybox.
@@ -164,7 +168,7 @@ Currently this project supports only the following cameras:
 This firmware completely overwrite the original firmware.
 So, USE AT YOUR OWN RISK.
 
-**Do not try to use an fw on an unlisted model**
+**Do not try to use a fw on an unlisted model**
 
 **Do not try to force the fw loading renaming the files**
 
@@ -232,8 +236,12 @@ Special thanks to the following people for the previous projects I started from.
 - All the people who worked on the previous projects "yi-hack".
 
 ## DISCLAIMER
-**I AM NOT RESPONSIBLE FOR ANY USE OR DAMAGE THIS SOFTWARE MAY CAUSE. THIS IS INTENDED FOR EDUCATIONAL PURPOSES ONLY. USE AT YOUR OWN RISK.**
+**NOBODY BUT YOU IS RESPONSIBLE FOR ANY USE OR DAMAGE THIS SOFTWARE MAY CAUSE. THIS IS INTENDED FOR EDUCATIONAL PURPOSES ONLY. USE AT YOUR OWN RISK.**
 
 ## Donation
-If you like this project, you can buy me a beer :) 
-[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=JBYXDMR24FW7U&currency_code=EUR&source=url)
+If you like this project, you can buy roleo a beer :)
+
+Click [here](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=JBYXDMR24FW7U&currency_code=EUR&source=url) or use the below QR code to donate via PayPal
+<p align="center">
+  <img src="https://github.com/roleoroleo/yi-hack-MStar/assets/39277388/35b9db58-4013-4bf9-845c-2028a769662d"/>
+</p>
