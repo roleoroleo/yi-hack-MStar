@@ -56,7 +56,8 @@ if [ "$DIR" == "none" ] ; then
 fi
 
 DIRS00="${DIR:0:4}-${DIR:5:2}-${DIR:8:2} ${DIR:11:2}:00"
-DIRS00E=$(date -u -d "$DIRS00" +"%s")
+#DIRS00E=$(date -u -d "$DIRS00" +"%s")
+DIRS00E=$(date -d "$DIRS00" +"%s")
 DIRL=$(date +%YY%mM%dD%HH -d "@$DIRS00E")
 
 printf "Content-type: application/json\r\n\r\n"
