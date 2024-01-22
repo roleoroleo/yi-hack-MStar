@@ -33,6 +33,7 @@
 #include <getopt.h>
 #include <errno.h>
 #include <jpeglib.h>
+#include <time.h>
 
 #ifdef HAVE_AV_CONFIG_H
 #undef HAVE_AV_CONFIG_H
@@ -375,7 +376,7 @@ int frame_decode(unsigned char *outbuffer, unsigned char *p, int length, int h26
     return 0;
 }
 
-int add_watermark(unsigned char *buffer, int w_res, int h_res)
+int add_watermark(unsigned char *buffer, int w_res, int h_res, struct tm *watermark_tm)
 {
     char path_res[1024];
     FILE *fBuf;
@@ -393,10 +394,10 @@ int add_watermark(unsigned char *buffer, int w_res, int h_res)
     } else {
         if (w_res != W_LOW) {
             AddWM(&WM_info, w_res, h_res, buffer,
-                buffer + w_res*h_res, w_res-460, h_res-40, NULL);
+                buffer + w_res*h_res, w_res-460, h_res-40, watermark_tm);
         } else {
             AddWM(&WM_info, w_res, h_res, buffer,
-                buffer + w_res*h_res, w_res-230, h_res-20, NULL);
+                buffer + w_res*h_res, w_res-230, h_res-20, watermark_tm);
         }
         WMRelease(&WM_info);
     }
@@ -449,7 +450,7 @@ pid_t proc_find(const char* process_name, pid_t process_pid)
 
 void print_usage(char *progname)
 {
-    fprintf(stderr, "\nUsage: %s [-m MODEL] [-r RES] [-w] [-d]\n\n", progname);
+    fprintf(stderr, "\nUsage: %s [-m MODEL] [-r RES] [-w] [-t watermark_time] [-d]\n\n", progname);
     fprintf(stderr, "\t-m, --model MODEL\n");
     fprintf(stderr, "\t\tset model: unused parameter\n");
     fprintf(stderr, "\t-f, --file FILE\n");
@@ -458,6 +459,8 @@ void print_usage(char *progname)
     fprintf(stderr, "\t\tset resolution: LOW or HIGH (default HIGH)\n");
     fprintf(stderr, "\t-w, --watermark\n");
     fprintf(stderr, "\t\tadd watermark to image\n");
+    fprintf(stderr, "\t-t, --watermark_time\n");
+    fprintf(stderr, "\t\tstring to print\n");
     fprintf(stderr, "\t-d, --debug\n");
     fprintf(stderr, "\t\tenable debug\n");
 }
@@ -481,6 +484,8 @@ int main(int argc, char **argv)
     char file[256];
     int resolution = RESOLUTION_HIGH;
     int watermark = 0;
+    int watermark_time = 0;
+    struct tm watermark_tm;
     int priority = 0;
     int width, height;
     FILE *fPtr, *fLen, *fHF;
@@ -515,6 +520,7 @@ int main(int argc, char **argv)
             {"file",      required_argument, 0, 'f'},
             {"resolution",  required_argument, 0, 'r'},
             {"watermark",  no_argument, 0, 'w'},
+            {"watermark_time",  required_argument, 0, 't'},
             {"priority",  required_argument, 0, 'p'},
             {"debug",  no_argument, 0, 'd'},
             {"help",  no_argument, 0, 'h'},
@@ -523,7 +529,7 @@ int main(int argc, char **argv)
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        c = getopt_long (argc, argv, "m:f:r:wp:dh",
+        c = getopt_long (argc, argv, "m:f:r:wt:p:dh",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -557,6 +563,24 @@ int main(int argc, char **argv)
             watermark = 1;
             break;
 
+        case 't':
+            {
+                int d0, d1, d2, d3, d4, d5, d6;
+                d0 = sscanf(optarg, "%d-%d-%d %d:%d:%d", &d1, &d2, &d3, &d4, &d5 ,&d6);
+                if (d0 == 6) {
+                    watermark_tm.tm_year = d1 - 1900;
+                    watermark_tm.tm_mon = d2 - 1;
+                    watermark_tm.tm_mday = d3;
+                    watermark_tm.tm_hour = d4;
+                    watermark_tm.tm_min = d5;
+                    watermark_tm.tm_sec = d6;
+                    watermark_time = 1;
+                } else {
+                    print_usage(argv[0]);
+                    exit(EXIT_FAILURE);
+                }
+                break;
+            }
         case 'p':
             errno = 0;    /* To distinguish success/failure after call */
             priority = strtol(optarg, &endptr, 10);
@@ -856,7 +880,7 @@ int main(int argc, char **argv)
 
     if (watermark) {
         if (debug) fprintf(stderr, "Adding watermark\n");
-        if (add_watermark(bufferyuv, width, height) < 0) {
+        if (add_watermark(bufferyuv, width, height, &watermark_tm) < 0) {
             fprintf(stderr, "Error adding watermark\n");
             return -10;
         }
