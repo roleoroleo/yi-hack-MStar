@@ -880,9 +880,16 @@ int main(int argc, char **argv)
 
     if (watermark) {
         if (debug) fprintf(stderr, "Adding watermark\n");
-        if (add_watermark(bufferyuv, width, height, &watermark_tm) < 0) {
-            fprintf(stderr, "Error adding watermark\n");
-            return -10;
+        if (watermark_time == 1) {
+            if (add_watermark(bufferyuv, width, height, &watermark_tm) < 0) {
+                fprintf(stderr, "Error adding watermark\n");
+                return -10;
+            }
+        } else {
+            if (add_watermark(bufferyuv, width, height, NULL) < 0) {
+                fprintf(stderr, "Error adding watermark\n");
+                return -10;
+            }
         }
     }
 
