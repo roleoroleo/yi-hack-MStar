@@ -57,6 +57,9 @@ ulimit -s 1024
 echo 1500 > /sys/class/net/eth0/mtu
 echo 1500 > /sys/class/net/wlan0/mtu
 
+mount --bind /home/yi-hack/script/wifidhcp.sh /home/app/script/wifidhcp.sh
+mount --bind /home/yi-hack/script/ethdhcp.sh /home/app/script/ethdhcp.sh
+
 # Remove core files, if any
 rm -f $YI_HACK_PREFIX/bin/core
 rm -f $YI_HACK_PREFIX/www/cgi-bin/core
