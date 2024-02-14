@@ -1,5 +1,14 @@
 #!/bin/sh
 
+CONF_FILE="etc/system.conf"
+YI_HACK_PREFIX="/home/yi-hack"
+
+get_config()
+{
+    key=$1
+    grep -w $1 $YI_HACK_PREFIX/$CONF_FILE | cut -d "=" -f2
+}
+
 validateRecDir()
 {
     if [ "${#1}" != "14" ]; then
@@ -56,8 +65,13 @@ if [ "$DIR" == "none" ] ; then
 fi
 
 DIRS00="${DIR:0:4}-${DIR:5:2}-${DIR:8:2} ${DIR:11:2}:00"
-#DIRS00E=$(date -u -d "$DIRS00" +"%s")
-DIRS00E=$(date -d "$DIRS00" +"%s")
+if [[ $(get_config EVENTS_TIME) == "autodetect" ]] ; then
+    DIRS00E=$(date -d "$DIRS00" +"%s")
+elif [[ $(get_config EVENTS_TIME) == "local" ]] ; then
+    DIRS00E=$(date -d "$DIRS00" +"%s")
+elif [[ $(get_config EVENTS_TIME) == "gmt" ]] ; then
+    DIRS00E=$(date -u -d "$DIRS00" +"%s")
+fi
 DIRL=$(date +%YY%mM%dD%HH -d "@$DIRS00E")
 
 printf "Content-type: application/json\r\n\r\n"
