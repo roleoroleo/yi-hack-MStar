@@ -158,7 +158,13 @@ if [[ $(get_config DISABLE_CLOUD) == "no" ]] ; then
         sleep 4
         dd if=/tmp/audio_fifo of=/dev/null bs=1 count=8192
 #        dd if=/dev/zero of=/tmp/audio_in_fifo bs=1 count=1024
-        ./mp4record &
+        if [[ $(get_config TIME_OSD) == "yes" ]] ; then
+            TZP=`TZ=$TZ_TMP date +%z`
+            TZP=${TZP:0:3}:${TZP:3:2}
+            TZ=GMT$TZP ./mp4record &
+        else
+            ./mp4record &
+        fi
         ./cloud &
         ./p2p_tnp &
         ./oss &
@@ -204,7 +210,13 @@ else
         # Trick to start circular buffer filling
         start_buffer
         if [[ $(get_config REC_WITHOUT_CLOUD) == "yes" ]] ; then
-            ./mp4record &
+            if [[ $(get_config TIME_OSD) == "yes" ]] ; then
+                TZP=`TZ=$TZ_TMP date +%z`
+                TZP=${TZP:0:3}:${TZP:3:2}
+                TZ=GMT$TZP ./mp4record &
+            else
+                ./mp4record &
+            fi
         fi
         ./cloud &
     )
