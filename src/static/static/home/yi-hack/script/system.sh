@@ -101,6 +101,10 @@ $YI_HACK_PREFIX/script/check_conf.sh
 
 hostname -F $YI_HACK_PREFIX/etc/hostname
 
+if [ -f $YI_HACK_PREFIX/etc/TZ ]; then
+    TZ_TMP=`cat $YI_HACK_PREFIX/etc/TZ`
+fi
+
 if [[ x$(get_config USERNAME) != "x" ]] ; then
     log "Setting username and password"
     USERNAME=$(get_config USERNAME)
@@ -208,7 +212,9 @@ fi
 
 log "Yi processes started successfully" 1
 
-[ -f /etc/TZ ] && export TZ=`cat /etc/TZ`
+if [ -f $YI_HACK_PREFIX/etc/TZ ]; then
+    export TZ=`cat $YI_HACK_PREFIX/etc/TZ`
+fi
 
 if [[ $(get_config HTTPD) == "yes" ]] ; then
     log "Starting http"

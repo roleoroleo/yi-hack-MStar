@@ -145,7 +145,7 @@ lstat ()
 
 translateFULLFNWithTz ()
 {
-	TIMEZONE=`cat /etc/TZ`
+	TIMEZONE=`cat $YI_HACK_PREFIX/etc/TZ`
 	TR_PREFIX=${1:0:15}
 	TR_DATE=""
 	TR_HOUR_PREFIX=""

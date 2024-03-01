@@ -62,8 +62,8 @@ else
 fi
 
 if [ "$CONF_TYPE" == "system" ] ; then
-    printf "\"%s\":\"%s\",\n"  "HOSTNAME" "$(cat /etc/hostname)"
-    printf "\"%s\":\"%s\",\n"  "TIMEZONE" "$(cat /etc/TZ)"
+    printf "\"%s\":\"%s\",\n"  "HOSTNAME" "$(cat $YI_HACK_PREFIX/etc/hostname)"
+    printf "\"%s\":\"%s\",\n"  "TIMEZONE" "$(cat $YI_HACK_PREFIX/etc/TZ)"
 fi
 
 if [ "$CONF_TYPE" == "camera" ] ; then
