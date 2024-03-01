@@ -154,68 +154,7 @@ unsigned char *cb_memmem(unsigned char *src, int src_len, unsigned char *what, i
     }
     return p;
 }
-/*
-unsigned char *cb_memmem_snal(unsigned char *src, int src_len)
-{
-    unsigned char *idx1, *idx2, *idx3, *ret;
-    unsigned char *tmp_idx1, *tmp_idx2, *tmp_idx3;
 
-    idx1 = cb_memmem(src, src_len, SPS4_START, sizeof(SPS4_START));
-    idx2 = cb_memmem(src, src_len, PPS4_START, sizeof(PPS4_START));
-    idx3 = cb_memmem(src, src_len, N06_START, sizeof(N06_START));
-
-    if ((idx1 == NULL) && (idx2 == NULL) && (idx3 == NULL)) {
-        return NULL;
-    }
-
-    if (idx1 == NULL) {
-        // Move forward enough
-        tmp_idx1 = idx1 + (10 * buf_size);
-    } else {
-        if (idx1 < src) {
-            tmp_idx1 = idx1 + buf_size;
-        } else {
-            tmp_idx1 = idx1;
-        }
-    }
-    if (idx2 == NULL) {
-        // Move forward enough
-        tmp_idx2 = idx2 + (10 * buf_size);
-    } else {
-        if (idx2 < src) {
-            tmp_idx2 = idx2 + buf_size;
-        } else {
-            tmp_idx2 = idx2;
-        }
-    }
-    if (idx3 == NULL) {
-        // Move forward enough
-        tmp_idx3 = idx3 + (10 * buf_size);
-    } else {
-        if (idx3 < src) {
-            tmp_idx3 = idx3 + buf_size;
-        } else {
-            tmp_idx3 = idx3;
-        }
-    }
-
-    if (tmp_idx1 <= tmp_idx2) {
-        if (tmp_idx1 <= tmp_idx3) {
-            ret = idx1;
-        } else {
-            ret = idx3;
-        }
-    } else {
-        if (tmp_idx2 <= tmp_idx3) {
-            ret = idx2;
-        } else {
-            ret = idx3;
-        }
-    }
-
-    return ret;
-}
-*/
 unsigned char *cb_move(unsigned char *buf, int offset)
 {
     buf += offset;
@@ -465,6 +404,8 @@ int main(int argc, char **argv) {
             fOutLow = stdout;
         } else if (resolution == RESOLUTION_HIGH) {
             fOutHigh = stdout;
+        } else if (audio == 1) {
+            fOutAac = stdout;
         }
     } else {
         pthread_t unlock_low_thread, unlock_high_thread, unlock_aac_thread;
