@@ -33,8 +33,6 @@ fbasename()
     echo ${1:0:$((${#1} - 4))}
 }
 
-YI_HACK_PREFIX="/home/yi-hack"
-
 . $YI_HACK_PREFIX/www/cgi-bin/validate.sh
 
 if ! $(validateQueryString $QUERY_STRING); then
