@@ -157,11 +157,8 @@ if [[ $(get_config DISABLE_CLOUD) == "no" ]] ; then
         LD_LIBRARY_PATH="/home/yi-hack/lib:/lib:/home/lib:/home/ms:/home/app/locallib" ./rmm &
         sleep 4
         dd if=/tmp/audio_fifo of=/dev/null bs=1 count=8192
-#        dd if=/dev/zero of=/tmp/audio_in_fifo bs=1 count=1024
         if [[ $(get_config TIME_OSD) == "yes" ]] ; then
-            TZP=`TZ=$TZ_TMP date +%z`
-            TZP=${TZP:0:3}:${TZP:3:2}
-            TZ=GMT$TZP ./mp4record &
+            (sleep 30; export TZP=`TZ=$TZ_TMP date +%z`; export TZP=${TZP:0:3}:${TZP:3:2}; export TZ=GMT$TZP; ./mp4record) &
         else
             ./mp4record &
         fi
@@ -174,7 +171,7 @@ if [[ $(get_config DISABLE_CLOUD) == "no" ]] ; then
         if [ -f ./oss_lapse ]; then
             ./oss_lapse &
         fi
-        ./watch_process &
+        (sleep 30; ./watch_process) &
     )
 else
     (
@@ -206,14 +203,11 @@ else
         LD_LIBRARY_PATH="/home/yi-hack/lib:/lib:/home/lib:/home/ms:/home/app/locallib" ./rmm &
         sleep 4
         dd if=/tmp/audio_fifo of=/dev/null bs=1 count=8192
-#        dd if=/dev/zero of=/tmp/audio_in_fifo bs=1 count=1024
         # Trick to start circular buffer filling
         start_buffer
         if [[ $(get_config REC_WITHOUT_CLOUD) == "yes" ]] ; then
             if [[ $(get_config TIME_OSD) == "yes" ]] ; then
-                TZP=`TZ=$TZ_TMP date +%z`
-                TZP=${TZP:0:3}:${TZP:3:2}
-                TZ=GMT$TZP ./mp4record &
+                (sleep 30; export TZP=`TZ=$TZ_TMP date +%z`; export TZP=${TZP:0:3}:${TZP:3:2}; export TZ=GMT$TZP; ./mp4record) &
             else
                 ./mp4record &
             fi

@@ -17,6 +17,10 @@ get_config()
 
 init_config()
 {
+    if [ -f $YI_HACK_PREFIX/etc/TZ ]; then
+        TZ_TMP=`cat $YI_HACK_PREFIX/etc/TZ`
+    fi
+
     if [[ x$(get_config USERNAME) != "x" ]] ; then
         USERNAME=$(get_config USERNAME)
         PASSWORD=$(get_config PASSWORD)
