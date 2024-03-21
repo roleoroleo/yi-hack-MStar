@@ -62,9 +62,12 @@ mount --bind /home/yi-hack/script/wifidhcp.sh /home/app/script/wifidhcp.sh
 mount --bind /home/yi-hack/script/ethdhcp.sh /home/app/script/ethdhcp.sh
 
 # Remove core files, if any
-rm -f $YI_HACK_PREFIX/bin/core
-rm -f $YI_HACK_PREFIX/www/cgi-bin/core
 rm -f $YI_PREFIX/core
+rm -f $YI_HACK_PREFIX/bin/core
+rm -f $YI_HACK_PREFIX/script/core
+rm -f $YI_HACK_PREFIX/www/core
+rm -f $YI_HACK_PREFIX/www/cgi-bin/core
+rm -f $YI_HACK_PREFIX/core
 
 if [ ! -L /home/yi-hack-v4 ]; then
     ln -s $YI_HACK_PREFIX /home/yi-hack-v4
@@ -306,7 +309,7 @@ mkdir -p /var/spool/cron/crontabs/
 if [ ! -z "$CRONTAB" ]; then
     echo -e "$CRONTAB" > /var/spool/cron/crontabs/root
 fi
-if [[ $(get_config SNAPSHOT) == "yes" ]] && [[ $(get_config SNAPSHOT_VIDEO) == "yes" ]]; then
+if [[ $(get_config SNAPSHOT) == "yes" ]] && [[ $(get_config SNAPSHOT_VIDEO) == "yes" ]] ; then
     echo "* * * * * /home/yi-hack/script/thumb.sh cron" >> /var/spool/cron/crontabs/root
 fi
 if [ "$FREE_SPACE" != "0" ]; then
