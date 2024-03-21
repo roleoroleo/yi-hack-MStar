@@ -99,7 +99,7 @@ checkFiles ()
 				logAdd "[ERROR] checkFiles: create jpg FAILED - [${file}]. Using fallback.jpg."
 				rm -f $BASE_NAME.h26x
 				rm -f $BASE_NAME.jpg
-				cp /home/yi-hack/etc/fallback.jpg $BASE_NAME.jpg
+				cp $YI_HACK_PREFIX/etc/fallback.jpg $BASE_NAME.jpg
 			fi
 			rm -f $BASE_NAME.h26x
 			logAdd "[INFO] checkFiles: createThumb SUCCEEDED - [${file}]."
