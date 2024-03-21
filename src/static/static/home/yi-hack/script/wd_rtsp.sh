@@ -6,6 +6,8 @@ CAMERA_CONF_FILE="etc/camera.conf"
 YI_HACK_PREFIX="/home/yi-hack"
 MODEL_SUFFIX=$(cat /home/yi-hack/model_suffix)
 
+START_STOP_SCRIPT=$YI_HACK_PREFIX/script/service.sh
+
 #LOG_FILE="/tmp/sd/wd_rtsp.log"
 LOG_FILE="/dev/null"
 
@@ -28,40 +30,7 @@ get_config()
 
 restart_rtsp()
 {
-    if [[ $(get_config RTSP) == "yes" ]] ; then
-        if [[ $(get_config RTSP_STREAM) == "low" ]]; then
-            h264grabber_l -m $MODEL_SUFFIX -r low -f &
-            sleep 1
-            CODEC_LOW=$(cat /tmp/lowres)
-            if [ ! -z $CODEC_LOW ]; then
-                CODEC_LOW="-c "$CODEC_LOW
-            fi
-            $RTSP_DAEMON -r low $CODEC_LOW $RTSP_AUDIO_COMPRESSION $RTSP_PORT $RTSP_USER $RTSP_PASSWORD $NR_LEVEL &
-        fi
-        if [[ $(get_config RTSP_STREAM) == "high" ]]; then
-            h264grabber_h -m $MODEL_SUFFIX -r high -f &
-            sleep 1
-            CODEC_HIGH=$(cat /tmp/highres)
-            if [ ! -z $CODEC_HIGH ]; then
-                CODEC_HIGH="-C "$CODEC_HIGH
-            fi
-            $RTSP_DAEMON -r high $CODEC_HIGH $RTSP_AUDIO_COMPRESSION $RTSP_PORT $RTSP_USER $RTSP_PASSWORD $NR_LEVEL &
-        fi
-        if [[ $(get_config RTSP_STREAM) == "both" ]]; then
-            h264grabber_l -m $MODEL_SUFFIX -r low -f &
-            h264grabber_h -m $MODEL_SUFFIX -r high -f &
-            sleep 1
-            CODEC_LOW=$(cat /tmp/lowres)
-            if [ ! -z $CODEC_LOW ]; then
-                CODEC_LOW="-c "$CODEC_LOW
-            fi
-            CODEC_HIGH=$(cat /tmp/highres)
-            if [ ! -z $CODEC_HIGH ]; then
-                CODEC_HIGH="-C "$CODEC_HIGH
-            fi
-            $RTSP_DAEMON -r both $CODEC_LOW $CODEC_HIGH $RTSP_AUDIO_COMPRESSION $RTSP_PORT $RTSP_USER $RTSP_PASSWORD $NR_LEVEL &
-        fi
-    fi
+    $START_STOP_SCRIPT rtsp start
 }
 
 check_rtsp()
@@ -197,46 +166,13 @@ if [[ $(get_config RTSP) == "no" ]] ; then
     exit
 fi
 
-if [[ "$(get_config USERNAME)" != "" ]] ; then
-    USERNAME=$(get_config USERNAME)
-    PASSWORD=$(get_config PASSWORD)
-fi
-
 case $(get_config RTSP_PORT) in
     ''|*[!0-9]*) RTSP_PORT=554 ;;
     *) RTSP_PORT=$(get_config RTSP_PORT) ;;
 esac
 
-RTSP_DAEMON="rRTSPServer"
-RTSP_AUDIO_COMPRESSION=$(get_config RTSP_AUDIO)
-NR_LEVEL=$(get_config RTSP_AUDIO_NR_LEVEL)
-
-if [[ $(get_config RTSP_ALT) == "yes" ]] ; then
-    RTSP_DAEMON="rtsp_server_yi"
-    if [[ "$RTSP_AUDIO_COMPRESSION" == "aac" ]] ; then
-        RTSP_AUDIO_COMPRESSION="alaw"
-    fi
-    NR_LEVEL=""
-fi
-
-if [[ "$RTSP_AUDIO_COMPRESSION" == "none" ]] ; then
-    RTSP_AUDIO_COMPRESSION="no"
-fi
-if [ ! -z $RTSP_AUDIO_COMPRESSION ]; then
-    RTSP_AUDIO_COMPRESSION="-a "$RTSP_AUDIO_COMPRESSION
-fi
 if [ ! -z $RTSP_PORT ]; then
     RTSP_PORT_NUMBER=$RTSP_PORT
-    RTSP_PORT="-p "$RTSP_PORT
-fi
-if [ ! -z $USERNAME ]; then
-    RTSP_USER="-u "$USERNAME
-fi
-if [ ! -z $PASSWORD ]; then
-    RTSP_PASSWORD="-w "$PASSWORD
-fi
-if [ ! -z $NR_LEVEL ]; then
-    NR_LEVEL="-n "$NR_LEVEL
 fi
 
 RTSP_ALT=$(get_config RTSP_ALT)
