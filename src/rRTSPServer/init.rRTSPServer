@@ -53,6 +53,7 @@ fi
 tar zxvf $ARCHIVE
 
 patch -p0 < rRTSPServer.patch
+patch -p0 < friend.patch
 
 cd live || exit 1
 

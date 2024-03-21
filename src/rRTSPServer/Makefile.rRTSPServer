@@ -19,6 +19,8 @@ LIBS_FOR_AAC = ./lib/libfdk-aac.a
 EXE =
 ##### End of variables to change
 
+.PHONY: all livemedia rRTSPServer install distclean clean
+
 INCLUDES = -IUsageEnvironment/include -Igroupsock/include -IliveMedia/include -IBasicUsageEnvironment/include
 # Default library filename suffixes for each library that we link with.  The "config.*" file might redefine these later.
 libliveMedia_LIB_SUFFIX = $(LIB_SUFFIX)
@@ -74,6 +76,12 @@ rRTSPServer_OBJS	= src/rRTSPServer.$(OBJ) \
 				src/WAVAudioFifoSource.$(OBJ) src/WAVAudioFifoServerMediaSubsession.$(OBJ) \
 				src/ADTSFromWAVAudioFifoSource.$(OBJ) src/ADTSFromWAVAudioFifoServerMediaSubsession.$(OBJ) \
 				src/aLawAudioFilter.$(OBJ) \
+				src/PCMFileSink.$(OBJ) \
+				src/ADTS2PCMFileSink.$(OBJ) \
+				src/ADTSAudioFileServerMediaSubsession_BC.$(OBJ) \
+				src/PCMAudioFileServerMediaSubsession_BC.$(OBJ) \
+				src/FileServerMediaSubsession_BC.$(OBJ) \
+				src/OnDemandServerMediaSubsession_BC.$(OBJ) \
 				src/YiNoiseReduction.$(OBJ)
 
 rRTSPServer$(EXE):	$(rRTSPServer_OBJS) $(LOCAL_LIBS)
