@@ -132,7 +132,11 @@ start_rtsp()
     fi
 
     $RTSP_DAEMON $RTSP_RES $CODEC_LOW $CODEC_HIGH $RTSP_AUDIO_COMPRESSION $RTSP_PORT $RTSP_USER $RTSP_PASSWORD $NR_LEVEL $B_ONVIF_AUDIO_BC >/dev/null &
-    (sleep 30; $YI_HACK_PREFIX/script/wd_rtsp.sh >/dev/null) &
+
+    WD_COUNT=$(ps | grep wd_rtsp.sh | grep -v grep | grep -c ^)
+    if [ $WD_COUNT -eq 0 ]; then
+        (sleep 30; $YI_HACK_PREFIX/script/wd_rtsp.sh >/dev/null) &
+    fi
 }
 
 stop_rtsp()
