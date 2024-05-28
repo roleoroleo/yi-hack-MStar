@@ -16,8 +16,8 @@ STATIC_DNS1=$(get_config STATIC_DNS1)
 STATIC_DNS2=$(get_config STATIC_DNS2)
 
 if [ -z $STATIC_IP ] || [ -z $STATIC_MASK ]; then
-    if [ -f /tmp/sd/yi-hack/etc/hostname ]; then
-        HN=$(cat /tmp/sd/yi-hack/etc/hostname)
+    if [ -f /etc/hostname ]; then
+        HN=$(cat /etc/hostname)
     fi
     udhcpc -i wlan0 -b -s /home/app/script/default.script -x hostname:$HN
 else
