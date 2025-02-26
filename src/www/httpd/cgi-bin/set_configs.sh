@@ -85,6 +85,14 @@ for ROW in $ROWS; do
     # Change back tab with \n
     VALUE=$(echo "$ROW" | cut -d'=' -f2 | sed 's/\t/\\n/g')
 
+    if ! $(validateKey $KEY); then
+        printf "Content-type: application/json\r\n\r\n"
+        printf "{\n"
+        printf "\"%s\":\"%s\"\\n" "error" "true"
+        printf "}"
+        exit
+    fi
+
     if [ "$KEY" == "HOSTNAME" ] ; then
         if [ -z $VALUE ] ; then
 
@@ -121,6 +129,7 @@ for ROW in $ROWS; do
             sed -i "s/^\(${KEY}\s*=\s*\).*$/\1${VALUE}/" $CONF_FILE
         fi
     else
+        KEY=$(echo "$KEY" | sedencode)
         VALUE=$(echo "$VALUE" | sedencode)
         sed -i "s/^\(${KEY}\s*=\s*\).*$/\1${VALUE}/" $CONF_FILE
     fi
