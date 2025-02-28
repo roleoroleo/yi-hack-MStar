@@ -1,23 +1,22 @@
-/**********
-This library is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the
-Free Software Foundation; either version 3 of the License, or (at your
-option) any later version. (See <http://www.gnu.org/copyleft/lesser.html>.)
+/*
+ * Copyright (c) 2025 roleo.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, version 3.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 
-This library is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for
-more details.
-
-You should have received a copy of the GNU Lesser General Public License
-along with this library; if not, write to the Free Software Foundation, Inc.,
-51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
-**********/
-// "liveMedia"
-// Copyright (c) 1996-2020 Live Networks, Inc.  All rights reserved.
-// Copyright (c) 2020 roleo.  All rights reserved.
-// Filters for converting between raw PCM audio and aLaw
-// Implementation
+/*
+ * Filter for converting between raw PCM audio and aLaw
+ */
 
 #include "aLawAudioFilter.hh"
 
@@ -35,13 +34,13 @@ aLawFromPCMAudioSource* aLawFromPCMAudioSource
 
 aLawFromPCMAudioSource
 ::aLawFromPCMAudioSource(UsageEnvironment& env, FramedSource* inputSource,
-			 int byteOrdering)
+                         int byteOrdering)
     : FramedFilter(env, inputSource),
       fByteOrdering(byteOrdering), fInputBuffer(NULL), fInputBufferSize(0) {
 }
 
 aLawFromPCMAudioSource::~aLawFromPCMAudioSource() {
-  delete[] fInputBuffer;
+    delete[] fInputBuffer;
 }
 
 void aLawFromPCMAudioSource::doGetNextFrame() {
@@ -55,18 +54,18 @@ void aLawFromPCMAudioSource::doGetNextFrame() {
 
     // Arrange to read samples into the input buffer:
     fInputSource->getNextFrame(fInputBuffer, bytesToRead,
-			     afterGettingFrame, this,
-                             FramedSource::handleClosure, this);
+                               afterGettingFrame, this,
+                               FramedSource::handleClosure, this);
 }
 
 void aLawFromPCMAudioSource
 ::afterGettingFrame(void* clientData, unsigned frameSize,
-		    unsigned numTruncatedBytes,
-		    struct timeval presentationTime,
-		    unsigned durationInMicroseconds) {
+                    unsigned numTruncatedBytes,
+                    struct timeval presentationTime,
+                    unsigned durationInMicroseconds) {
     aLawFromPCMAudioSource* source = (aLawFromPCMAudioSource*)clientData;
     source->afterGettingFrame1(frameSize, numTruncatedBytes,
-			     presentationTime, durationInMicroseconds);
+                               presentationTime, durationInMicroseconds);
 }
 
 #define CLIP 32767
@@ -96,8 +95,8 @@ static unsigned char aLawFrom16BitLinear(u_int16_t sample) {
 
 void aLawFromPCMAudioSource
 ::afterGettingFrame1(unsigned frameSize, unsigned numTruncatedBytes,
-		     struct timeval presentationTime,
-		     unsigned durationInMicroseconds) {
+                     struct timeval presentationTime,
+                     unsigned durationInMicroseconds) {
     // Translate raw 16-bit PCM samples (in the input buffer)
     // into aLaw samples (in the output buffer).
     unsigned numSamples = frameSize/2;
@@ -163,18 +162,18 @@ void PCMFromaLawAudioSource::doGetNextFrame() {
 
     // Arrange to read samples into the input buffer:
     fInputSource->getNextFrame(fInputBuffer, bytesToRead,
-			     afterGettingFrame, this,
-                             FramedSource::handleClosure, this);
+                               afterGettingFrame, this,
+                               FramedSource::handleClosure, this);
 }
 
 void PCMFromaLawAudioSource
 ::afterGettingFrame(void* clientData, unsigned frameSize,
-		    unsigned numTruncatedBytes,
-		    struct timeval presentationTime,
-		    unsigned durationInMicroseconds) {
+                    unsigned numTruncatedBytes,
+                    struct timeval presentationTime,
+                    unsigned durationInMicroseconds) {
     PCMFromaLawAudioSource* source = (PCMFromaLawAudioSource*)clientData;
     source->afterGettingFrame1(frameSize, numTruncatedBytes,
-			     presentationTime, durationInMicroseconds);
+                               presentationTime, durationInMicroseconds);
 }
 
 static int16_t alaw_decode[256] = {
@@ -218,8 +217,8 @@ static u_int16_t linear16FromaLaw(unsigned char aLawByte) {
 
 void PCMFromaLawAudioSource
 ::afterGettingFrame1(unsigned frameSize, unsigned numTruncatedBytes,
-		     struct timeval presentationTime,
-		     unsigned durationInMicroseconds) {
+                     struct timeval presentationTime,
+                     unsigned durationInMicroseconds) {
     // Translate aLaw samples (in the input buffer)
     // into 16-bit PCM samples (in the output buffer), in host order.
     unsigned numSamples = frameSize;
