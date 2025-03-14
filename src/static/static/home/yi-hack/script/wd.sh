@@ -8,8 +8,9 @@ MODEL_SUFFIX=$(cat /home/yi-hack/model_suffix)
 
 START_STOP_SCRIPT=$YI_HACK_PREFIX/script/service.sh
 
-#LOG_FILE="/tmp/sd/wd_rtsp.log"
+#LOG_FILE="/tmp/sd/wd.log"
 LOG_FILE="/dev/null"
+LOGWIFI_FILE="/tmp/sd/hack_wififailsafe.log"
 
 COUNTER_H=0
 COUNTER_L=0
@@ -106,6 +107,8 @@ check_rtsp()
                 COUNTER_H=0
             fi
         fi
+    else
+        echo "Camera is swiched off no rtsp restart needed" >> $LOG_FILE
     fi
 }
 
@@ -148,6 +151,52 @@ check_rtsp_alt()
             fi
             COUNTER_H=0
         fi
+    else
+        echo "Camera is swiched off no rtsp restart needed" >> $LOG_FILE
+    fi
+}
+
+check_rtsp_go2rtc()
+{
+    if [[ $(get_camera_config SWITCH_ON) == "yes" ]] ; then
+        #  echo "$(date +'%Y-%m-%d %H:%M:%S') - Checking RTSP process..." >> $LOG_FILE
+        LISTEN=`netstat -an 2>&1 | grep ":$RTSP_PORT_NUMBER " | grep LISTEN | grep -c ^`
+        CPU_1_L=`top -b -n 2 -d 1 | grep h264grabber_l | grep -v grep | tail -n 1 | awk '{print $8}'`
+        CPU_1_H=`top -b -n 2 -d 1 | grep h264grabber_h | grep -v grep | tail -n 1 | awk '{print $8}'`
+        CPU_2=`top -b -n 2 -d 1 | grep go2rtc | grep -v grep | tail -n 1 | awk '{print $8}'`
+
+        if [ $LISTEN -eq 0 ]; then
+            echo "$(date +'%Y-%m-%d %H:%M:%S') - Restarting rtsp process" >> $LOG_FILE
+            killall -q go2rtc
+            killall -q h264grabber_l
+            killall -q h264grabber_h
+            sleep 1
+            restart_rtsp
+        fi
+        if [[ $(get_config RTSP_STREAM) == "low" ]] || [[ $(get_config RTSP_STREAM) == "both" ]]; then
+            if [ "$CPU_1_L" == "" ] || [ "$CPU_2" == "" ]; then
+                echo "$(date +'%Y-%m-%d %H:%M:%S') - No running processes for low res, restarting..." >> $LOG_FILE
+                killall -q go2rtc
+                killall -q h264grabber_l
+                killall -q h264grabber_h
+                sleep 1
+                restart_rtsp
+            fi
+            COUNTER_L=0
+        fi
+        if [[ $(get_config RTSP_STREAM) == "high" ]] || [[ $(get_config RTSP_STREAM) == "both" ]]; then
+            if [ "$CPU_1_H" == "" ] || [ "$CPU_2" == "" ]; then
+                echo "$(date +'%Y-%m-%d %H:%M:%S') - No running processes for high res, restarting..." >> $LOG_FILE
+                killall -q go2rtc
+                killall -q h264grabber_l
+                killall -q h264grabber_h
+                sleep 1
+                restart_rtsp
+            fi
+            COUNTER_H=0
+        fi
+    else
+        echo "Camera is swiched off no rtsp restart needed" >> $LOG_FILE
     fi
 }
 
@@ -157,8 +206,44 @@ check_rmm()
     PS=`ps | grep rmm | grep -v grep | grep -c ^`
 
     if [ $PS -eq 0 ]; then
+        echo "check_rmm failed, reboot!" >> $LOG_FILE
         sync
         reboot -f
+    fi
+}
+
+check_mqtt()
+{
+#  echo "$(date +'%Y-%m-%d %H:%M:%S') - Checking mqttv4 process..." >> $LOG_FILE
+    PS=`ps ww | grep mqttv4 | grep -v grep | grep -c ^`
+
+    if [ $PS -eq 0 ]; then
+        echo "check_mqtt failed, restart it!" >> $LOG_FILE
+        $START_STOP_SCRIPT mqtt start
+    fi
+}
+
+check_wifi()
+{
+    if ! wpa_cli -i wlan0 status 2>&1 | grep -q "wpa_state=COMPLETED"; then
+        if [ -e "$LOGFILE" ]; then
+            /usr/bin/tail -n 145 "$LOGFILE" > "$LOGFILE.tmp" && mv "$LOGFILE.tmp" "$LOGFILE"
+        fi
+        echo -e "$(date): Wifi connection lost:\n$(wpa_cli -i wlan0 status 2>&1)" >> "$LOGFILE"
+        failsafecounter=$((failsafecounter + 1))
+        if [ "$failsafecounter" -ge 6 ]; then
+            echo -e "$(date): Wifi connection still could't be restored. Restarting." >> "$LOGFILE"
+            sync
+            reboot -f
+        else
+            echo -e "$(date): Attempting reconnect." >> "$LOGFILE"
+            sleep 2
+            ifconfig wlan0 down
+            sleep 1
+            ifconfig wlan0 up
+            sleep 1
+            wpa_cli -i wlan0 reconfigure
+        fi
     fi
 }
 
@@ -181,12 +266,16 @@ echo "$(date +'%Y-%m-%d %H:%M:%S') - Starting RTSP watchdog..." >> $LOG_FILE
 
 while true
 do
-    if [[ "$RTSP_ALT" == "no" ]] ; then
+    if [[ "$RTSP_ALT" == "standard" ]] ; then
         check_rtsp
-    else
+    elif [[ "$RTSP_ALT" == "alternative" ]] ; then
         check_rtsp_alt
+    else
+        check_rtsp_go2rtc
     fi
     check_rmm
+    check_mqtt
+    check_wifi
 
     echo 1500 > /sys/class/net/eth0/mtu
     echo 1500 > /sys/class/net/wlan0/mtu

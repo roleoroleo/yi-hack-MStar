@@ -11,12 +11,12 @@ get_config()
 
 start_rtsp()
 {
-    $YI_HACK_PREFIX/script/wd_rtsp.sh >/dev/null &
+    $YI_HACK_PREFIX/script/wd.sh >/dev/null &
 }
 
 stop_rtsp()
 {
-    killall wd_rtsp.sh
+    killall wd.sh
     killall rtsp_server_yi
     killall rRTSPServer
     killall h264grabber
