@@ -55,8 +55,12 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/lib:/home/yi-hack/lib:/tmp/sd/yi-h
 
 ulimit -s 1024
 
-echo 1500 > /sys/class/net/eth0/mtu
-echo 1500 > /sys/class/net/wlan0/mtu
+if [ -d /sys/class/net/eth0/ ]; then
+    echo 1500 > /sys/class/net/eth0/mtu
+fi
+if [ -d /sys/class/net/wlan0/ ]; then
+    echo 1500 > /sys/class/net/wlan0/mtu
+fi
 
 mount --bind /home/yi-hack/script/wifidhcp.sh /home/app/script/wifidhcp.sh
 mount --bind /home/yi-hack/script/ethdhcp.sh /home/app/script/ethdhcp.sh
