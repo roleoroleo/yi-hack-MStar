@@ -92,6 +92,13 @@ elif [ "$c" = "142" ]; then
     #echo '{"code":"20000","data":{"timezone":"'$TZP_GMT'","language":"en-US","tz_offset":'$TZP_SET'000,"css_flag":0,"css_mode":0,"appParam":"","doorbellCoolingDuration":"0"}}'
     echo '{"code":"20000","data":{"timezone":"'$TZP_GMT'","language":"en-US","tz_offset":'$TZP_SET'000,"css_flag":0,"css_mode":0,"appParam":"","doorbellCoolingDuration":"0","allowFeature":{"Vehicle":0,"Animal":0,"Person":1}}}'
     #{"code":"20000","data":{"timezone":"GMT+01:00","language":"en-US","tz_offset":3600000,"css_flag":0,"css_mode":0,"appParam":{"schedule_power":{"schedule_power_on":{"enable":0,"repeater":"","time":"2212220800"},"schedule_power_off":{"enable":0,"repeater":"","time":"2212222200"}}},"doorbellCoolingDuration":"0","model":"38","allowFeature":{"Vehicle":0,"Animal":0,"Person":1}}}
+
+    if [[ $(get_config TIME_OSD) == "yes" ]] ; then
+        # Enable time osd
+        set_tz_offset -c osd -o on
+        # Set timezone for time osd
+        set_tz_offset -c tz_offset_osd -m $MODEL_SUFFIX -f $HV -v $TZP_SET
+    fi
 elif [ "$c" = "304" ]; then
     #CMD_do_update_event_v4
     echo '{"code":"20000"}'
