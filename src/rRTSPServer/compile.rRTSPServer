@@ -22,8 +22,8 @@ cd $SCRIPT_DIR
 make -C dummylib
 
 cd fdk-aac || exit 1
-make clean
-make || exit 1
+#make clean
+make -j $(nproc) || exit 1
 make install
 mkdir ../live/lib/
 cp -f ./_install/lib/libfdk-aac.a ../live/lib/
@@ -31,7 +31,7 @@ cp -rf ./_install/include/* ../live/include/
 cd ..
 
 cd live || exit 1
-make clean
+#make clean
 make || exit 1
 
 mkdir -p ../_install/bin || exit 1
