@@ -25,8 +25,8 @@ int is_ptz(char *model) {
 
     } else if ((strcmp("r30gb", model) == 0) ||
             (strcmp("r35gb", model) == 0) ||
+            (strcmp("r37gb", model) == 0) ||
             (strcmp("r40ga", model) == 0) ||
-            (strcmp("h60ga", model) == 0) ||
             (strcmp("q321br_lsx", model) == 0) ||
             (strcmp("qg311r", model) == 0) ||
             (strcmp("b091qp", model) == 0)) {
@@ -35,7 +35,8 @@ int is_ptz(char *model) {
 
     } else if ((strcmp("h30ga", model) == 0) ||
             (strcmp("h51ga", model) == 0) ||
-            (strcmp("h52ga", model) == 0)) {
+            (strcmp("h52ga", model) == 0) ||
+            (strcmp("h60ga", model) == 0)) {
 
         return ALLWINNER_V2_ALT;
     } else {
