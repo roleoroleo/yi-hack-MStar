@@ -4,7 +4,7 @@ YI_HACK_PREFIX="/home/yi-hack"
 
 killall wsd_simple_server
 killall onvif_simple_server
-killall wd_rtsp.sh
+killall wd.sh
 killall rRTSPServer
 killall rtsp_server_yi
 killall h264grabber_l
