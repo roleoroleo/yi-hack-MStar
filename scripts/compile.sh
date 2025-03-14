@@ -27,19 +27,20 @@ compile_module()
     (
     local MOD_DIR=$1
     local MOD_NAME=$(basename "$MOD_DIR")
-    
+
     local MOD_INIT="init.$MOD_NAME"
     local MOD_COMPILE="compile.$MOD_NAME"
     local MOD_INSTALL="install.$MOD_NAME"
-    
+
     printf "MOD_DIR:        %s\n" "$MOD_DIR"
     printf "MOD_NAME:       %s\n" "$MOD_NAME"
     printf "MOD_INIT:       %s\n" "$MOD_INIT"
     printf "MOD_COMPILE:    %s\n" "$MOD_COMPILE"
     printf "MOD_INSTALL:    %s\n" "$MOD_INSTALL"
-    
+
+    echo "Compile $MOD_NAME"
     cd "$MOD_DIR"
-    
+
     if [ ! -f $MOD_INIT ]; then
         echo "$MOD_INIT not found.. exiting."
         exit 1
@@ -52,18 +53,18 @@ compile_module()
         echo "$MOD_INSTALL not found.. exiting."
         exit 1
     fi
-    
+
     echo ""
-    
+
     printf "Initializing $MOD_NAME...\n\n"
     ./$MOD_INIT || exit 1
-    
+
     printf "Compiling $MOD_NAME...\n\n"
     ./$MOD_COMPILE || exit 1
-    
+
     printf "Installing '$MOD_INSTALL' in the firmware...\n\n"
     ./$MOD_INSTALL || exit 1
-    
+
     printf "\n\nDone!\n\n"
     )
 }
@@ -88,10 +89,22 @@ mkdir -p "$(get_script_dir)/../build/home"
 mkdir -p "$(get_script_dir)/../build/rootfs"
 
 SRC_DIR=$(get_script_dir)/../src
+SELECTED_MODULE=$1
+if [ -n ${SELECTED_MODULE} ]; then
+    echo "SELECTED_MODULE: $SELECTED_MODULE"
+fi
 
 for SUB_DIR in $SRC_DIR/* ; do
     if [ -d ${SUB_DIR} ]; then # Will not run if no directories are available
-        compile_module $(normalize_path "$SUB_DIR") || exit 1
+        if [ -n ${SELECTED_MODULE} ]; then
+            if [[ $SUB_DIR == *"$SELECTED_MODULE"* ]]; then
+                compile_module $(normalize_path "$SUB_DIR") || exit 1
+            else
+                echo "Skip $SUB_DIR"
+            fi
+        else
+            compile_module $(normalize_path "$SUB_DIR") || exit 1
+        fi
     fi
 done
 
