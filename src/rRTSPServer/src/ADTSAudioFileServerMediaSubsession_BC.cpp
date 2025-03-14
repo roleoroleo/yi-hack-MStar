@@ -26,17 +26,17 @@
 extern int debug;
 ADTSAudioFileServerMediaSubsession_BC*
 ADTSAudioFileServerMediaSubsession_BC::createNew(UsageEnvironment& env,
-						 char const* fileName,
-						 Boolean reuseFirstSource,
-						 int sampleRate, int numChannels) {
+                                                 char const* fileName,
+                                                 Boolean reuseFirstSource,
+                                                 int sampleRate, int numChannels) {
     return new ADTSAudioFileServerMediaSubsession_BC(env, fileName, reuseFirstSource,
                                                      sampleRate, numChannels);
 }
 
 ADTSAudioFileServerMediaSubsession_BC
 ::ADTSAudioFileServerMediaSubsession_BC(UsageEnvironment& env,
-				       char const* fileName, Boolean reuseFirstSource,
-				       int sampleRate, int numChannels)
+                                        char const* fileName, Boolean reuseFirstSource,
+                                        int sampleRate, int numChannels)
   : FileServerMediaSubsession_BC(env, fileName, reuseFirstSource),
     fSampleRate(sampleRate), fNumChannels(numChannels),
     fAuxSDPLine(NULL), fRTPTimestampFrequency(sampleRate) {
@@ -55,8 +55,8 @@ MediaSink* ADTSAudioFileServerMediaSubsession_BC
 
 RTPSource* ADTSAudioFileServerMediaSubsession_BC
 ::createNewRTPSource(Groupsock* rtpGroupsock,
-		     unsigned char rtpPayloadTypeIfDynamic,
-		     MediaSink* outputSink) {
+                     unsigned char rtpPayloadTypeIfDynamic,
+                     MediaSink* outputSink) {
 
 
     // Create the data source: a "MPEG4 Generic RTP source"
@@ -94,14 +94,14 @@ char const* ADTSAudioFileServerMediaSubsession_BC::getAuxSDPLineForBackChannel(M
 
 FramedSource* ADTSAudioFileServerMediaSubsession_BC
 ::createNewStreamSource(unsigned clientSessionId,
-			unsigned& estBitrate) {
+                        unsigned& estBitrate) {
     return NULL;
 }
 
 RTPSink* ADTSAudioFileServerMediaSubsession_BC
 ::createNewRTPSink(Groupsock* rtpGroupsock,
-		   unsigned char rtpPayloadTypeIfDynamic,
-		   FramedSource* inputSource) {
+                   unsigned char rtpPayloadTypeIfDynamic,
+                   FramedSource* inputSource) {
 
     return NULL;
 }

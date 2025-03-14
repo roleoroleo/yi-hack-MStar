@@ -1,45 +1,41 @@
-/**********
-This library is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the
-Free Software Foundation; either version 3 of the License, or (at your
-option) any later version. (See <http://www.gnu.org/copyleft/lesser.html>.)
+/*
+ * Copyright (c) 2025 roleo.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, version 3.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 
-This library is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for
-more details.
+/*
+ * A ServerMediaSubsession object that creates new, unicast, RTPSource
+ * on demand, to a PCM Audio
+ */
 
-You should have received a copy of the GNU Lesser General Public License
-along with this library; if not, write to the Free Software Foundation, Inc.,
-51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
-**********/
-// "liveMedia"
-// Copyright (c) 1996-2023 Live Networks, Inc.  All rights reserved.
-// A 'ServerMediaSubsession' object that creates new, unicast, "RTPSource"s
-// on demand, to a PCM audio file
-// Implementation
-
-#if (defined(__WIN32__) || defined(_WIN32)) && !defined(_WIN32_WCE)
-#include <io.h>
-#include <fcntl.h>
-#endif
 #include "PCMAudioFileServerMediaSubsession_BC.hh"
 #include "SimpleRTPSource.hh"
 #include "PCMFileSink.hh"
 
 PCMAudioFileServerMediaSubsession_BC*
 PCMAudioFileServerMediaSubsession_BC::createNew(UsageEnvironment& env,
-						char const* fileName,
-						Boolean reuseFirstSource,
-						int sampleRate, int numChannels, int law) {
+                                                char const* fileName,
+                                                Boolean reuseFirstSource,
+                                                int sampleRate, int numChannels, int law) {
     return new PCMAudioFileServerMediaSubsession_BC(env, fileName, reuseFirstSource,
                                                     sampleRate, numChannels, law);
 }
 
 PCMAudioFileServerMediaSubsession_BC
 ::PCMAudioFileServerMediaSubsession_BC(UsageEnvironment& env,
-				       char const* fileName, Boolean reuseFirstSource,
-				       int sampleRate, int numChannels, int law)
+                                       char const* fileName, Boolean reuseFirstSource,
+                                       int sampleRate, int numChannels, int law)
   : FileServerMediaSubsession_BC(env, fileName, reuseFirstSource),
     fSampleRate(sampleRate), fNumChannels(numChannels), fLaw(law),
     fAuxSDPLine(NULL), fRTPTimestampFrequency(sampleRate) {
@@ -58,8 +54,8 @@ MediaSink* PCMAudioFileServerMediaSubsession_BC
 
 RTPSource* PCMAudioFileServerMediaSubsession_BC
 ::createNewRTPSource(Groupsock* rtpGroupsock,
-		     unsigned char rtpPayloadTypeIfDynamic,
-		     MediaSink* outputSink) {
+                     unsigned char rtpPayloadTypeIfDynamic,
+                     MediaSink* outputSink) {
 
     // Create the data source: a "Simple RTP source"
     SimpleRTPSource *rtpSource;
@@ -81,28 +77,16 @@ RTPSource* PCMAudioFileServerMediaSubsession_BC
     return rtpSource;
 }
 
-char const* PCMAudioFileServerMediaSubsession_BC::getAuxSDPLineForBackChannel(MediaSink* mediaSink, RTPSource* rtpSource)
-{
-    char pTmpStr[1024] = {0};
-
-    if(fAuxSDPLine != NULL)  return fAuxSDPLine;
-
-    sprintf(pTmpStr, "a=fmtp:%d\r\n", fRTPPayloadFormat);
-    fAuxSDPLine = strDup(pTmpStr);
-
-    return fAuxSDPLine;
-}
-
 FramedSource* PCMAudioFileServerMediaSubsession_BC
 ::createNewStreamSource(unsigned clientSessionId,
-			unsigned& estBitrate) {
+                        unsigned& estBitrate) {
     return NULL;
 }
 
 RTPSink* PCMAudioFileServerMediaSubsession_BC
 ::createNewRTPSink(Groupsock* rtpGroupsock,
-		   unsigned char rtpPayloadTypeIfDynamic,
-		   FramedSource* inputSource) {
+                   unsigned char rtpPayloadTypeIfDynamic,
+                   FramedSource* inputSource) {
 
     return NULL;
 }

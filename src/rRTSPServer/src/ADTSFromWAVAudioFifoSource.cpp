@@ -1,28 +1,29 @@
-/**********
-This library is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the
-Free Software Foundation; either version 3 of the License, or (at your
-option) any later version. (See <http://www.gnu.org/copyleft/lesser.html>.)
+/*
+ * Copyright (c) 2025 roleo.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, version 3.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 
-This library is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for
-more details.
-
-You should have received a copy of the GNU Lesser General Public License
-along with this library; if not, write to the Free Software Foundation, Inc.,
-51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
-**********/
-// "liveMedia"
-// Copyright (c) 1996-2020 Live Networks, Inc.  All rights reserved.
-// A source object for WAV fifo file converted in AAC/ADTS format
-// Implementation
+/*
+ * A source object for WAV fifo file converted in AAC/ADTS format
+ * Implementation
+ */
 
 #include "ADTSFromWAVAudioFifoSource.hh"
 #include "InputFile.hh"
 #include "GroupsockHelper.hh"
-#include "misc.hh"
 #include "fdk-aac/aacenc_lib.h"
+#include "rRTSPServer.h"
 
 #include <fcntl.h>
 
@@ -332,21 +333,21 @@ void ADTSFromWAVAudioFifoSource::doReadFromFile() {
         fNumTruncatedBytes = 0;
     }
 
-#ifndef PRES_TIME_CLOCK
-    // Set the 'presentation time':
-    if (fPresentationTime.tv_sec == 0 && fPresentationTime.tv_usec == 0) {
-        // This is the first frame, so use the current time:
-        gettimeofday(&fPresentationTime, NULL);
+    if (0) {
+        // Set the 'presentation time':
+        if (fPresentationTime.tv_sec == 0 && fPresentationTime.tv_usec == 0) {
+            // This is the first frame, so use the current time:
+            gettimeofday(&fPresentationTime, NULL);
+        } else {
+            // Increment by the play time of the previous frame:
+            unsigned uSeconds = fPresentationTime.tv_usec + fuSecsPerFrame;
+            fPresentationTime.tv_sec += uSeconds/1000000;
+            fPresentationTime.tv_usec = uSeconds%1000000;
+        }
     } else {
-        // Increment by the play time of the previous frame:
-        unsigned uSeconds = fPresentationTime.tv_usec + fuSecsPerFrame;
-        fPresentationTime.tv_sec += uSeconds/1000000;
-        fPresentationTime.tv_usec = uSeconds%1000000;
+        // Use system clock to set presentation time
+        gettimeofday(&fPresentationTime, NULL);
     }
-#else
-    // Use system clock to set presentation time
-    gettimeofday(&fPresentationTime, NULL);
-#endif
 
     fDurationInMicroseconds = fuSecsPerFrame;
 
