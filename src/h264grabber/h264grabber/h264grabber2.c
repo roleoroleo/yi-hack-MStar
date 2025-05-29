@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 roleo.
+ * Copyright (c) 2025 roleo.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,7 +31,6 @@
 #include <unistd.h>
 #include <sys/mman.h>
 #include <sys/time.h>
-
 #include <getopt.h>
 #include <signal.h>
 #include <pthread.h>
@@ -256,6 +255,7 @@ void print_usage(char *progname)
 int main(int argc, char **argv) {
     unsigned char *buf_idx, *buf_idx_cur, *buf_idx_end, *buf_idx_end_prev;
     unsigned char *buf_idx_start = NULL;
+    char *stdoutbuf;
     FILE *fFS, *fOut, *fOutLow = NULL, *fOutHigh = NULL, *fOutAac = NULL;
     int fshm;
     mode_t mode = 0755;
@@ -395,16 +395,23 @@ int main(int argc, char **argv) {
 
     // Opening/setting output file
     if (fifo == 0) {
-        char stdoutbuf[262144];
-
-        if (setvbuf(stdout, stdoutbuf, _IOFBF, sizeof(stdoutbuf)) != 0) {
-            fprintf(stderr, "Error setting stdout buffer\n");
-        }
         if (resolution == RESOLUTION_LOW) {
+            stdoutbuf = (char *) malloc(sizeof(char) * 262144);
+            if (setvbuf(stdout, stdoutbuf, _IOFBF, sizeof(stdoutbuf)) != 0) {
+                fprintf(stderr, "Error setting stdout buffer\n");
+            }
             fOutLow = stdout;
         } else if (resolution == RESOLUTION_HIGH) {
+            stdoutbuf = (char *) malloc(sizeof(char) * 262144);
+            if (setvbuf(stdout, stdoutbuf, _IOFBF, sizeof(stdoutbuf)) != 0) {
+                fprintf(stderr, "Error setting stdout buffer\n");
+            }
             fOutHigh = stdout;
         } else if (audio == 1) {
+            stdoutbuf = (char *) malloc(sizeof(char) * 32768);
+            if (setvbuf(stdout, stdoutbuf, _IOFBF, sizeof(stdoutbuf)) != 0) {
+                fprintf(stderr, "Error setting stdout buffer\n");
+            }
             fOutAac = stdout;
         }
     } else {
@@ -756,7 +763,9 @@ int main(int argc, char **argv) {
         if (debug) fprintf(stderr, "unmapping file %s, size %d, from %08x\n", BUFFER_FILE, buf_size, (unsigned int) addr);
     }
 
-    if (fifo == 1) {
+    if (fifo == 0) {
+        free(stdoutbuf);
+    } else {
         if ((resolution == RESOLUTION_LOW) || (resolution == RESOLUTION_BOTH)) {
             fclose(fOutLow);
             unlink(FIFO_NAME_LOW);
