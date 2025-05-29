@@ -174,7 +174,7 @@ start_rtsp()
         fi
 
         /tmp/sd/yi-hack/bin/go2rtc -c /tmp/go2rtc.yaml -d
-    else
+    elif [ "$RTSP_ALT" == "alternative" ]; then
 
         CODEC_LOW=$(cat /tmp/lowres)
         if [ ! -z $CODEC_LOW ]; then
@@ -188,11 +188,11 @@ start_rtsp()
         if [[ $RTSP_RES == "low" ]]; then
             h264grabber_l -m $MODEL_SUFFIX -r low  -f &
             sleep 1
-            $RTSP_DAEMON -m $MODEL_SUFFIX -r low $CODEC_LOW $RTSP_AUDIO_OPTION $P_RTSP_PORT $RTSP_USER $RTSP_PASSWORD $RTSP_AUDIO_BC $NR_LEVEL &
+            $RTSP_DAEMON -m $MODEL_SUFFIX -r low $CODEC_LOW $RTSP_AUDIO_OPTION $P_RTSP_PORT $RTSP_USER $RTSP_PASSWORD $RTSP_AUDIO_BC $NR_LEVEL > /dev/null &
         elif [[ $RTSP_RES == "high" ]]; then
             h264grabber_h -m $MODEL_SUFFIX -r high -f &
             sleep 1
-            $RTSP_DAEMON -m $MODEL_SUFFIX -r high $CODEC_HIGH $RTSP_AUDIO_OPTION $P_RTSP_PORT $RTSP_USER $RTSP_PASSWORD $RTSP_AUDIO_BC $NR_LEVEL &
+            $RTSP_DAEMON -m $MODEL_SUFFIX -r high $CODEC_HIGH $RTSP_AUDIO_OPTION $P_RTSP_PORT $RTSP_USER $RTSP_PASSWORD $RTSP_AUDIO_BC $NR_LEVEL > /dev/null &
         elif [[ $RTSP_RES == "both" ]]; then
             h264grabber_l -m $MODEL_SUFFIX -r low -f &
             h264grabber_h -m $MODEL_SUFFIX -r high -f &
@@ -203,6 +203,15 @@ start_rtsp()
         WD_COUNT=$(ps | grep wd.sh | grep -v grep | grep -c ^)
         if [ $WD_COUNT -eq 0 ]; then
             (sleep 30; $YI_HACK_PREFIX/script/wd.sh >/dev/null) &
+        fi
+    else
+
+        if [[ $RTSP_RES == "low" ]]; then
+            $RTSP_DAEMON -m $MODEL_SUFFIX -r low $RTSP_AUDIO_OPTION $P_RTSP_PORT $RTSP_USER $RTSP_PASSWORD $RTSP_AUDIO_BC $NR_LEVEL > /dev/null &
+        elif [[ $RTSP_RES == "high" ]]; then
+            $RTSP_DAEMON -m $MODEL_SUFFIX -r high $RTSP_AUDIO_OPTION $P_RTSP_PORT $RTSP_USER $RTSP_PASSWORD $RTSP_AUDIO_BC $NR_LEVEL > /dev/null &
+        elif [[ $RTSP_RES == "both" ]]; then
+            $RTSP_DAEMON -m $MODEL_SUFFIX -r both $RTSP_AUDIO_OPTION $P_RTSP_PORT $RTSP_USER $RTSP_PASSWORD $RTSP_AUDIO_BC $NR_LEVEL > /dev/null &
         fi
     fi
 }
