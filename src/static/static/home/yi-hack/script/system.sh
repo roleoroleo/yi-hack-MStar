@@ -298,6 +298,21 @@ if [[ $(get_config ONVIF) == "yes" ]] ; then
     fi
 fi
 
+if [[ $(get_config HTTPD) == "yes" ]] ; then
+    mkdir -p /tmp/mdns.d
+    echo -e "type _http._tcp\nport $HTTPD_PORT\n" > /tmp/mdns.d/http.service
+fi
+if [[ $(get_config SSHD) == "yes" ]] ; then
+    mkdir -p /tmp/mdns.d
+    echo -e "type _ssh._tcp\nport 22\n" > /tmp/mdns.d/ssh.service
+fi
+if [[ $(get_config MDNSD) == "yes" ]] ; then
+    MAC_ADDR=$(ifconfig wlan0 | awk '/HWaddr/{print substr($5,1)}')
+    mkdir -p /tmp/mdns.d
+    echo -e "type _yi-hack._tcp\nport $HTTPD_PORT\ntxt mac=$MAC_ADDR\n" > /tmp/mdns.d/yi-hack.service
+    /home/yi-hack/sbin/mdnsd /tmp/mdns.d
+fi
+
 if [[ $(get_config TIME_OSD) == "yes" ]] ; then
     # Set timezone for time osd
     TZP=$(date +%z)
