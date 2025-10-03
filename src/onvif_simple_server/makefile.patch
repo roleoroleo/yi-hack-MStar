@@ -1,0 +1,12 @@
+diff -Naur onvif_simple_server.ori/Makefile.static onvif_simple_server/Makefile.static
+--- onvif_simple_server.ori/Makefile.static	2025-10-01 17:41:18.369077773 +0200
++++ onvif_simple_server/Makefile.static	2025-10-01 17:27:27.943207032 +0200
+@@ -29,6 +29,8 @@
+     STRIP=echo
+ endif
+ 
++INCLUDE += -std=gnu99
++
+ all: onvif_simple_server onvif_notify_server wsd_simple_server
+ 
+ log.o: log.c $(HEADERS)
