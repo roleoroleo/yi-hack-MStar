@@ -41,7 +41,8 @@ public:
     // (Available in case a client wants to add extra data to the output file)
 
 protected:
-    PCMFileSink(UsageEnvironment& env, FILE* fid, int destSampleRate, int srcLaw, unsigned bufferSize);
+    PCMFileSink(UsageEnvironment& env, FILE* fid, int destSampleRate, int srcLaw,
+                unsigned bufferSize);
     // called only by createNew()
     virtual ~PCMFileSink();
 

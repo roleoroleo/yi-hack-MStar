@@ -117,13 +117,13 @@ FramedSource* WAVAudioFifoServerMediaSubsession
         if ((((WAVAudioFifoSource*)(previousSource))->bitsPerSample() == fBitsPerSample) &&
            (((WAVAudioFifoSource*)(previousSource))->numChannels() == fNumChannels) &&
            (((WAVAudioFifoSource*)(previousSource))->samplingFrequency() == fSamplingFrequency)) {
-            if (debug & 2) fprintf(stderr, "%lld: WAVAudioFifoServerMediaSubsession - WAVAudioFifoSource found at x = %d\n", current_timestamp(), x);
+            if (debug & 8) fprintf(stderr, "%lld: WAVAudioFifoServerMediaSubsession - WAVAudioFifoSource found at x = %d\n", current_timestamp(), x);
             originalSource = (WAVAudioFifoSource*)(previousSource);
             break; 
         }
         previousSource = (FramedFilter*)previousSource->inputSource();
     }
-    if (debug & 2) fprintf(stderr, "%lld: WAVAudioFifoServerMediaSubsession - fReplicator->inputSource() = %p\n", current_timestamp(), originalSource);
+    if (debug & 8) fprintf(stderr, "%lld: WAVAudioFifoServerMediaSubsession - fReplicator->inputSource() = %p\n", current_timestamp(), originalSource);
     resultSource = fReplicator->createStreamReplica();
     if (resultSource == NULL) {
         fprintf(stderr, "%lld: WAVAudioFifoServerMediaSubsession - Failed to create stream replica\n", current_timestamp());
@@ -132,7 +132,7 @@ FramedSource* WAVAudioFifoServerMediaSubsession
     } else {
         fAudioFormat = originalSource->getAudioFormat();
         unsigned bitsPerSecond = fSamplingFrequency*fBitsPerSample*fNumChannels;
-        if (debug & 2) fprintf(stderr, "%lld: WAVAudioFifoServerMediaSubsession - Original source FMT: %d bps: %d freq: %d\n", current_timestamp(), fAudioFormat, fBitsPerSample, fSamplingFrequency);
+        if (debug & 8) fprintf(stderr, "%lld: WAVAudioFifoServerMediaSubsession - Original source FMT: %d bps: %d freq: %d\n", current_timestamp(), fAudioFormat, fBitsPerSample, fSamplingFrequency);
         fFileDuration = ~0;//(float)((8.0*originalSource->numPCMBytes())/(fSamplingFrequency*fNumChannels*fBitsPerSample));
 
         estBitrate = (bitsPerSecond+500)/1000; // kbps
@@ -205,7 +205,7 @@ RTPSink* WAVAudioFifoServerMediaSubsession
         } else { //unknown format
             break;
         }
-        if (debug & 2) fprintf(stderr, "%lld: WAVAudioFifoServerMediaSubsession - Create SimpleRTPSink: %s, freq: %d, channels %d\n", current_timestamp(), mimeType, fSamplingFrequency, fNumChannels);
+        if (debug & 8) fprintf(stderr, "%lld: WAVAudioFifoServerMediaSubsession - Create SimpleRTPSink: %s, freq: %d, channels %d\n", current_timestamp(), mimeType, fSamplingFrequency, fNumChannels);
         return SimpleRTPSink::createNew(envir(), rtpGroupsock,
                                         payloadFormatCode, fSamplingFrequency,
                                         "audio", mimeType, fNumChannels);

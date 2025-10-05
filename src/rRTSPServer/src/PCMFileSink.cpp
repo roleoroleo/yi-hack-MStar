@@ -83,7 +83,8 @@ static u_int16_t linear16FromaLaw(unsigned char aLawByte) {
 
 // PCMFileSink class implementation
 PCMFileSink::PCMFileSink(UsageEnvironment& env, FILE* fid,
-                         int destSampleRate, int srcLaw, unsigned bufferSize)
+                         int destSampleRate, int srcLaw,
+                         unsigned bufferSize)
     : FileSink(env, fid, bufferSize, NULL), fDestSampleRate(destSampleRate),
       fSrcLaw(srcLaw), fPacketCounter(0) {
 
@@ -97,7 +98,8 @@ PCMFileSink::~PCMFileSink() {
 
 PCMFileSink* PCMFileSink::createNew(UsageEnvironment& env,
                                     char const* fileName, int destSampleRate,
-                                    int srcLaw, unsigned bufferSize) {
+                                    int srcLaw,
+                                    unsigned bufferSize) {
 
     if ((destSampleRate != 8000) && (destSampleRate != 16000)) {
         fprintf(stderr, "PCMFileSink::createNew(): The sample rate is not supported\n");

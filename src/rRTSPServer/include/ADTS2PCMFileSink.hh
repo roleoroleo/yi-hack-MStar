@@ -27,7 +27,8 @@
 class ADTS2PCMFileSink: public FileSink {
 public:
     static ADTS2PCMFileSink* createNew(UsageEnvironment& env, char const* fileName,
-			     int sampleRate, int numChannels, unsigned bufferSize = 1024);
+                                       int sampleRate, int numChannels,
+                                       unsigned bufferSize = 1024);
     // "bufferSize" should be at least as large as the largest expected
     //   input frame.
 
@@ -38,7 +39,8 @@ public:
     // (Available in case a client wants to add extra data to the output file)
 
 protected:
-    ADTS2PCMFileSink(UsageEnvironment& env, FILE* fid, int sampleRate, int numChannels, unsigned bufferSize);
+    ADTS2PCMFileSink(UsageEnvironment& env, FILE* fid, int sampleRate, int numChannels,
+                     unsigned bufferSize);
     // called only by createNew()
     virtual ~ADTS2PCMFileSink();
 
