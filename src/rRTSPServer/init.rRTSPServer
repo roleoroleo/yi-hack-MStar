@@ -1,8 +1,8 @@
 #!/bin/bash
 
 ARCHIVE=live.2023.01.19.tar.gz
-FDKAAC_VER=2.0.1
-ARCHIVE_FDKAAC=v${FDKAAC_VER}.tar.gz
+LIBHELIXAAC_VER=2.0.0
+ARCHIVE_LIBHELIXAAC=${LIBHELIXAAC_VER}.tar.gz
 
 export PATH=${PATH}:/opt/yi/arm-linux-gnueabihf-4.8.3-201404/bin
 
@@ -25,26 +25,23 @@ cd $SCRIPT_DIR
 rm -rf ./_install
 rm -rf ./live
 rm -rf ./fdk-aac
+rm -rf ./libhelix-aac
 
-# fdk-aac
-if [ ! -f ${ARCHIVE_FDKAAC} ]; then
-    wget https://github.com/mstorsjo/fdk-aac/archive/${ARCHIVE_FDKAAC}
+# libhelix-aac
+if [ ! -f ${ARCHIVE_LIBHELIXAAC} ]; then
+    wget https://github.com/earlephilhower/ESP8266Audio/archive/refs/tags/${ARCHIVE_LIBHELIXAAC}
 fi
-tar zxvf ${ARCHIVE_FDKAAC}
-mv fdk-aac-${FDKAAC_VER} fdk-aac
-cd fdk-aac
-
-./autogen.sh || exit 1
-
-./configure CC=arm-linux-gnueabihf-gcc \
-    --prefix=$SCRIPT_DIR/fdk-aac/_install \
-    CFLAGS="-g -Os -ffunction-sections -fdata-sections -mcpu=cortex-a7 -mfpu=neon-vfpv4 -I/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include -L/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/lib/arm-linux-gnueabihf" \
-    AR=arm-linux-gnueabihf-ar \
-    RANLIB=arm-linux-gnueabihf-ranlib \
-    --host=arm \
-    || exit 1
-
+tar zxvf ${ARCHIVE_LIBHELIXAAC}
+mv ESP8266Audio-2.0.0/src/libhelix-aac libhelix-aac
+patch -p0 < not-arduino.patch
+patch -p0 < remove-mangling.patch
+cd libhelix-aac
+wget https://raw.githubusercontent.com/FrankBoesing/Arduino-Teensy-Codec-lib/refs/heads/master/aac/armgcc_nosyms/sbrcov.S
+sed -i -e 's/raac_CVKernel1/CVKernel1/g' sbrcov.S
+sed -i -e 's/raac_CVKernel2/CVKernel2/g' sbrcov.S
 cd ..
+rm -rf ESP8266Audio-2.0.0
+cp Makefile.libhelix-aac libhelix-aac/Makefile
 
 # live555
 if [ ! -f $ARCHIVE ]; then

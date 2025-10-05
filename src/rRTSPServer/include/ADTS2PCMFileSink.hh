@@ -22,7 +22,8 @@
 #define _ADTS2PCM_FILE_SINK_HH
 
 #include "FileSink.hh"
-#include "fdk-aac/aacdecoder_lib.h"
+#include "aaccommon.h"
+#include "aacdec.h"
 
 class ADTS2PCMFileSink: public FileSink {
 public:
@@ -60,8 +61,9 @@ protected:
     int fNumChannels;
     char fConfigStr[8];
     int fPacketCounter;
-    HANDLE_AACDECODER fAACHandle;
-    INT_PCM fPCMBuffer[1024];
+    HAACDecoder fAACDecoder;
+    _AACFrameInfo fAACFrameInfo{};
+    short fPCMBuffer[1024];
     unsigned fSampleRateIndex;
     unsigned fChannelConfiguration;
 };

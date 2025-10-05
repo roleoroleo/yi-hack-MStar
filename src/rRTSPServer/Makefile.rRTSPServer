@@ -1,5 +1,5 @@
 ##### Change the following for your environment:
-COMPILE_OPTS =		$(INCLUDES) -I. -I./include -O2 -ffunction-sections -fdata-sections -DSOCKLEN_T=socklen_t -D_LARGEFILE_SOURCE=1 -D_FILE_OFFSET_BITS=64 -DNO_OPENSSL=1 -DRTP_PAYLOAD_MAX_SIZE=1352
+COMPILE_OPTS =		$(INCLUDES) -I. -I./include -I./include/libhelix-aac -O2 -ffunction-sections -fdata-sections -DSOCKLEN_T=socklen_t -D_LARGEFILE_SOURCE=1 -D_FILE_OFFSET_BITS=64 -DNO_OPENSSL=1 -DRTP_PAYLOAD_MAX_SIZE=1352
 C =			c
 C_COMPILER =		$(CC)
 C_FLAGS =		$(COMPILE_OPTS) $(CPPFLAGS) $(CFLAGS)
@@ -15,7 +15,7 @@ LIBRARY_LINK_OPTS =
 LIB_SUFFIX =			a
 LIBS_FOR_CONSOLE_APPLICATION =
 LIBS_FOR_GUI_APPLICATION =
-LIBS_FOR_AAC = ./lib/libfdk-aac.a
+LIBS_FOR_AAC = ./lib/libhelix-aac.a
 EXE =
 ##### End of variables to change
 
@@ -73,8 +73,11 @@ livemedia:
 	$(CPLUSPLUS_COMPILER) -c $(CPLUSPLUS_FLAGS) -o $@ $<
 
 rRTSPServer_OBJS	= src/rRTSPServer.$(OBJ) \
+				src/AudioFramedMemorySource.$(OBJ) src/VideoFramedMemorySource.$(OBJ) \
+				src/H264VideoFramedMemoryServerMediaSubsession.$(OBJ) \
+				src/H265VideoFramedMemoryServerMediaSubsession.$(OBJ) \
+				src/ADTSAudioFramedMemoryServerMediaSubsession.$(OBJ) \
 				src/WAVAudioFifoSource.$(OBJ) src/WAVAudioFifoServerMediaSubsession.$(OBJ) \
-				src/ADTSFromWAVAudioFifoSource.$(OBJ) src/ADTSFromWAVAudioFifoServerMediaSubsession.$(OBJ) \
 				src/aLawAudioFilter.$(OBJ) \
 				src/PCMFileSink.$(OBJ) \
 				src/ADTS2PCMFileSink.$(OBJ) \
@@ -85,7 +88,7 @@ rRTSPServer_OBJS	= src/rRTSPServer.$(OBJ) \
 				src/YiNoiseReduction.$(OBJ)
 
 rRTSPServer$(EXE):	$(rRTSPServer_OBJS) $(LOCAL_LIBS)
-	$(LINK)$@ $(CONSOLE_LINK_OPTS) $(rRTSPServer_OBJS) $(LIBS) -lpthread
+	$(LINK)$@ $(CONSOLE_LINK_OPTS) $(rRTSPServer_OBJS) $(LIBS) -lrt -lpthread
 
 install:
 	cd $(LIVEMEDIA_DIR) ; $(MAKE) install

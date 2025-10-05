@@ -7,3 +7,5 @@ rm -rf live
 rm -f live.*.tar.gz
 rm -rf fdk-aac
 rm -f v*.tar.gz
+rm -rf libhelix-aac
+rm -f 2.0.0.tar.gz
