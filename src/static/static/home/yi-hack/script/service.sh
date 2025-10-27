@@ -213,6 +213,11 @@ start_rtsp()
         elif [[ $RTSP_RES == "both" ]]; then
             $RTSP_DAEMON -m $MODEL_SUFFIX -r both $RTSP_AUDIO_OPTION $P_RTSP_PORT $RTSP_USER $RTSP_PASSWORD $RTSP_AUDIO_BC $NR_LEVEL > /dev/null &
         fi
+
+        WD_COUNT=$(ps | grep wd.sh | grep -v grep | grep -c ^)
+        if [ $WD_COUNT -eq 0 ]; then
+            (sleep 30; $YI_HACK_PREFIX/script/wd.sh >/dev/null) &
+        fi
     fi
 }
 
