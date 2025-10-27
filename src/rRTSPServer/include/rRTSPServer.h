@@ -33,6 +33,8 @@
 #define BUFFER_FILE "/dev/fshare_frame_buf"
 #define BUFFER_SHM "fshare_frame_buf"
 
+#define MAX_QUEUE_SIZE 20
+
 #define BUF_OFFSET 230 //228
 #define FRAME_HEADER_SIZE 19
 
