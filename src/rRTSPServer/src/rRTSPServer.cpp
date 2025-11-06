@@ -90,6 +90,7 @@ int audio;
 int port;
 int nr_level;
 int sps_timing_info;
+int ssf0;
 
 cb_input_buffer input_buffer;
 output_queue output_queue_high;
@@ -509,7 +510,16 @@ void *capture(void *ptr)
                     }
 
                     output_frame of;
-                    of.frame = {tmp_out, tmp_out + frame_len};
+                    unsigned char *real_frame_start = tmp_out;
+                    int real_frame_len = frame_len;
+                    if (ssf0) {
+                        unsigned char *p;
+                        while ((p = (unsigned char *) memmem(real_frame_start + 1, real_frame_len - 1, SEI4_F0, sizeof(SEI4_F0))) != NULL) {
+                            real_frame_start = p;
+                            real_frame_len -= (real_frame_start - tmp_out);
+                        }
+                    }
+                    of.frame = {real_frame_start, real_frame_start + real_frame_len};
                     of.counter = frame_counter;
                     of.time = frame_time;
                     p_output_queue->frame_queue.push(of);
@@ -619,6 +629,8 @@ void print_usage(char *progname)
     fprintf(stderr, "\t\tset noise reduction level (only pcm and xlaw)\n");
     fprintf(stderr, "\t-s,       --sti\n");
     fprintf(stderr, "\t\tdon't overwrite SPS timing info (default overwrite)\n");
+    fprintf(stderr, "\t-f,       --ssf0\n");
+    fprintf(stderr, "\t\tskip SEI F0\n");
     fprintf(stderr, "\t-u USER,  --user USER\n");
     fprintf(stderr, "\t\tset username\n");
     fprintf(stderr, "\t-w PASSWORD,  --password PASSWORD\n");
@@ -655,6 +667,7 @@ int main(int argc, char** argv)
     port = 554;
     nr_level = 0;
     sps_timing_info = 1;
+    ssf0 = 0;
     debug = 0;
 
     // Autodetect sps/vps type
@@ -677,6 +690,7 @@ int main(int argc, char** argv)
             {"port",  required_argument, 0, 'p'},
             {"nr_level",  required_argument, 0, 'n'},
             {"sti",  no_argument, 0, 's'},
+            {"ssf0",  no_argument, 0, 'f'},
             {"user",  required_argument, 0, 'u'},
             {"password",  required_argument, 0, 'w'},
             {"debug",  required_argument, 0, 'd'},
@@ -686,7 +700,7 @@ int main(int argc, char** argv)
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        c = getopt_long (argc, argv, "r:a:b:p:n:su:w:d:h",
+        c = getopt_long (argc, argv, "r:a:b:p:n:sfu:w:d:h",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -770,6 +784,10 @@ int main(int argc, char** argv)
 
         case 's':
             sps_timing_info = 0;
+            break;
+
+        case 'f':
+            ssf0 = 1;
             break;
 
         case 'u':
@@ -879,6 +897,11 @@ int main(int argc, char** argv)
     str = getenv("RRTSP_STI");
     if ((str != NULL) && (sscanf (str, "%i", &nm) == 1) && (nm >= 0) && (nm <= 1)) {
         sps_timing_info = nm;
+    }
+
+    str = getenv("RRTSP_SSF0");
+    if ((str != NULL) && (sscanf (str, "%i", &nm) == 1) && (nm >= 0) && (nm <= 1)) {
+        ssf0 = nm;
     }
 
     str = getenv("RRTSP_DEBUG");
