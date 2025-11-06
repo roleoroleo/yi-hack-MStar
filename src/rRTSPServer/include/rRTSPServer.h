@@ -87,7 +87,7 @@ typedef struct
 
 struct __attribute__((__packed__)) frame_header {
     uint32_t len;
-    uint16_t counter;
+    uint32_t counter;
     uint32_t time;
     uint16_t type;
     uint16_t stream_counter;

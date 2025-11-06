@@ -247,6 +247,9 @@ void *capture(void *ptr)
     buf_idx_end_prev = buf_idx_end;
     last_counter = 0;
 
+    if (debug & 3) fprintf(stderr, "%lld: capture - frame offset = %d\n", current_timestamp(), input_buffer.offset);
+    if (debug & 3) fprintf(stderr, "%lld: capture - frame header size = %d\n", current_timestamp(), frame_header_size);
+
     if (debug & 3) fprintf(stderr, "%lld: capture - starting capture main loop\n", current_timestamp());
 
     // Infinite loop
