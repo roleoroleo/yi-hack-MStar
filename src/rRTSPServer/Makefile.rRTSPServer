@@ -79,6 +79,9 @@ rRTSPServer_OBJS	= src/rRTSPServer.$(OBJ) \
 				src/ADTSAudioFramedMemoryServerMediaSubsession.$(OBJ) \
 				src/WAVAudioFifoSource.$(OBJ) src/WAVAudioFifoServerMediaSubsession.$(OBJ) \
 				src/aLawAudioFilter.$(OBJ) \
+				src/ADTSAudioFifoServerMediaSubsession.$(OBJ) src/ADTSAudioFifoSource.$(OBJ) \
+				src/H264VideoFifoServerMediaSubsession.$(OBJ) src/ByteStreamFifoSource.$(OBJ) \
+				src/H265VideoFifoServerMediaSubsession.$(OBJ) \
 				src/PCMFileSink.$(OBJ) \
 				src/ADTS2PCMFileSink.$(OBJ) \
 				src/ADTSAudioFileServerMediaSubsession_BC.$(OBJ) \

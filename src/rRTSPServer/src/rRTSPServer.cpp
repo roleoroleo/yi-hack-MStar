@@ -25,11 +25,15 @@
 
 #include "H264VideoFramedMemoryServerMediaSubsession.hh"
 #include "H265VideoFramedMemoryServerMediaSubsession.hh"
+#include "H264VideoFifoServerMediaSubsession.hh"
+#include "H265VideoFifoServerMediaSubsession.hh"
 #include "ADTSAudioFramedMemoryServerMediaSubsession.hh"
+#include "ADTSAudioFifoServerMediaSubsession.hh"
 #include "ADTSAudioFileServerMediaSubsession_BC.hh"
 #include "PCMAudioFileServerMediaSubsession_BC.hh"
 #include "WAVAudioFifoServerMediaSubsession.hh"
 #include "WAVAudioFifoSource.hh"
+#include "ADTSAudioFifoSource.hh"
 #include "AudioFramedMemorySource.hh"
 #include "StreamReplicator.hh"
 #include "YiNoiseReduction.hh"
@@ -91,6 +95,7 @@ int port;
 int nr_level;
 int sps_timing_info;
 int ssf0;
+int internal_capture;
 
 cb_input_buffer input_buffer;
 output_queue output_queue_high;
@@ -589,9 +594,26 @@ StreamReplicator* startReplicatorStream(const char* inputAudioFileName, unsigned
     return replicator;
 }
 
-StreamReplicator* startReplicatorStream(output_queue *qBuffer, unsigned samplingFrequency, unsigned char numChannels, Boolean useTimeForPres) {
+StreamReplicator* startReplicatorStream(const char* inputAudioFileName) {
+
+    // Create a single ADTSAudioFifo source that will be replicated for mutliple streams
+    ADTSAudioFifoSource* adtsSource = ADTSAudioFifoSource::createNew(*env, inputAudioFileName);
+    if (adtsSource == NULL) {
+        fprintf(stderr, "Failed to create Fifo Source \n");
+    }
+
+    // Create and start the replicator that will be given to each subsession
+    StreamReplicator* replicator = StreamReplicator::createNew(*env, adtsSource);
+
+    // Begin by creating an input stream from our replicator:
+    replicator->createStreamReplica();
+
+    return replicator;
+}
+
+StreamReplicator* startReplicatorStream(output_queue *qBuffer, unsigned samplingFrequency, unsigned char numChannels, Boolean useCurrentTimeForPres) {
     // Create a single ADTSFromWAVAudioFifo source that will be replicated for mutliple streams
-    AudioFramedMemorySource* adtsSource = AudioFramedMemorySource::createNew(*env, qBuffer, samplingFrequency, numChannels, useTimeForPres);
+    AudioFramedMemorySource* adtsSource = AudioFramedMemorySource::createNew(*env, qBuffer, samplingFrequency, numChannels, useCurrentTimeForPres);
     if (adtsSource == NULL) {
         fprintf(stderr, "Failed to create Fifo Source \n");
     }
@@ -608,7 +630,7 @@ StreamReplicator* startReplicatorStream(output_queue *qBuffer, unsigned sampling
 static void announceStream(RTSPServer* rtspServer, ServerMediaSession* sms, char const* streamName, int audio)
 {
     char* url = rtspServer->rtspURL(sms);
-    fprintf(stderr, "\n\"%s\" stream, from memory\n", streamName);
+    fprintf(stderr, "\n\"%s\" stream, from fifo/memory\n", streamName);
     if (audio == 1)
         fprintf(stderr, "PCM audio enabled\n");
     else if (audio == 2)
@@ -622,6 +644,12 @@ void print_usage(char *progname)
     fprintf(stderr, "\nUsage: %s [options]\n\n", progname);
     fprintf(stderr, "\t-r RES,   --resolution RES\n");
     fprintf(stderr, "\t\tset resolution: low, high, both or none (default high)\n");
+    fprintf(stderr, "\t-i,   --no_internal\n");
+    fprintf(stderr, "\t\tdon't use embedded grabber (default use)\n");
+    fprintf(stderr, "\t-c CODEC,   --codec_low CODEC\n");
+    fprintf(stderr, "\t\tset codec for low resolution stream: h264 or h265\n");
+    fprintf(stderr, "\t-C CODEC,   --codec_high CODEC\n");
+    fprintf(stderr, "\t\tset codec for high resolution stream: h264 or h265\n");
     fprintf(stderr, "\t-a AUDIO, --audio AUDIO\n");
     fprintf(stderr, "\t\tset audio: yes, no, alaw, ulaw, pcm or aac (default ulaw)\n");
     fprintf(stderr, "\t-b CODEC, --audio_back_channel CODEC\n");
@@ -657,11 +685,14 @@ int main(int argc, char** argv)
     pthread_t capture_thread;
 
     int convertTo = WA_PCMU;
+    char const* inputVideoFileNameHigh = "/tmp/h264_high_fifo";
+    char const* inputVideoFileNameLow = "/tmp/h264_low_fifo";
     char const* inputAudioFileName = "/tmp/audio_fifo";
     char const* outputAudioFileName = "/tmp/audio_in_fifo";
+    char const* inputAudioFileNameAAC = "/tmp/aac_audio_fifo";
     struct stat stat_buffer;
     FILE *fFS;
-    Boolean useTimeForPres;
+    Boolean useCurrentTimeForPres = false;
 
     // Setting default
     resolution = RESOLUTION_HIGH;
@@ -671,6 +702,7 @@ int main(int argc, char** argv)
     nr_level = 0;
     sps_timing_info = 1;
     ssf0 = 0;
+    internal_capture = 1;
     debug = 0;
 
     // Autodetect sps/vps type
@@ -688,6 +720,9 @@ int main(int argc, char** argv)
         static struct option long_options[] =
         {
             {"resolution",  required_argument, 0, 'r'},
+            {"internal",  no_argument, 0, 'i'},
+            {"codec_low",  required_argument, 0, 'c'},
+            {"codec_high",  required_argument, 0, 'C'},
             {"audio",  required_argument, 0, 'a'},
             {"audio_back_channel", required_argument, 0, 'b'},
             {"port",  required_argument, 0, 'p'},
@@ -703,7 +738,7 @@ int main(int argc, char** argv)
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        c = getopt_long (argc, argv, "r:a:b:p:n:sfu:w:d:h",
+        c = getopt_long (argc, argv, "r:ic:C:a:b:p:n:sfu:w:d:h",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -720,6 +755,30 @@ int main(int argc, char** argv)
                 resolution = RESOLUTION_BOTH;
             } else if (strcasecmp("none", optarg) == 0) {
                 resolution = RESOLUTION_NONE;
+            }
+            break;
+
+        case 'i':
+            internal_capture = 0;
+            break;
+
+        case 'c':
+            if (strcasecmp("h264", optarg) == 0) {
+                stream_type.codec_low = CODEC_H264;
+            } else if (strcasecmp("h265", optarg) == 0) {
+                stream_type.codec_low = CODEC_H265;
+            } else {
+                stream_type.codec_low = CODEC_NONE;
+            }
+            break;
+
+        case 'C':
+            if (strcasecmp("h264", optarg) == 0) {
+                stream_type.codec_high = CODEC_H264;
+            } else if (strcasecmp("h265", optarg) == 0) {
+                stream_type.codec_high = CODEC_H265;
+            } else {
+                stream_type.codec_high = CODEC_NONE;
             }
             break;
 
@@ -922,99 +981,130 @@ int main(int argc, char** argv)
         strcpy(pwd, str);
     }
 
-    fFS = fopen(BUFFER_FILE, "r");
-    if ( fFS == NULL ) {
-        fprintf(stderr, "could not get size of %s\n", BUFFER_FILE);
-        exit(EXIT_FAILURE);
+    if (internal_capture == 1) {
+        fFS = fopen(BUFFER_FILE, "r");
+        if ( fFS == NULL ) {
+            fprintf(stderr, "could not get size of %s\n", BUFFER_FILE);
+            exit(EXIT_FAILURE);
+        }
+        fseek(fFS, 0, SEEK_END);
+        buf_size = ftell(fFS) - 2;
+        fclose(fFS);
+        if (debug) fprintf(stderr, "%lld: the size of the buffer is %d\n",
+                current_timestamp(), buf_size);
+
+        buf_offset = BUF_OFFSET;
+        frame_header_size = FRAME_HEADER_SIZE;
+    } else {
+        if ((resolution == RESOLUTION_HIGH) || (resolution == RESOLUTION_BOTH)) {
+            if (stat (inputVideoFileNameHigh, &stat_buffer) != 0) {
+                fprintf(stderr, "unable to find %s, exiting...\n", inputVideoFileNameHigh);
+                exit(EXIT_FAILURE);
+            }
+            if (stream_type.codec_high == CODEC_NONE) {
+                fprintf(stderr, "please set the codec for high resolution stream\n");
+                exit(EXIT_FAILURE);
+            }
+        }
+        if ((resolution == RESOLUTION_LOW) || (resolution == RESOLUTION_BOTH)) {
+            if (stat (inputVideoFileNameLow, &stat_buffer) != 0) {
+                fprintf(stderr, "unable to find %s, exiting...\n", inputVideoFileNameLow);
+                exit(EXIT_FAILURE);
+            }
+            if (stream_type.codec_low == CODEC_NONE) {
+                fprintf(stderr, "please set the codec for low resolution stream\n");
+                exit(EXIT_FAILURE);
+            }
+        }
     }
-    fseek(fFS, 0, SEEK_END);
-    buf_size = ftell(fFS) - 2;
-    fclose(fFS);
-    if (debug) fprintf(stderr, "%lld: the size of the buffer is %d\n",
-            current_timestamp(), buf_size);
 
-    buf_offset = BUF_OFFSET;
-    frame_header_size = FRAME_HEADER_SIZE;
-
-    // If fifo doesn't exist, disable audio
+    // If audio fifo doesn't exist, disable audio
     if ((audio == 1) && (stat (inputAudioFileName, &stat_buffer) != 0)) {
         fprintf(stderr, "unable to find %s, audio disabled\n", inputAudioFileName);
+        audio = 0;
+    }
+    if ((audio == 2) && (stat (inputAudioFileNameAAC, &stat_buffer) != 0)) {
+        fprintf(stderr, "unable to find %s, audio disabled\n", inputAudioFileNameAAC);
         audio = 0;
     }
 
     setpriority(PRIO_PROCESS, 0, -10);
 
-    // Fill input and output buffer struct
-    strcpy(input_buffer.filename, BUFFER_SHM);
-    input_buffer.size = buf_size;
-    input_buffer.offset = buf_offset;
+    if (internal_capture == 1) {
+        // Fill input and output buffer struct
+        strcpy(input_buffer.filename, BUFFER_SHM);
+        input_buffer.size = buf_size;
+        input_buffer.offset = buf_offset;
 
-    // Low res
-    if ((resolution == RESOLUTION_LOW) || (resolution == RESOLUTION_BOTH)) {
-        output_queue_low.type = TYPE_LOW;
-    }
+        // Low res
+        if ((resolution == RESOLUTION_LOW) || (resolution == RESOLUTION_BOTH)) {
+            output_queue_low.type = TYPE_LOW;
+        }
 
-    // High res
-    if ((resolution == RESOLUTION_HIGH) || (resolution == RESOLUTION_BOTH)) {
-        output_queue_high.type = TYPE_HIGH;
-    }
+        // High res
+        if ((resolution == RESOLUTION_HIGH) || (resolution == RESOLUTION_BOTH)) {
+            output_queue_high.type = TYPE_HIGH;
+        }
 
-    // Audio
-    if (audio == 0) {
-        // Just video, use timestamps from video samples
-        useTimeForPres = False;
-        output_queue_audio.type = TYPE_NONE;
-    } else if (audio == 1) {
-        // We don't have timestamps for PCM audio samples when the source is the fifo queue: use current time
-        useTimeForPres = True;
-        output_queue_audio.type = TYPE_NONE;
-    } else if (audio == 2) {
-        // AAC audio and H26x video, use timestamps from audio/video samples
-        useTimeForPres = False;
-        output_queue_audio.type = TYPE_AAC;
+        // Audio
+        if (audio == 0) {
+            // Just video, use timestamps from video samples
+            useCurrentTimeForPres = False;
+            output_queue_audio.type = TYPE_NONE;
+        } else if (audio == 1) {
+            // We don't have timestamps for PCM audio samples when the source is the fifo queue: use current time
+            useCurrentTimeForPres = True;
+            output_queue_audio.type = TYPE_NONE;
+        } else if (audio == 2) {
+            // AAC audio and H26x video, use timestamps from audio/video samples
+            useCurrentTimeForPres = False;
+            output_queue_audio.type = TYPE_AAC;
+        }
     }
 
     // Begin by setting up our usage environment:
     TaskScheduler* scheduler = BasicTaskScheduler::createNew();
     env = BasicUsageEnvironment::createNew(*scheduler);
 
-    // Init mutexes
-    if (pthread_mutex_init(&(output_queue_low.mutex), NULL) != 0) {
-        fprintf(stderr, "Failed to create mutex\n");
-        exit(EXIT_FAILURE);
-    }
-    if (pthread_mutex_init(&(output_queue_high.mutex), NULL) != 0) {
-        fprintf(stderr, "Failed to create mutex\n");
-        exit(EXIT_FAILURE);
-    }
-    if (pthread_mutex_init(&(output_queue_audio.mutex), NULL) != 0) {
-        fprintf(stderr, "Failed to create mutex\n");
-        exit(EXIT_FAILURE);
-    }
-
-    // Start capture thread
-    pth_ret = pthread_create(&capture_thread, NULL, capture, (void*) NULL);
-    if (pth_ret != 0) {
-        fprintf(stderr, "Failed to create capture thread\n");
-        exit(EXIT_FAILURE);
-    }
-    pthread_detach(capture_thread);
-
-    sleep(2);
-
-    // Wait for stream type autodetect
-    while (1) {
-        if ((stream_type.codec_low != CODEC_NONE) && (stream_type.codec_high != CODEC_NONE)) {
-            usleep(10000);
-            break;
+    if (internal_capture == 1) {
+        // Init mutexes
+        if (pthread_mutex_init(&(output_queue_low.mutex), NULL) != 0) {
+            fprintf(stderr, "Failed to create mutex\n");
+            exit(EXIT_FAILURE);
         }
-        usleep(10000);
-    }
+        if (pthread_mutex_init(&(output_queue_high.mutex), NULL) != 0) {
+            fprintf(stderr, "Failed to create mutex\n");
+            exit(EXIT_FAILURE);
+        }
+        if (pthread_mutex_init(&(output_queue_audio.mutex), NULL) != 0) {
+            fprintf(stderr, "Failed to create mutex\n");
+            exit(EXIT_FAILURE);
+        }
 
-    if (debug) {
-        fprintf(stderr, "Stream detected: high res is %s, low res is %s\n",
-                (stream_type.codec_high==CODEC_H264)?"h264":"h265",
-                (stream_type.codec_low==CODEC_H264)?"h264":"h265");
+        // Start capture thread
+        pth_ret = pthread_create(&capture_thread, NULL, capture, (void*) NULL);
+        if (pth_ret != 0) {
+            fprintf(stderr, "Failed to create capture thread\n");
+            exit(EXIT_FAILURE);
+        }
+        pthread_detach(capture_thread);
+
+        sleep(2);
+
+        // Wait for stream type autodetect
+        while (1) {
+            if ((stream_type.codec_low != CODEC_NONE) && (stream_type.codec_high != CODEC_NONE)) {
+                usleep(10000);
+                break;
+            }
+            usleep(10000);
+        }
+
+        if (debug) {
+            fprintf(stderr, "Stream detected: high res is %s, low res is %s\n",
+                    (stream_type.codec_high==CODEC_H264)?"h264":"h265",
+                    (stream_type.codec_low==CODEC_H264)?"h264":"h265");
+        }
     }
 
     UserAuthenticationDatabase* authDB = NULL;
@@ -1040,9 +1130,15 @@ int main(int argc, char** argv)
         // Create and start the replicator that will be given to each subsession
         replicator = startReplicatorStream(inputAudioFileName, 8000, 1, 16, convertTo, nr_level);
     } else if (audio == 2) {
-        if (debug) fprintf(stderr, "Starting aac replicator\n");
-        // Create and start the replicator that will be given to each subsession
-        replicator = startReplicatorStream(&output_queue_audio, 16000, 1, useTimeForPres);
+        if (internal_capture == 1) {
+            if (debug) fprintf(stderr, "Starting aac replicator\n");
+            // Create and start the replicator that will be given to each subsession
+            replicator = startReplicatorStream(&output_queue_audio, 16000, 1, useCurrentTimeForPres);
+        } else {
+            if (debug) fprintf(stderr, "Starting aac replicator\n");
+            // Create and start the replicator that will be given to each subsession
+            replicator = startReplicatorStream(inputAudioFileNameAAC);
+        }
     }
 
     char const* descriptionString = "Session streamed by \"rRTSPServer\"";
@@ -1063,33 +1159,63 @@ int main(int argc, char** argv)
         ServerMediaSession* sms_high
             = ServerMediaSession::createNew(*env, streamName, streamName,
                                               descriptionString);
-        if (stream_type.codec_high == CODEC_H264) {
-            sms_high->addSubsession(H264VideoFramedMemoryServerMediaSubsession
-                                   ::createNew(*env, &output_queue_high, useTimeForPres, reuseFirstSource));
-        } else if (stream_type.codec_high == CODEC_H265) {
-            sms_high->addSubsession(H265VideoFramedMemoryServerMediaSubsession
-                                   ::createNew(*env, &output_queue_high, useTimeForPres, reuseFirstSource));
+        if (internal_capture == 1) {
+            if (stream_type.codec_high == CODEC_H264) {
+                // Use embedded grabber, H264
+                sms_high->addSubsession(H264VideoFramedMemoryServerMediaSubsession
+                                       ::createNew(*env, &output_queue_high, useCurrentTimeForPres, reuseFirstSource));
+            } else if (stream_type.codec_high == CODEC_H265) {
+                // Use embedded grabber, H265
+                sms_high->addSubsession(H265VideoFramedMemoryServerMediaSubsession
+                                       ::createNew(*env, &output_queue_high, useCurrentTimeForPres, reuseFirstSource));
+            }
+            if (audio == 1) {
+                // Use fifo with PCM content
+                sms_high->addSubsession(WAVAudioFifoServerMediaSubsession
+                                           ::createNew(*env, replicator, reuseFirstSource, 8000, 1, 16, convertTo));
+            } else if (audio == 2) {
+                // Use embedded grabber, AAC
+                sms_high->addSubsession(ADTSAudioFramedMemoryServerMediaSubsession
+                                           ::createNew(*env, replicator, reuseFirstSource, 16000, 1));
+            }
+        } else {
+            if (stream_type.codec_high == CODEC_H264) {
+                // Use fifo, H264
+                sms_high->addSubsession(H264VideoFifoServerMediaSubsession
+                                                ::createNew(*env, inputVideoFileNameHigh, reuseFirstSource));
+            } else if (stream_type.codec_high == CODEC_H265) {
+                // Use fifo, H265
+                sms_high->addSubsession(H265VideoFifoServerMediaSubsession
+                                                ::createNew(*env, inputVideoFileNameHigh, reuseFirstSource));
+            }
+            if (audio == 1) {
+                // Use fifo with PCM content
+                sms_high->addSubsession(WAVAudioFifoServerMediaSubsession
+                                           ::createNew(*env, replicator, reuseFirstSource, 8000, 1, 16, convertTo));
+            } else if (audio == 2) {
+                // Use fifo, AAC
+                sms_high->addSubsession(ADTSAudioFifoServerMediaSubsession
+                                           ::createNew(*env, replicator, reuseFirstSource));
+            }
         }
-        if (audio == 1) {
-            sms_high->addSubsession(WAVAudioFifoServerMediaSubsession
-                                       ::createNew(*env, replicator, reuseFirstSource, 8000, 1, 16, convertTo));
-        } else if (audio == 2) {
-            sms_high->addSubsession(ADTSAudioFramedMemoryServerMediaSubsession
-                                       ::createNew(*env, replicator, reuseFirstSource, 16000, 1));
-        }
+
         if (back_channel == 1) {
+            // Backchannel ALAW
             PCMAudioFileServerMediaSubsession_BC* smss_bc = PCMAudioFileServerMediaSubsession_BC
                     ::createNew(*env, outputAudioFileName, reuseFirstSource, 16000, 1, ALAW);
             sms_high->addSubsession(smss_bc);
         } else if (back_channel == 2) {
+            // Backchannel ULAW
             PCMAudioFileServerMediaSubsession_BC* smss_bc = PCMAudioFileServerMediaSubsession_BC
                     ::createNew(*env, outputAudioFileName, reuseFirstSource, 16000, 1, ULAW);
             sms_high->addSubsession(smss_bc);
         } else if (back_channel == 4) {
+            // Backchannel AAC
             ADTSAudioFileServerMediaSubsession_BC* smss_bc = ADTSAudioFileServerMediaSubsession_BC
                     ::createNew(*env, outputAudioFileName, reuseFirstSource, 16000, 1);
             sms_high->addSubsession(smss_bc);
         }
+
         rtspServer->addServerMediaSession(sms_high);
 
         announceStream(rtspServer, sms_high, streamName, audio);
@@ -1103,35 +1229,65 @@ int main(int argc, char** argv)
         ServerMediaSession* sms_low
             = ServerMediaSession::createNew(*env, streamName, streamName,
                                               descriptionString);
-        if (stream_type.codec_low == CODEC_H264) {
-            sms_low->addSubsession(H264VideoFramedMemoryServerMediaSubsession
-                                       ::createNew(*env, &output_queue_low, useTimeForPres, reuseFirstSource));
-        } else if (stream_type.codec_low == CODEC_H265) {
-            sms_low->addSubsession(H265VideoFramedMemoryServerMediaSubsession
-                                       ::createNew(*env, &output_queue_low, useTimeForPres, reuseFirstSource));
-        }
-        if (audio == 1) {
-            sms_low->addSubsession(WAVAudioFifoServerMediaSubsession
+        if (internal_capture == 1) {
+            if (stream_type.codec_low == CODEC_H264) {
+                // Use embedded grabber, H264
+                sms_low->addSubsession(H264VideoFramedMemoryServerMediaSubsession
+                                           ::createNew(*env, &output_queue_low, useCurrentTimeForPres, reuseFirstSource));
+            } else if (stream_type.codec_low == CODEC_H265) {
+                // Use embedded grabber, H265
+                sms_low->addSubsession(H265VideoFramedMemoryServerMediaSubsession
+                                           ::createNew(*env, &output_queue_low, useCurrentTimeForPres, reuseFirstSource));
+            }
+            if (audio == 1) {
+                // Use fifo with PCM content
+                sms_low->addSubsession(WAVAudioFifoServerMediaSubsession
+                                           ::createNew(*env, replicator, reuseFirstSource, 8000, 1, 16, convertTo));
+            } else if (audio == 2) {
+                // Use embedded grabber, AAC
+                sms_low->addSubsession(ADTSAudioFramedMemoryServerMediaSubsession
+                                           ::createNew(*env, replicator, reuseFirstSource, 16000, 1));
+            }
+        } else {
+            if (stream_type.codec_low == CODEC_H264) {
+                // Use fifo, H264
+                sms_low->addSubsession(H264VideoFifoServerMediaSubsession
+                                            ::createNew(*env, inputVideoFileNameLow, reuseFirstSource));
+            } else if (stream_type.codec_low == CODEC_H265) {
+                // Use fifo, H265
+                sms_low->addSubsession(H265VideoFifoServerMediaSubsession
+                                            ::createNew(*env, inputVideoFileNameLow, reuseFirstSource));
+            }
+            if (audio == 1) {
+                // Use fifo with PCM content
+                sms_low->addSubsession(WAVAudioFifoServerMediaSubsession
                                        ::createNew(*env, replicator, reuseFirstSource, 8000, 1, 16, convertTo));
-        } else if (audio == 2) {
-            sms_low->addSubsession(ADTSAudioFramedMemoryServerMediaSubsession
-                                       ::createNew(*env, replicator, reuseFirstSource, 16000, 1));
+            } else if (audio == 2) {
+                // Use fifo, AAC
+                sms_low->addSubsession(ADTSAudioFifoServerMediaSubsession
+                                       ::createNew(*env, replicator, reuseFirstSource));
+            }
         }
+
         if (resolution == RESOLUTION_LOW) {
             if (back_channel == 1) {
+                // Backchannel ALAW
                 PCMAudioFileServerMediaSubsession_BC* smss_bc = PCMAudioFileServerMediaSubsession_BC
                         ::createNew(*env, outputAudioFileName, reuseFirstSource, 16000, 1, ALAW);
                 sms_low->addSubsession(smss_bc);
             } else if (back_channel == 2) {
+                // Backchannel ULAW
                 PCMAudioFileServerMediaSubsession_BC* smss_bc = PCMAudioFileServerMediaSubsession_BC
                         ::createNew(*env, outputAudioFileName, reuseFirstSource, 16000, 1, ULAW);
                 sms_low->addSubsession(smss_bc);
             } else if (back_channel == 4) {
+                // Backchannel AAC
                 ADTSAudioFileServerMediaSubsession_BC* smss_bc = ADTSAudioFileServerMediaSubsession_BC
                         ::createNew(*env, outputAudioFileName, reuseFirstSource, 16000, 1);
                 sms_low->addSubsession(smss_bc);
             }
         }
+
         rtspServer->addServerMediaSession(sms_low);
 
         announceStream(rtspServer, sms_low, streamName, audio);
@@ -1145,28 +1301,47 @@ int main(int argc, char** argv)
         ServerMediaSession* sms_audio
             = ServerMediaSession::createNew(*env, streamName, streamName,
                                               descriptionString);
-        if (audio == 1) {
-            sms_audio->addSubsession(WAVAudioFifoServerMediaSubsession
-                                       ::createNew(*env, replicator, reuseFirstSource, 8000, 1, 16, convertTo));
-        } else if (audio == 2) {
-            sms_audio->addSubsession(ADTSAudioFramedMemoryServerMediaSubsession
-                                       ::createNew(*env, replicator, reuseFirstSource, 16000, 1));
+        if (internal_capture == 1) {
+            if (audio == 1) {
+                // Use fifo with PCM content
+                sms_audio->addSubsession(WAVAudioFifoServerMediaSubsession
+                                           ::createNew(*env, replicator, reuseFirstSource, 8000, 1, 16, convertTo));
+            } else if (audio == 2) {
+                // Use embedded grabber, AAC
+                sms_audio->addSubsession(ADTSAudioFramedMemoryServerMediaSubsession
+                                           ::createNew(*env, replicator, reuseFirstSource, 16000, 1));
+            }
+        } else {
+            if (audio == 1) {
+                // Use fifo with PCM content
+                sms_audio->addSubsession(WAVAudioFifoServerMediaSubsession
+                                           ::createNew(*env, replicator, reuseFirstSource, 8000, 1, 16, convertTo));
+            } else if (audio == 2) {
+                // Use fifo, AAC
+                sms_audio->addSubsession(ADTSAudioFifoServerMediaSubsession
+                                           ::createNew(*env, replicator, reuseFirstSource));
+            }
         }
+
         if (resolution == RESOLUTION_NONE) {
             if (back_channel == 1) {
+                // Backchannel ALAW
                 PCMAudioFileServerMediaSubsession_BC* smss_bc = PCMAudioFileServerMediaSubsession_BC
                         ::createNew(*env, outputAudioFileName, reuseFirstSource, 16000, 1, ALAW);
                 sms_audio->addSubsession(smss_bc);
             } else if (back_channel == 2) {
+                // Backchannel ULAW
                 PCMAudioFileServerMediaSubsession_BC* smss_bc = PCMAudioFileServerMediaSubsession_BC
                         ::createNew(*env, outputAudioFileName, reuseFirstSource, 16000, 1, ULAW);
                 sms_audio->addSubsession(smss_bc);
             } else if (back_channel == 4) {
+                // Backchannel AAC
                 ADTSAudioFileServerMediaSubsession_BC* smss_bc = ADTSAudioFileServerMediaSubsession_BC
                         ::createNew(*env, outputAudioFileName, reuseFirstSource, 16000, 1);
                 sms_audio->addSubsession(smss_bc);
             }
         }
+
         rtspServer->addServerMediaSession(sms_audio);
 
         announceStream(rtspServer, sms_audio, streamName, audio);
@@ -1174,9 +1349,11 @@ int main(int argc, char** argv)
 
     env->taskScheduler().doEventLoop(); // does not return
 
-    pthread_mutex_destroy(&(output_queue_low.mutex));
-    pthread_mutex_destroy(&(output_queue_high.mutex));
-    pthread_mutex_destroy(&(output_queue_audio.mutex));
+    if (internal_capture == 1) {
+        pthread_mutex_destroy(&(output_queue_low.mutex));
+        pthread_mutex_destroy(&(output_queue_high.mutex));
+        pthread_mutex_destroy(&(output_queue_audio.mutex));
+    }
 
     return 0; // only to prevent compiler warning
 }
