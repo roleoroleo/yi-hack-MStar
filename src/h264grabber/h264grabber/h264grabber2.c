@@ -34,6 +34,7 @@
 #include <getopt.h>
 #include <signal.h>
 #include <pthread.h>
+#include <errno.h>
 
 #define BUF_OFFSET 230 //228
 #define FRAME_HEADER_SIZE 19
@@ -127,6 +128,9 @@ int audio;
 int sps_timing_info;
 int fifo;
 int debug;
+
+char *stdoutbuf = NULL;
+FILE *fOutLow = NULL, *fOutHigh = NULL, *fOutAac = NULL;
 
 long long current_timestamp() {
     struct timeval te; 
@@ -255,8 +259,7 @@ void print_usage(char *progname)
 int main(int argc, char **argv) {
     unsigned char *buf_idx, *buf_idx_cur, *buf_idx_end, *buf_idx_end_prev;
     unsigned char *buf_idx_start = NULL;
-    char *stdoutbuf;
-    FILE *fFS, *fOut, *fOutLow = NULL, *fOutHigh = NULL, *fOutAac = NULL;
+    FILE *fFS, *fOut;
     int fshm;
     mode_t mode = 0755;
 
@@ -396,19 +399,19 @@ int main(int argc, char **argv) {
     // Opening/setting output file
     if (fifo == 0) {
         if (resolution == RESOLUTION_LOW) {
-            stdoutbuf = (char *) malloc(sizeof(char) * 262144);
+            stdoutbuf = (char *) malloc(sizeof(char) * 256 * 1024);
             if (setvbuf(stdout, stdoutbuf, _IOFBF, sizeof(stdoutbuf)) != 0) {
                 fprintf(stderr, "Error setting stdout buffer\n");
             }
             fOutLow = stdout;
         } else if (resolution == RESOLUTION_HIGH) {
-            stdoutbuf = (char *) malloc(sizeof(char) * 262144);
+            stdoutbuf = (char *) malloc(sizeof(char) * 256 * 1024);
             if (setvbuf(stdout, stdoutbuf, _IOFBF, sizeof(stdoutbuf)) != 0) {
                 fprintf(stderr, "Error setting stdout buffer\n");
             }
             fOutHigh = stdout;
         } else if (audio == 1) {
-            stdoutbuf = (char *) malloc(sizeof(char) * 32768);
+            stdoutbuf = (char *) malloc(sizeof(char) * 32 * 1024);
             if (setvbuf(stdout, stdoutbuf, _IOFBF, sizeof(stdoutbuf)) != 0) {
                 fprintf(stderr, "Error setting stdout buffer\n");
             }
@@ -435,6 +438,14 @@ int main(int argc, char **argv) {
                 fprintf(stderr, "Error opening fifo %s\n", FIFO_NAME_LOW);
                 return -6;
             }
+            // Set non blocking
+            int flags;
+            if ((flags = fcntl(fileno(fOutLow), F_GETFL, 0)) < 0) {
+                return -6;
+            };
+            if (fcntl(fileno(fOutLow), F_SETFL, flags | O_NONBLOCK) != 0) {
+                return -6;
+            };
         }
         if ((resolution == RESOLUTION_HIGH) || (resolution == RESOLUTION_BOTH)) {
             unlink(FIFO_NAME_HIGH);
@@ -452,6 +463,19 @@ int main(int argc, char **argv) {
                 fprintf(stderr, "Error opening fifo %s\n", FIFO_NAME_HIGH);
                 return -6;
             }
+            // Set fifo size
+            int flags;
+            if ((flags = fcntl(fileno(fOutHigh), F_SETPIPE_SZ, 256 * 1024)) < 0) {
+                return -6;
+            };
+            fprintf(stderr, "Fifo size is %d\n", fcntl(fileno(fOutHigh), F_GETPIPE_SZ));
+            // Set non blocking
+            if ((flags = fcntl(fileno(fOutHigh), F_GETFL, 0)) < 0) {
+                return -6;
+            };
+            if (fcntl(fileno(fOutHigh), F_SETFL, flags | O_NONBLOCK) != 0) {
+                return -6;
+            };
         }
 
         if (audio == 1) {
@@ -470,6 +494,14 @@ int main(int argc, char **argv) {
                 fprintf(stderr, "Error opening fifo %s\n", FIFO_NAME_AAC);
                 return -6;
             }
+            // Set non blocking
+            int flags;
+            if ((flags = fcntl(fileno(fOutAac), F_GETFL, 0)) < 0) {
+                return -6;
+            };
+            if (fcntl(fileno(fOutAac), F_SETFL, flags | O_NONBLOCK) != 0) {
+                return -6;
+            };
         }
 
         fprintf(stderr, "fifo started\n");
@@ -746,6 +778,7 @@ int main(int argc, char **argv) {
                             fwrite(buf_idx_start, 1, frame_len, fOut);
                         }
                     }
+                    fflush(fOut);
                     if (debug) fprintf(stderr, "%lld: writing frame, length %d\n", current_timestamp(), frame_len);
                 }
             }
@@ -764,7 +797,7 @@ int main(int argc, char **argv) {
     }
 
     if (fifo == 0) {
-        free(stdoutbuf);
+        if (stdoutbuf != NULL) free(stdoutbuf);
     } else {
         if ((resolution == RESOLUTION_LOW) || (resolution == RESOLUTION_BOTH)) {
             fclose(fOutLow);
