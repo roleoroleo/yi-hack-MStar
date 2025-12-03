@@ -131,6 +131,7 @@ int debug;
 
 char *stdoutbuf = NULL;
 FILE *fOutLow = NULL, *fOutHigh = NULL, *fOutAac = NULL;
+int exit_main = 0;
 
 long long current_timestamp() {
     struct timeval te; 
@@ -226,6 +227,11 @@ void cb2s_headercpy(unsigned char *dest, unsigned char *src, size_t n)
 void sigpipe_handler(int unused)
 {
     // Do nothing
+}
+
+void signal_handler(int signal)
+{
+    exit_main = 1;
 }
 
 void* unlock_fifo_thread(void *data)
@@ -353,6 +359,10 @@ int main(int argc, char **argv) {
             return -1;
         }
     }
+
+    // Set signal handler
+    signal(SIGTERM, signal_handler);
+    signal(SIGINT, signal_handler);
 
     if (fifo == 0) {
         if (resolution == RESOLUTION_BOTH) {
@@ -519,7 +529,7 @@ int main(int argc, char **argv) {
     if (debug) fprintf(stderr, "starting capture main loop\n");
 
     // Infinite loop
-    while (1) {
+    while (!exit_main) {
         memcpy(&i, addr + 16, sizeof(i));
         buf_idx = addr + buf_offset + i;
         memcpy(&i, addr + 4, sizeof(i));
@@ -787,13 +797,11 @@ int main(int argc, char **argv) {
         usleep(25000);
     }
 
-    // Unreacheable path
-
     // Unmap file from memory
     if (munmap(addr, buf_size) == -1) {
         if (debug) fprintf(stderr, "error - unmapping file");
     } else {
-        if (debug) fprintf(stderr, "unmapping file %s, size %d, from %08x\n", BUFFER_FILE, buf_size, (unsigned int) addr);
+        if (debug) fprintf(stderr, "unmapped file %s, size %d, from %08x\n", BUFFER_FILE, buf_size, (unsigned int) addr);
     }
 
     if (fifo == 0) {
@@ -802,17 +810,22 @@ int main(int argc, char **argv) {
         if ((resolution == RESOLUTION_LOW) || (resolution == RESOLUTION_BOTH)) {
             fclose(fOutLow);
             unlink(FIFO_NAME_LOW);
+            if (debug) fprintf(stderr, "fifo %s removed\n", FIFO_NAME_LOW);
         }
         if ((resolution == RESOLUTION_HIGH) || (resolution == RESOLUTION_BOTH)) {
             fclose(fOutHigh);
             unlink(FIFO_NAME_HIGH);
+            if (debug) fprintf(stderr, "fifo %s removed\n", FIFO_NAME_HIGH);
         }
-
         if (audio == 1) {
             fclose(fOutAac);
             unlink(FIFO_NAME_AAC);
+            if (debug) fprintf(stderr, "fifo %s removed\n", FIFO_NAME_AAC);
         }
     }
+
+
+    if (debug) fprintf(stderr, "Program terminated\n");
 
     return 0;
 }
