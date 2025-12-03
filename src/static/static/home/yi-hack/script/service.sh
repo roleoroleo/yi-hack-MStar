@@ -72,6 +72,7 @@ init_config()
             else
                 ONVIF_AUDIO_ENCODER="audio_encoder=aac"
             fi
+            HG2_AUDIO="-a"
         elif [ "$RTSP_AUDIO" == "pcm" ]; then
             ONVIF_AUDIO_ENCODER="audio_encoder=none"
         elif [ "$RTSP_AUDIO" == "none" ] || [ "$RTSP_AUDIO" == "no" ] ; then
@@ -206,12 +207,20 @@ start_rtsp()
         fi
     else
 
+        CODEC_LOW="h264"
+        CODEC_HIGH="h264"
+        if [[ $MODEL_SUFFIX == H305R ]]; then
+            CODEC_HIGH="h265"
+        fi
         if [[ $RTSP_RES == "low" ]]; then
-            $RTSP_DAEMON -m $MODEL_SUFFIX -r low $RTSP_AUDIO_OPTION $P_RTSP_PORT $RTSP_USER $RTSP_PASSWORD $RTSP_AUDIO_BC $NR_LEVEL > /dev/null &
+            h264grabber2 -m $MODEL_SUFFIX -r low $HG2_AUDIO -f &
+            $RTSP_DAEMON -r low -i -c $CODEC_LOW $RTSP_AUDIO_OPTION $P_RTSP_PORT $RTSP_USER $RTSP_PASSWORD $RTSP_AUDIO_BC $NR_LEVEL > /dev/null &
         elif [[ $RTSP_RES == "high" ]]; then
-            $RTSP_DAEMON -m $MODEL_SUFFIX -r high $RTSP_AUDIO_OPTION $P_RTSP_PORT $RTSP_USER $RTSP_PASSWORD $RTSP_AUDIO_BC $NR_LEVEL > /dev/null &
+            h264grabber2 -m $MODEL_SUFFIX -r high $HG2_AUDIO -f &
+            $RTSP_DAEMON -r high -i -C $CODEC_HIGH $RTSP_AUDIO_OPTION $P_RTSP_PORT $RTSP_USER $RTSP_PASSWORD $RTSP_AUDIO_BC $NR_LEVEL > /dev/null &
         elif [[ $RTSP_RES == "both" ]]; then
-            $RTSP_DAEMON -m $MODEL_SUFFIX -r both $RTSP_AUDIO_OPTION $P_RTSP_PORT $RTSP_USER $RTSP_PASSWORD $RTSP_AUDIO_BC $NR_LEVEL > /dev/null &
+            h264grabber2 -m $MODEL_SUFFIX -r both $HG2_AUDIO -f &
+            $RTSP_DAEMON -r both -i -c $CODEC_LOW -C $CODEC_HIGH $RTSP_AUDIO_OPTION $P_RTSP_PORT $RTSP_USER $RTSP_PASSWORD $RTSP_AUDIO_BC $NR_LEVEL > /dev/null &
         fi
 
         WD_COUNT=$(ps | grep wd.sh | grep -v grep | grep -c ^)

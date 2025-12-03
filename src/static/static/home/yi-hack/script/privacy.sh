@@ -20,6 +20,7 @@ stop_rtsp()
     killall rtsp_server_yi
     killall rRTSPServer
     killall h264grabber
+    killall h264grabber2
 }
 
 ps_program()
