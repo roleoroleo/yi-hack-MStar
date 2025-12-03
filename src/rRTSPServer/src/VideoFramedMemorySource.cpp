@@ -38,20 +38,20 @@ VideoFramedMemorySource*
 VideoFramedMemorySource::createNew(UsageEnvironment& env,
                                         int hNumber,
                                         output_queue *qBuffer,
-                                        Boolean useTimeForPres,
+                                        Boolean useCurrentTimeForPres,
                                         unsigned playTimePerFrame) {
     if (qBuffer == NULL) return NULL;
 
-    return new VideoFramedMemorySource(env, hNumber, qBuffer, useTimeForPres, playTimePerFrame);
+    return new VideoFramedMemorySource(env, hNumber, qBuffer, useCurrentTimeForPres, playTimePerFrame);
 }
 
 VideoFramedMemorySource::VideoFramedMemorySource(UsageEnvironment& env,
                                                         int hNumber,
                                                         output_queue *qBuffer,
-                                                        Boolean useTimeForPres,
+                                                        Boolean useCurrentTimeForPres,
                                                         unsigned playTimePerFrame)
     : FramedSource(env), fHNumber(hNumber), fQBuffer(qBuffer),
-      fCurIndex(0), fUseTimeForPres(useTimeForPres), fPlayTimePerFrame(playTimePerFrame), fLastPlayTime(0),
+      fCurIndex(0), fUseCurrentTimeForPres(useCurrentTimeForPres), fPlayTimePerFrame(playTimePerFrame), fLastPlayTime(0),
       fLimitNumBytesToStream(False), fNumBytesToStream(0), fHaveStartedReading(False) {
 
     if (debug & 4) fprintf(stderr, "%lld: VideoFramedMemorySource - fPlayTimePerFrame %u\n", current_timestamp(), fPlayTimePerFrame);
@@ -162,7 +162,7 @@ void VideoFramedMemorySource::doGetNextFrame() {
         fprintf(stderr, "%lld: VideoFramedMemorySource - doGetNextFrame() frame lost\n", current_timestamp());
     }
 
-    if (!fUseTimeForPres) {
+    if (!fUseCurrentTimeForPres) {
         fPresentationTime.tv_usec = (frame_time % 1000) * 1000;
         fPresentationTime.tv_sec = frame_time / 1000;
     } else {

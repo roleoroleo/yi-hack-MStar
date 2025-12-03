@@ -32,7 +32,7 @@ public:
     static VideoFramedMemorySource* createNew(UsageEnvironment& env,
                                                 int hNumber,
                                                 output_queue *qBuffer,
-                                                Boolean useTimeForPres,
+                                                Boolean useCurrentTimeForPres,
                                                 unsigned playTimePerFrame = 0);
 
     void seekToByteAbsolute(u_int64_t byteNumber, u_int64_t numBytesToStream = 0);
@@ -44,7 +44,7 @@ protected:
     VideoFramedMemorySource(UsageEnvironment& env,
                                 int hNumber,
                                 output_queue *qBuffer,
-                                Boolean useTimeForPres,
+                                Boolean useCurrentTimeForPres,
                                 unsigned playTimePerFrame);
         // called only by createNew()
 
@@ -59,7 +59,7 @@ private:
     int fHNumber;
     output_queue *fQBuffer;
     u_int64_t fCurIndex;
-    Boolean fUseTimeForPres;
+    Boolean fUseCurrentTimeForPres;
     unsigned fPlayTimePerFrame;
     unsigned fLastPlayTime;
     Boolean fLimitNumBytesToStream;

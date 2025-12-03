@@ -49,19 +49,19 @@ AudioFramedMemorySource::createNew(UsageEnvironment& env,
                                         output_queue *qBuffer,
                                         unsigned samplingFrequency,
                                         unsigned char numChannels,
-                                        Boolean useTimeForPres) {
+                                        Boolean useCurrentTimeForPres) {
     if (qBuffer == NULL) return NULL;
 
-    return new AudioFramedMemorySource(env, qBuffer, samplingFrequency, numChannels, useTimeForPres);
+    return new AudioFramedMemorySource(env, qBuffer, samplingFrequency, numChannels, useCurrentTimeForPres);
 }
 
 AudioFramedMemorySource::AudioFramedMemorySource(UsageEnvironment& env,
                                                         output_queue *qBuffer,
                                                         unsigned samplingFrequency,
                                                         unsigned char numChannels,
-                                                        Boolean useTimeForPres)
+                                                        Boolean useCurrentTimeForPres)
     : FramedSource(env), fQBuffer(qBuffer), fProfile(1), fSamplingFrequency(samplingFrequency),
-      fNumChannels(numChannels), fUseTimeForPres(useTimeForPres), fHaveStartedReading(False) {
+      fNumChannels(numChannels), fUseCurrentTimeForPres(useCurrentTimeForPres), fHaveStartedReading(False) {
 
     u_int8_t samplingFrequencyIndex;
     int i;
@@ -185,7 +185,7 @@ void AudioFramedMemorySource::doGetNextFrame() {
         fprintf(stderr, "%lld: AudioFramedMemorySource - doGetNextFrame() frame lost\n", current_timestamp());
     }
 
-    if (!fUseTimeForPres) {
+    if (!fUseCurrentTimeForPres) {
         fPresentationTime.tv_usec = (frame_time % 1000) * 1000;
         fPresentationTime.tv_sec = frame_time / 1000;
     } else {

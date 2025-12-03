@@ -33,7 +33,7 @@ public:
                                                 output_queue *qBuffer,
                                                 unsigned samplingFrequency,
                                                 unsigned char numChannels,
-                                                Boolean useTimeForPres);
+                                                Boolean useCurrentTimeForPres);
 
     unsigned samplingFrequency() const { return fSamplingFrequency; }
     unsigned char numChannels() const { return fNumChannels; }
@@ -46,7 +46,7 @@ protected:
                                 output_queue *qBuffer,
                                 unsigned samplingFrequency,
                                 unsigned char numChannels,
-                                Boolean useTimeForPres);
+                                Boolean useCurrentTimeForPres);
         // called only by createNew()
 
     virtual ~AudioFramedMemorySource();
@@ -63,7 +63,7 @@ private:
     int fProfile;
     unsigned fSamplingFrequency;
     unsigned char  fNumChannels;
-    Boolean fUseTimeForPres;
+    Boolean fUseCurrentTimeForPres;
     unsigned fuSecsPerFrame;
     char fConfigStr[5];
     Boolean fHaveStartedReading;

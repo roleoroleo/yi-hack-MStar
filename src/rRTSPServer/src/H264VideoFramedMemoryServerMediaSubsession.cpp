@@ -27,17 +27,17 @@
 H264VideoFramedMemoryServerMediaSubsession*
 H264VideoFramedMemoryServerMediaSubsession::createNew(UsageEnvironment& env,
                                                 output_queue *qBuffer,
-                                                Boolean useTimeForPres,
+                                                Boolean useCurrentTimeForPres,
                                                 Boolean reuseFirstSource) {
-    return new H264VideoFramedMemoryServerMediaSubsession(env, qBuffer, useTimeForPres, reuseFirstSource);
+    return new H264VideoFramedMemoryServerMediaSubsession(env, qBuffer, useCurrentTimeForPres, reuseFirstSource);
 }
 
 H264VideoFramedMemoryServerMediaSubsession::H264VideoFramedMemoryServerMediaSubsession(UsageEnvironment& env,
                                                                         output_queue *qBuffer,
-                                                                        Boolean useTimeForPres,
+                                                                        Boolean useCurrentTimeForPres,
                                                                         Boolean reuseFirstSource)
     : OnDemandServerMediaSubsession(env, reuseFirstSource),
-      fQBuffer(qBuffer), fUseTimeForPres(useTimeForPres), fAuxSDPLine(NULL), fDoneFlag(0), fDummyRTPSink(NULL) {
+      fQBuffer(qBuffer), fUseCurrentTimeForPres(useCurrentTimeForPres), fAuxSDPLine(NULL), fDoneFlag(0), fDummyRTPSink(NULL) {
 }
 
 H264VideoFramedMemoryServerMediaSubsession::~H264VideoFramedMemoryServerMediaSubsession() {
@@ -112,7 +112,7 @@ FramedSource* H264VideoFramedMemoryServerMediaSubsession::createNewStreamSource(
         estBitrate = 500; // kbps, estimate
 
     // Create the video source:
-    VideoFramedMemorySource* memorySource = VideoFramedMemorySource::createNew(envir(), 264, fQBuffer, fUseTimeForPres, 50000);
+    VideoFramedMemorySource* memorySource = VideoFramedMemorySource::createNew(envir(), 264, fQBuffer, fUseCurrentTimeForPres, 50000);
     if (memorySource == NULL) return NULL;
 
     // Create a framer for the Video Elementary Stream:

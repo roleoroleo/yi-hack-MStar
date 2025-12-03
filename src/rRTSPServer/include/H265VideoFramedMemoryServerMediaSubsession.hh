@@ -29,7 +29,7 @@
 class H265VideoFramedMemoryServerMediaSubsession: public OnDemandServerMediaSubsession {
 public:
     static H265VideoFramedMemoryServerMediaSubsession*
-        createNew(UsageEnvironment& env, output_queue *qBuffer, Boolean useTimeForPres,
+        createNew(UsageEnvironment& env, output_queue *qBuffer, Boolean useCurrentTimeForPres,
                                 Boolean reuseFirstSource);
 
     // Used to implement "getAuxSDPLine()":
@@ -39,7 +39,7 @@ public:
 protected:
     H265VideoFramedMemoryServerMediaSubsession(UsageEnvironment& env,
                                         output_queue *qBuffer,
-                                        Boolean useTimeForPres,
+                                        Boolean useCurrentTimeForPres,
                                         Boolean reuseFirstSource);
       // called only by createNew();
       virtual ~H265VideoFramedMemoryServerMediaSubsession();
@@ -57,7 +57,7 @@ protected: // redefined virtual functions
 
 private:
     output_queue *fQBuffer;
-    Boolean fUseTimeForPres;
+    Boolean fUseCurrentTimeForPres;
     char* fAuxSDPLine;
     char fDoneFlag; // used when setting up "fAuxSDPLine"
     RTPSink* fDummyRTPSink; // ditto
