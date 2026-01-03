@@ -213,13 +213,14 @@ start_rtsp()
             CODEC_HIGH="h265"
         fi
         if [[ $RTSP_RES == "low" ]]; then
-            h264grabber2 -m $MODEL_SUFFIX -r low $HG2_AUDIO -f &
+            h264grabber_l -m $MODEL_SUFFIX -r low -f &
             $RTSP_DAEMON -r low -i -c $CODEC_LOW $RTSP_AUDIO_OPTION $P_RTSP_PORT $RTSP_USER $RTSP_PASSWORD $RTSP_AUDIO_BC $NR_LEVEL > /dev/null &
         elif [[ $RTSP_RES == "high" ]]; then
-            h264grabber2 -m $MODEL_SUFFIX -r high $HG2_AUDIO -f &
+            h264grabber_h -m $MODEL_SUFFIX -r high -f &
             $RTSP_DAEMON -r high -i -C $CODEC_HIGH $RTSP_AUDIO_OPTION $P_RTSP_PORT $RTSP_USER $RTSP_PASSWORD $RTSP_AUDIO_BC $NR_LEVEL > /dev/null &
         elif [[ $RTSP_RES == "both" ]]; then
-            h264grabber2 -m $MODEL_SUFFIX -r both $HG2_AUDIO -f &
+            h264grabber_l -m $MODEL_SUFFIX -r low -f &
+            h264grabber_h -m $MODEL_SUFFIX -r high -f &
             $RTSP_DAEMON -r both -i -c $CODEC_LOW -C $CODEC_HIGH $RTSP_AUDIO_OPTION $P_RTSP_PORT $RTSP_USER $RTSP_PASSWORD $RTSP_AUDIO_BC $NR_LEVEL > /dev/null &
         fi
 
