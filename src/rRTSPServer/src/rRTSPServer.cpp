@@ -720,7 +720,7 @@ int main(int argc, char** argv)
         static struct option long_options[] =
         {
             {"resolution",  required_argument, 0, 'r'},
-            {"internal",  no_argument, 0, 'i'},
+            {"no_internal",  no_argument, 0, 'i'},
             {"codec_low",  required_argument, 0, 'c'},
             {"codec_high",  required_argument, 0, 'C'},
             {"audio",  required_argument, 0, 'a'},
