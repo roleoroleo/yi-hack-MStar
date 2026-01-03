@@ -1,5 +1,9 @@
 #!/bin/bash
 
+set -e
+
+. ./config.jq
+
 export CROSSPATH=/opt/yi/arm-linux-gnueabihf-4.8.3-201404/bin
 export PATH=${PATH}:${CROSSPATH}
 
@@ -19,13 +23,21 @@ export AR=${CROSSPREFIX}ar
 SCRIPT_DIR=$(cd `dirname $0` && pwd)
 cd $SCRIPT_DIR
 
-cd jq-1.5 || exit 1
+cd jq-${VERSION}
 
 make clean
-make -j $(nproc) || exit 1
+make -j $(nproc)
 
-mkdir -p ../_install/bin || exit 1
+mkdir -p ../_install/bin
+mkdir -p ../_install/lib
 
-cp ./jq ../_install/bin || exit 1
+cp ./vendor/oniguruma/src/.libs/libonig.so.5.5.0 ../_install/lib
+cp ./.libs/libjq.so.1.0.4 ../_install/lib
+cp ./.libs/jq ../_install/bin
+ln -s libonig.so.5.5.0 ../_install/lib/libonig.so.5
+ln -s libonig.so.5.5.0 ../_install/lib/libonig.so
+ln -s libjq.so.1.0.4 ../_install/lib/libjq.so.1
+ln -s libjq.so.1.0.4 ../_install/lib/libjq.so
 
-$STRIP ../_install/bin/* || exit 1
+$STRIP ../_install/bin/*
+$STRIP ../_install/lib/*
