@@ -1,7 +1,7 @@
 diff -Naur mqttv4.ori/include/mqttv4.h mqttv4/include/mqttv4.h
 --- mqttv4.ori/include/mqttv4.h	2023-02-17 19:39:43.060796415 +0100
 +++ mqttv4/include/mqttv4.h	2023-02-17 19:34:54.000000000 +0100
-@@ -21,6 +21,8 @@
+@@ -25,6 +25,8 @@
  
  #define MQTTV4_SNAPSHOT     "export MOD=$(cat /home/yi-hack/model_suffix); /home/yi-hack/bin/imggrabber -m $MOD -r high -w"
  
