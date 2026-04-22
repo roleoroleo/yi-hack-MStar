@@ -47,7 +47,7 @@ WAVAudioFifoSource::createNew(UsageEnvironment& env, char const* fileName,
         newSource->fFileSize = (unsigned) GetFileSize(fileName, fid);
         newSource->cleanFifo();
 
-        if (debug & 8) fprintf(stderr, "%lld: WAVAudioFifoSource - WAVAudioFifoSource created\n", current_timestamp());
+        if (debug & 2) fprintf(stderr, "%lld: WAVAudioFifoSource - WAVAudioFifoSource created\n", current_timestamp());
 
         return newSource;
     } while (0);
@@ -80,7 +80,7 @@ unsigned char WAVAudioFifoSource::getAudioFormat() {
 void WAVAudioFifoSource::cleanFifo() {
     int flags;
 
-    if (debug & 8) fprintf(stderr, "%lld: WAVAudioFifoSource - cleaning fifo\n", current_timestamp());
+    if (debug & 2) fprintf(stderr, "%lld: WAVAudioFifoSource - cleaning fifo\n", current_timestamp());
 
     if (fFid == NULL) return;
 
@@ -101,7 +101,7 @@ void WAVAudioFifoSource::cleanFifo() {
         return;
     }
 
-    if (debug & 8) fprintf(stderr, "%lld: WAVAudioFifoSource - fifo cleaned\n", current_timestamp());
+    if (debug & 2) fprintf(stderr, "%lld: WAVAudioFifoSource - fifo cleaned\n", current_timestamp());
 }
 
 WAVAudioFifoSource::WAVAudioFifoSource(UsageEnvironment& env, FILE* fid,
@@ -127,13 +127,13 @@ WAVAudioFifoSource::WAVAudioFifoSource(UsageEnvironment& env, FILE* fid,
     unsigned desiredSamplesPerFrame = (unsigned)(0.02*fSamplingFrequency);
     unsigned samplesPerFrame = desiredSamplesPerFrame < maxSamplesPerFrame ? desiredSamplesPerFrame : maxSamplesPerFrame;
 //    fPreferredFrameSize = (samplesPerFrame*fNumChannels*fBitsPerSample)/8;
-    // Force fPreferredFrameSize = 1024
-    fPreferredFrameSize = 1024;
+    // Yi Mstar noise reduction requires a framesize of 512
+    fPreferredFrameSize = 512;
 
     // Now that we've finished reading the WAV header, all future reads (of audio samples) from the file will be asynchronous:
     makeSocketNonBlocking(fileno(fFid));
 
-    if (debug & 8) fprintf(stderr, "%lld: WAVAudioFifoSource - maxSamplesPerFrame %u, desiredSamplesPerFrame %u, samplesPerFrame %u, fPreferredFrameSize %u\n",
+    if (debug & 2) fprintf(stderr, "%lld: WAVAudioFifoSource - maxSamplesPerFrame %u, desiredSamplesPerFrame %u, samplesPerFrame %u, fPreferredFrameSize %u\n",
             current_timestamp(), maxSamplesPerFrame, desiredSamplesPerFrame, samplesPerFrame, fPreferredFrameSize);
 }
 
@@ -153,7 +153,7 @@ void WAVAudioFifoSource::doGetNextFrame() {
 
     fFrameSize = 0; // until it's set later
     if (!fHaveStartedReading) {
-        if (debug & 8) fprintf(stderr, "%lld: WAVAudioFifoSource - doGetNextFrame() 1st start\n", current_timestamp());
+        if (debug & 2) fprintf(stderr, "%lld: WAVAudioFifoSource - doGetNextFrame() 1st start\n", current_timestamp());
         cleanFifo();
         // Await readable data from the file:
         envir().taskScheduler().turnOnBackgroundReadHandling(fileno(fFid),
@@ -179,6 +179,12 @@ void WAVAudioFifoSource::fileReadableHandler(WAVAudioFifoSource* source, int /*m
 void WAVAudioFifoSource::doReadFromFile() {
     struct timeval fCurrentTime;
     gettimeofday(&fCurrentTime, NULL);
+    if (fCurrentTime.tv_sec - fPresentationTime.tv_sec >= 5) {
+        if (debug & 2) fprintf(stderr, "%lld: WAVAudioFifoSource - Previous frame is too old\n", current_timestamp());;
+        cleanFifo();
+        gettimeofday(&fPresentationTime, NULL);
+        return;
+    }
 
     // Try to read as many bytes as will fit in the buffer provided (or "fPreferredFrameSize" if less)
     if (fLimitNumBytesToStream && fNumBytesToStream < fMaxSize) {
@@ -188,7 +194,7 @@ void WAVAudioFifoSource::doReadFromFile() {
         fMaxSize = fPreferredFrameSize;
     }
 
-    if (debug & 8) fprintf(stderr, "%lld: WAVAudioFifoSource - doReadFromFile() start - fMaxSize %d\n", current_timestamp(), fMaxSize);
+    if (debug & 2) fprintf(stderr, "%lld: WAVAudioFifoSource - doReadFromFile() start - fMaxSize %d\n", current_timestamp(), fMaxSize);
 
     unsigned bytesPerSample = (fNumChannels*fBitsPerSample)/8;
     if (bytesPerSample == 0) bytesPerSample = 1; // because we can't read less than a byte at a time
@@ -203,7 +209,7 @@ void WAVAudioFifoSource::doReadFromFile() {
             if (numBytesRead > 0) {
                 break;
             }
-            usleep(2000);
+            usleep(1000);
         }
 
         fFrameSize += numBytesRead;
@@ -217,7 +223,7 @@ void WAVAudioFifoSource::doReadFromFile() {
         break; // from the loop (normal case)
     }
 
-    if (debug & 8) fprintf(stderr, "%lld: WAVAudioFifoSource - doReadFromFile() - fFrameSize %d - fMaxSize %d\n", current_timestamp(), fFrameSize, fMaxSize);
+    if (debug & 2) fprintf(stderr, "%lld: WAVAudioFifoSource - doReadFromFile() - fFrameSize %d - fMaxSize %d\n", current_timestamp(), fFrameSize, fMaxSize);
 
     if (0) {
         // Set the 'presentation time' and 'duration' of this frame:

@@ -22,6 +22,8 @@
 #include "GroupsockHelper.hh"
 #include "OutputFile.hh"
 
+#include "fdk-aac/aacdecoder_lib.h"
+
 ////////// ADTS2PCMFileSink //////////
 
 extern int debug;
@@ -39,7 +41,7 @@ ADTS2PCMFileSink::ADTS2PCMFileSink(UsageEnvironment& env, FILE* fid,
     : FileSink(env, fid, bufferSize, NULL), fSampleRate(sampleRate),
       fNumChannels(numChannels), fPacketCounter(0) {
 
-    int i, ret;
+    int i;
     for (i = 0; i < 16; i++) {
         if (sampleRate == (signed) samplingFrequencyTable[i]) {
             fSampleRateIndex = i;
@@ -59,34 +61,14 @@ ADTS2PCMFileSink::ADTS2PCMFileSink(UsageEnvironment& env, FILE* fid,
     audioSpecificConfig[1] = (fSampleRateIndex << 7) | (fChannelConfiguration << 3);
     sprintf(fConfigStr, "%02X%02X", audioSpecificConfig[0], audioSpecificConfig[1]);
 
-    fAACDecoder = AACInitDecoder();
-    if (fAACDecoder) {
-        memset(&fAACFrameInfo, 0, sizeof(_AACFrameInfo));
-        fAACFrameInfo.nChans = 1;
-        fAACFrameInfo.sampRateCore = sampleRate;
-        fAACFrameInfo.profile = AAC_PROFILE_LC;
-
-        ret = AACSetRawBlockParams(fAACDecoder, 0, &fAACFrameInfo);
-        if (ret != ERR_AAC_NONE) {
-            fprintf(stderr, "AACSetRawBlockParams failed: %d", ret);
-        }
-    } else {
+    fAACHandle = aacDecoder_Open(TT_MP4_ADTS, 1);
+    if (fAACHandle == NULL) {
         fprintf(stderr, "Couldn't open AAC decoder\n");
     }
 }
 
 ADTS2PCMFileSink::~ADTS2PCMFileSink() {
-    if (!fAACDecoder)
-    {
-        return;
-    }
-
-    AACFreeDecoder(fAACDecoder);
-    fAACDecoder = NULL;
-    memset(&fAACFrameInfo, 0, sizeof(AACFrameInfo));
-    fprintf(stderr, "AAC decoder closed successfully.\n");
-
-    return;
+    aacDecoder_Close(fAACHandle);
 }
 
 ADTS2PCMFileSink* ADTS2PCMFileSink::createNew(UsageEnvironment& env,
@@ -115,53 +97,60 @@ Boolean ADTS2PCMFileSink::continuePlaying() {
 
 void ADTS2PCMFileSink::addData(unsigned char* data, unsigned dataSize,
                                struct timeval presentationTime) {
-    int size = (int) dataSize;
-    int i;
-
     // Write to our file:
     if (fOutFid != NULL && data != NULL) {
 
-        if (!fAACDecoder)
-        {
-            fprintf(stderr, "AAC decoder instance is not initialized\n");
+        unsigned char aacHeader[7];
+        unsigned char *aacHeaderPtr = &aacHeader[0];
+        unsigned int aacHeaderSize = 7;
+        AAC_DECODER_ERROR err;
+        unsigned int valid;
+        int i;
+
+        dataSize = dataSize + aacHeaderSize;
+        aacHeader[0] = 0xFF;
+        aacHeader[1] = 0xF1;
+        aacHeader[2] = 0x40 | ((fSampleRateIndex << 2) & 0x3c) | ((fChannelConfiguration >> 2) & 0x03);
+        aacHeader[3] = ((fChannelConfiguration << 6) & 0xc0) | ((dataSize >> 11) & 0x3);
+        aacHeader[4] = (dataSize >> 3) & 0xff;
+        aacHeader[5] = ((dataSize << 5) & 0xe0) | 0x1f;
+        aacHeader[6] = 0xfc;
+        dataSize = dataSize - aacHeaderSize;
+
+        valid = aacHeaderSize;
+        err = aacDecoder_Fill(fAACHandle, &aacHeaderPtr, &aacHeaderSize, &valid);
+        if (err != AAC_DEC_OK) {
+            fprintf(stderr, "Fill failed: %x\n", err);
+            return;
+        }
+        valid = dataSize;
+        err = aacDecoder_Fill(fAACHandle, &data, &dataSize, &valid);
+        if (err != AAC_DEC_OK) {
+            fprintf(stderr, "Fill failed: %x\n", err);
             return;
         }
 
-        if (dataSize < 7)
-        {
-            fprintf(stderr, "Input buffer too small for AAC header (%d < 7)\n", dataSize);
+        err = aacDecoder_DecodeFrame(fAACHandle, fPCMBuffer, 1024, 0);
+//        if (err == AAC_DEC_NOT_ENOUGH_BITS)
+//            return;
+        if (err != AAC_DEC_OK) {
+            fprintf(stderr, "Decode failed: %x\n", err);
             return;
         }
-
-        int ret = AACDecode(fAACDecoder, &data, &size, fPCMBuffer);
-
-        if (ret < 0)
-        {
-            if (ret != ERR_AAC_INDATA_UNDERFLOW)
-            {
-                fprintf(stderr, "AAC decode failed: %d\n", ret);
-            }
-            return;
-        }
-
-        // Get frame info to determine actual output properties
-        AACFrameInfo frameInfoOut;
-        AACGetLastFrameInfo(fAACDecoder, &frameInfoOut);
-
+        CStreamInfo *info = aacDecoder_GetStreamInfo(fAACHandle);
         if (debug) {
-            fprintf(stderr, "Sample rate: %d\n", frameInfoOut.sampRateOut);
-            fprintf(stderr, "Number of samples: %d\n", frameInfoOut.outputSamps);
-            fprintf(stderr, "Bits per sample: %d\n", frameInfoOut.bitsPerSample);
-            fprintf(stderr, "Nummer of channels: %d\n", frameInfoOut.nChans);
+            fprintf(stderr, "Sample Rate: %d\n", info->sampleRate);
+            fprintf(stderr, "Frame Size: %d\n", info->frameSize);
+            fprintf(stderr, "Num Channels: %d\n", info->numChannels);
         }
 
-        if (fSampleRate == frameInfoOut.sampRateOut / 2) {
-            for (i = 0; i < frameInfoOut.outputSamps / 2; i++) {
+        if (fSampleRate == info->sampleRate / 2) {
+            for (i = 0; i < info->frameSize / 2; i++) {
                 fPCMBuffer[i] = fPCMBuffer[2 * i];
             }
-            fwrite(fPCMBuffer, sizeof(short), frameInfoOut.outputSamps / 2, fOutFid);
+            fwrite(fPCMBuffer, sizeof(u_int16_t), info->frameSize / 2, fOutFid);
         } else {
-            fwrite(fPCMBuffer, sizeof(short), frameInfoOut.outputSamps, fOutFid);
+            fwrite(fPCMBuffer, sizeof(u_int16_t), info->frameSize, fOutFid);
         }
     }
 }

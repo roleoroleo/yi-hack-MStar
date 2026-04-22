@@ -15,28 +15,28 @@
  */
 
 /*
- * ServerMediaSubsession object that creates new, unicast, RTPSink
- * on demand, from an WAV fifo file.
+ * A ServerMediaSubsession object that creates new, unicast, RTPSinks
+ * on demand, from an AAC audio fifo in ADTS format
  */
 
-#ifndef _ADTS_AUDIO_FIFO_SERVER_MEDIA_SUBSESSION_HH
-#define _ADTS_AUDIO_FIFO_SERVER_MEDIA_SUBSESSION_HH
+#ifndef _ADTS_FROM_WAV_AUDIO_FIFO_SERVER_MEDIA_SUBSESSION_HH
+#define _ADTS_FROM_WAV_AUDIO_FIFO_SERVER_MEDIA_SUBSESSION_HH
 
 #ifndef _FILE_SERVER_MEDIA_SUBSESSION_HH
 #include "FileServerMediaSubsession.hh"
 #endif
 #include "StreamReplicator.hh"
 
-class ADTSAudioFifoServerMediaSubsession: public OnDemandServerMediaSubsession {
+class ADTSFromWAVAudioFifoServerMediaSubsession: public OnDemandServerMediaSubsession{
 public:
-    static ADTSAudioFifoServerMediaSubsession*
+    static ADTSFromWAVAudioFifoServerMediaSubsession*
     createNew(UsageEnvironment& env, StreamReplicator* replicator, Boolean reuseFirstSource);
 
 protected:
-    ADTSAudioFifoServerMediaSubsession(UsageEnvironment& env, StreamReplicator* replicator,
-                                      Boolean reuseFirstSource);
+    ADTSFromWAVAudioFifoServerMediaSubsession(UsageEnvironment& env,
+                                              StreamReplicator* replicator, Boolean reuseFirstSource);
     // called only by createNew();
-    virtual ~ADTSAudioFifoServerMediaSubsession();
+    virtual ~ADTSFromWAVAudioFifoServerMediaSubsession();
 
 protected: // redefined virtual functions
     virtual FramedSource* createNewStreamSource(unsigned clientSessionId,
@@ -46,12 +46,9 @@ protected: // redefined virtual functions
                                       FramedSource* inputSource);
 
 protected:
-
-    // The following parameters of the input stream are set after
-    // "createNewStreamSource" is called:
     StreamReplicator* fReplicator;
     unsigned fSamplingFrequency;
-    unsigned char fNumChannels;
+    unsigned fNumChannels;
     char fConfigStr[5];
 };
 
