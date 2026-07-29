@@ -35,7 +35,7 @@ char *config_params[PARAM_NUM][PARAM_OPTIONS] = {
     { "system", "ONVIF_SYNOLOGY_NVR", "bool", "", "", "" , "", "", "" },
     { "system", "TIME_OSD", "bool", "", "", "" , "", "", "" },
     { "system", "NTPD", "bool", "", "", "" , "", "", "" },
-    { "system", "NTP_SERVER", "string" "", "", "" , "", "", "" },
+    { "system", "NTP_SERVER", "string", "", "", "" , "", "", "" },
     { "system", "PROXYCHAINSNG", "bool", "", "", "" , "", "", "" },
     { "system", "SWAP_FILE", "bool", "", "", "" , "", "", "" },
     { "system", "SWAP_SWAPPINESS", "int", "0", "100", "" , "", "", "" },
@@ -50,8 +50,8 @@ char *config_params[PARAM_NUM][PARAM_OPTIONS] = {
     { "system", "FTP_HOST", "string", "", "", "" , "", "", "" },
     { "system", "FTP_DIR", "string", "", "", "" , "", "", "" },
     { "system", "FTP_DIR_TREE", "bool", "", "", "" , "", "", "" },
-    { "system", "FTP_USERNAME", "string" "", "", "" , "", "", "" },
-    { "system", "FTP_PASSWORD", "string" "", "", "" , "", "", "" },
+    { "system", "FTP_USERNAME", "string", "", "", "" , "", "", "" },
+    { "system", "FTP_PASSWORD", "string", "", "", "" , "", "", "" },
     { "system", "FTP_FILE_DELETE_AFTER_UPLOAD", "bool", "", "", "" , "", "", "" },
     { "system", "SSH_PASSWORD", "string", "", "", "" , "", "", "" },
     { "system", "CRONTAB", "string", "", "", "" , "", "", "" },
@@ -95,7 +95,7 @@ int validate_param(char *file, char *key, char *value)
     char *endptr;
 
     for (i = 0; i < PARAM_NUM; i++) {
-        if (strcasecmp(key, config_params[i][1]) == 0) {
+        if (strncasecmp(key, config_params[i][1], 9) == 0) {
             if (strcasecmp(file, config_params[i][0]) != 0) {
                 validate = 0;
                 break;
