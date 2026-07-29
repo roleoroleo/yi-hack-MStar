@@ -13,7 +13,7 @@ diff -Naur mqttv4.ori/include/mqttv4.h mqttv4/include/mqttv4.h
 diff -Naur mqttv4.ori/src/mqttv4.c mqttv4/src/mqttv4.c
 --- mqttv4.ori/src/mqttv4.c	2023-02-17 19:39:43.060796415 +0100
 +++ mqttv4/src/mqttv4.c	2023-02-17 19:39:02.000000000 +0100
-@@ -522,6 +522,7 @@
+@@ -524,6 +519,7 @@
      mqtt_msg_t msg;
      IPC_COMMAND_TYPE *cmd_type = (IPC_COMMAND_TYPE *) arg;
      int i;
@@ -21,7 +21,7 @@ diff -Naur mqttv4.ori/src/mqttv4.c mqttv4/src/mqttv4.c
  
      fprintf(stderr, "CALLBACK COMMAND\n");
  
-@@ -543,6 +544,17 @@
+@@ -545,6 +546,17 @@
  
      mqtt_send_message(&msg, 1);
  
