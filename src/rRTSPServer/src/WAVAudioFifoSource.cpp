@@ -200,28 +200,26 @@ void WAVAudioFifoSource::doReadFromFile() {
     if (bytesPerSample == 0) bytesPerSample = 1; // because we can't read less than a byte at a time
 
     unsigned bytesToRead = fMaxSize - fMaxSize%bytesPerSample;
-    unsigned numBytesRead;
 
-    while (1) { // loop for 'trick play' only
-        while (1) {
-            // For non-seekable files (e.g., pipes), call "read()" rather than "fread()", to ensure that the read doesn't block:
-            numBytesRead = read(fileno(fFid), fTo, bytesToRead);
-            if (numBytesRead > 0) {
-                break;
-            }
-            usleep(1000);
-        }
-
-        fFrameSize += numBytesRead;
-        fTo += numBytesRead;
-        fMaxSize -= numBytesRead;
-        fNumBytesToStream -= numBytesRead;
-
-        // If we did an asynchronous read, and didn't read an integral number of samples, then we need to wait for another read:
-        if (fFrameSize%bytesPerSample > 0) return;
-
-        break; // from the loop (normal case)
+    ssize_t numBytesRead = read(fileno(fFid), fTo, bytesToRead);
+    if (numBytesRead == 0) {
+        // Writer closed the fifo (EOF): end the stream instead of looping.
+        handleClosure();
+        return;
     }
+    if (numBytesRead < 0) {
+        // No data available right now (EAGAIN) or a transient error: wait for
+        // the next readable notification rather than spinning on usleep().
+        return;
+    }
+
+    fFrameSize += (unsigned) numBytesRead;
+    fTo += numBytesRead;
+    fMaxSize -= (unsigned) numBytesRead;
+    fNumBytesToStream -= (unsigned) numBytesRead;
+
+    // If we didn't read an integral number of samples, wait for another read:
+    if (fFrameSize%bytesPerSample > 0) return;
 
     if (debug & 2) fprintf(stderr, "%lld: WAVAudioFifoSource - doReadFromFile() - fFrameSize %d - fMaxSize %d\n", current_timestamp(), fFrameSize, fMaxSize);
 
