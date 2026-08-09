@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 roleo.
+ * Copyright (c) 2020 roleo.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@ int YUVtoJPG(char *output_file, unsigned char *input, const int width, const int
     FILE *fp;
 
     uint8_t* outbuffer = NULL;
-    size_t outlen = 0;
+    unsigned long outlen = 0;
 
     unsigned int wsl, hsl, i, j;
     unsigned int offset;

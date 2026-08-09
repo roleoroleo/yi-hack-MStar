@@ -36,13 +36,32 @@ int WMInit(WaterMarkInfo *WM_info, char WMPath[30])
             WM_info->height = height * (-1);
         }
 
+        if (WM_info->width <= 0 || WM_info->height <= 0 ||
+                WM_info->width > 4096 || WM_info->height > 4096) {
+            fprintf(stderr, "Invalid watermark dimensions %dx%d in %s\n",
+                    WM_info->width, WM_info->height, filename);
+            fclose(icon_hdle);
+            return -1;
+        }
+
         WM_info->single_pic[i].id = i;
         WM_info->single_pic[i].y = (unsigned char *)malloc(WM_info->width * WM_info->height * 5 / 2);
+        if (WM_info->single_pic[i].y == NULL) {
+            fprintf(stderr, "Unable to allocate watermark buffer\n");
+            fclose(icon_hdle);
+            return -1;
+        }
         WM_info->single_pic[i].alph = WM_info->single_pic[i].y + WM_info->width * WM_info->height;
         WM_info->single_pic[i].c = WM_info->single_pic[i].alph + WM_info->width * WM_info->height;
 
-        if (tmp_argb == NULL)
+        if (tmp_argb == NULL) {
             tmp_argb = (unsigned char *)malloc(WM_info->width * WM_info->height * 4);
+            if (tmp_argb == NULL) {
+                fprintf(stderr, "Unable to allocate watermark buffer\n");
+                fclose(icon_hdle);
+                return -1;
+            }
+        }
 
         fread(tmp_argb, WM_info->width * WM_info->height * 4, 1, icon_hdle);
         argb2yuv420sp(tmp_argb, WM_info->single_pic[i].alph, WM_info->width, WM_info->height,

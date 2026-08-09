@@ -563,7 +563,8 @@ int watermark_blending (BackGroudLayerInfo *bg_info, WaterMarkInfo *wm_info,
 {
     int i;
     int id;
-    if (wm_info->width * wm_Param->number > bg_info->width) {
+    if (wm_Param->pos.x + wm_info->width * wm_Param->number > bg_info->width ||
+            wm_Param->pos.y + wm_info->height > bg_info->height) {
         fprintf(stderr, "watermark_blending error region\n");
         return -1;
     }
@@ -582,7 +583,8 @@ int watermark_blending_ajust_brightness(BackGroudLayerInfo *bg_info, WaterMarkIn
 {
     int i;
     int id;
-    if (wm_info->width * wm_Param->number > bg_info->width) {
+    if (wm_Param->pos.x + wm_info->width * wm_Param->number > bg_info->width ||
+            wm_Param->pos.y + wm_info->height > bg_info->height) {
         fprintf(stderr, "watermark_blending error region\n");
         return -1;
     }
