@@ -16,7 +16,7 @@ HW_ID=$(dd status=none bs=1 count=4 skip=661 if=/tmp/mmap.info | tr '\0' '0' | c
 get_config()
 {
     key=$1
-    grep -w $1 $YI_HACK_PREFIX/$CONF_FILE | cut -d "=" -f2
+    grep -w $1 $YI_HACK_PREFIX/$CONF_FILE | cut -d "=" -f2-
 }
 
 init_config()

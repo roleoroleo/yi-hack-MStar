@@ -12,7 +12,7 @@ MODEL_SUFFIX=$(cat /home/yi-hack/model_suffix)
 get_config()
 {
     key=$1
-    grep -w $1 $YI_HACK_PREFIX/$CONF_FILE | cut -d "=" -f2
+    grep -w $1 $YI_HACK_PREFIX/$CONF_FILE | cut -d "=" -f2-
 }
 
 start_buffer()

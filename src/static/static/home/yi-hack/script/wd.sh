@@ -20,13 +20,13 @@ INTERVAL=10
 get_camera_config()
 {
     key=$1
-    grep -w $1 $YI_HACK_PREFIX/$CAMERA_CONF_FILE | cut -d "=" -f2
+    grep -w $1 $YI_HACK_PREFIX/$CAMERA_CONF_FILE | cut -d "=" -f2-
 }
 
 get_config()
 {
     key=$1
-    grep -w $1 $YI_HACK_PREFIX/$CONF_FILE | cut -d "=" -f2
+    grep -w $1 $YI_HACK_PREFIX/$CONF_FILE | cut -d "=" -f2-
 }
 
 restart_rtsp()

@@ -12,7 +12,7 @@ YI_HACK_PREFIX="/home/yi-hack"
 get_config()
 {
     key=$1
-    grep -w $1 $YI_HACK_PREFIX/$CONF_FILE | cut -d "=" -f2
+    grep -w $1 $YI_HACK_PREFIX/$CONF_FILE | cut -d "=" -f2-
 }
 # Setup env.
 export PATH=$PATH:/home/base/tools:/home/yi-hack/bin:/home/yi-hack/sbin:/tmp/sd/yi-hack/bin:/tmp/sd/yi-hack/sbin
