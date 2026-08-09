@@ -44,6 +44,7 @@ ADTSAudioFileServerMediaSubsession_BC
 
 ADTSAudioFileServerMediaSubsession_BC
 ::~ADTSAudioFileServerMediaSubsession_BC() {
+    delete[] fAuxSDPLine;
 }
 
 MediaSink* ADTSAudioFileServerMediaSubsession_BC

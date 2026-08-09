@@ -58,7 +58,7 @@ FramedSource* ADTSFromWAVAudioFifoServerMediaSubsession
 
     // Iterate back into the filter chain until a source is found that 
     // has a sample frequency and expected to be a ADTSFromWAVAudioFifoSource.
-    for (int x = 0; x < 10; x++) {
+    for (int x = 0; x < 10 && previousSource != NULL; x++) {
         if (((ADTSFromWAVAudioFifoSource*)(previousSource))->samplingFrequency() > 0) {
             if (debug & 2) fprintf(stderr, "%lld: ADTSFromWAVAudioFifoServerMediaSubsession - ADTSFromWAVAudioFifoSource found at x = %d\n", current_timestamp(), x);
             originalSource = (ADTSFromWAVAudioFifoSource*)(previousSource);
@@ -71,6 +71,10 @@ FramedSource* ADTSFromWAVAudioFifoServerMediaSubsession
 
     if (resultSource == NULL) {
         fprintf(stderr, "%lld: ADTSFromWAVAudioFifoServerMediaSubsession - Failed to create stream replica\n", current_timestamp());
+        Medium::close(resultSource);
+        return NULL;
+    } else if (originalSource == NULL) {
+        fprintf(stderr, "%lld: ADTSFromWAVAudioFifoServerMediaSubsession - Source not found in filter chain\n", current_timestamp());
         Medium::close(resultSource);
         return NULL;
     } else {

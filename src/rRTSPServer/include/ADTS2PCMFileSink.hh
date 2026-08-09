@@ -62,6 +62,10 @@ protected:
     INT_PCM fPCMBuffer[1024];
     unsigned fSampleRateIndex;
     unsigned fChannelConfiguration;
+    Boolean fOutputClosed;
+
+    // Best-effort non-blocking write to the output fifo (drops on full pipe).
+    void writeNonBlocking(void const* buf, unsigned nbytes);
 };
 
 #endif

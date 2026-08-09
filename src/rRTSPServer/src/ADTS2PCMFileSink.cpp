@@ -24,6 +24,10 @@
 
 #include "fdk-aac/aacdecoder_lib.h"
 
+#include <fcntl.h>
+#include <unistd.h>
+#include <errno.h>
+
 ////////// ADTS2PCMFileSink //////////
 
 extern int debug;
@@ -39,7 +43,7 @@ ADTS2PCMFileSink::ADTS2PCMFileSink(UsageEnvironment& env, FILE* fid,
                                    int sampleRate, int numChannels,
                                    unsigned bufferSize)
     : FileSink(env, fid, bufferSize, NULL), fSampleRate(sampleRate),
-      fNumChannels(numChannels), fPacketCounter(0) {
+      fNumChannels(numChannels), fPacketCounter(0), fOutputClosed(False) {
 
     int i;
     for (i = 0; i < 16; i++) {
@@ -68,7 +72,7 @@ ADTS2PCMFileSink::ADTS2PCMFileSink(UsageEnvironment& env, FILE* fid,
 }
 
 ADTS2PCMFileSink::~ADTS2PCMFileSink() {
-    aacDecoder_Close(fAACHandle);
+    if (fAACHandle != NULL) aacDecoder_Close(fAACHandle);
 }
 
 ADTS2PCMFileSink* ADTS2PCMFileSink::createNew(UsageEnvironment& env,
@@ -80,7 +84,18 @@ ADTS2PCMFileSink* ADTS2PCMFileSink::createNew(UsageEnvironment& env,
         fid = OpenOutputFile(env, fileName);
         if (fid == NULL) break;
 
-        return new ADTS2PCMFileSink(env, fid, sampleRate, numChannels, bufferSize);
+        // Make writes to the output fifo non-blocking
+        int fl = fcntl(fileno(fid), F_GETFL, 0);
+        if (fl >= 0) fcntl(fileno(fid), F_SETFL, fl | O_NONBLOCK);
+
+        ADTS2PCMFileSink* newSink = new ADTS2PCMFileSink(env, fid, sampleRate, numChannels, bufferSize);
+        if (newSink->fAACHandle == NULL) {
+            // The AAC decoder could not be opened
+            fprintf(stderr, "ADTS2PCMFileSink::createNew(): AAC decoder unavailable\n");
+            Medium::close(newSink);
+            break;
+        }
+        return newSink;
     } while (0);
 
     return NULL;
@@ -148,11 +163,21 @@ void ADTS2PCMFileSink::addData(unsigned char* data, unsigned dataSize,
             for (i = 0; i < info->frameSize / 2; i++) {
                 fPCMBuffer[i] = fPCMBuffer[2 * i];
             }
-            fwrite(fPCMBuffer, sizeof(u_int16_t), info->frameSize / 2, fOutFid);
+            writeNonBlocking(fPCMBuffer, (info->frameSize / 2) * sizeof(u_int16_t));
         } else {
-            fwrite(fPCMBuffer, sizeof(u_int16_t), info->frameSize, fOutFid);
+            writeNonBlocking(fPCMBuffer, info->frameSize * sizeof(u_int16_t));
         }
     }
+}
+
+void ADTS2PCMFileSink::writeNonBlocking(void const* buf, unsigned nbytes) {
+    if (fOutFid == NULL || nbytes == 0) return;
+    ssize_t n = write(fileno(fOutFid), buf, nbytes);
+    if (n < 0 && errno != EAGAIN && errno != EWOULDBLOCK && errno != EINTR) {
+        // Reader gone (EPIPE) or bad fd: mark the output as closed.
+        fOutputClosed = True;
+    }
+    // Partial writes / EAGAIN: intentionally drop the excess
 }
 
 void ADTS2PCMFileSink::afterGettingFrame(unsigned frameSize,
@@ -166,8 +191,8 @@ void ADTS2PCMFileSink::afterGettingFrame(unsigned frameSize,
     }
     addData(fBuffer, frameSize, presentationTime);
 
-    if (fOutFid == NULL || fflush(fOutFid) == EOF) {
-        // The output file has closed.  Handle this the same way as if the input source had closed:
+    if (fOutFid == NULL || fOutputClosed) {
+        // The output fifo has closed.  Handle this the same way as if the input source had closed:
         if (fSource != NULL) fSource->stopGettingFrames();
         onSourceClosure();
         return;

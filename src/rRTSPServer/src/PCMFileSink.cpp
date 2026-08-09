@@ -24,6 +24,10 @@
 #include "uLawAudioFilter.hh"
 #include "aLawAudioFilter.hh"
 
+#include <fcntl.h>
+#include <unistd.h>
+#include <errno.h>
+
 ////////// PCMFileSink //////////
 
 extern int debug;
@@ -89,6 +93,7 @@ PCMFileSink::PCMFileSink(UsageEnvironment& env, FILE* fid,
 
     fPCMBuffer = new int16_t[bufferSize];
     fLastSample = 0;
+    fOutputClosed = False;
 }
 
 PCMFileSink::~PCMFileSink() {
@@ -108,6 +113,10 @@ PCMFileSink* PCMFileSink::createNew(UsageEnvironment& env,
         FILE* fid;
         fid = OpenOutputFile(env, fileName);
         if (fid == NULL) break;
+
+        // Make writes to the output fifo non-blocking
+        int fl = fcntl(fileno(fid), F_GETFL, 0);
+        if (fl >= 0) fcntl(fileno(fid), F_SETFL, fl | O_NONBLOCK);
 
         return new PCMFileSink(env, fid, destSampleRate, srcLaw, bufferSize);
     } while (0);
@@ -148,7 +157,7 @@ void PCMFileSink::addData(unsigned char* data, unsigned dataSize,
                 fPCMBuffer[i] = (int16_t) fLastSample;
             }
 
-            fwrite(fPCMBuffer, sizeof(int16_t), dataSize * 2, fOutFid);
+            writeNonBlocking(fPCMBuffer, dataSize * 2 * sizeof(int16_t));
         } else  if (fDestSampleRate == 8000) {
             for (unsigned i = 0; i < dataSize; ++i) {
                 if (fSrcLaw == ULAW) {
@@ -158,9 +167,19 @@ void PCMFileSink::addData(unsigned char* data, unsigned dataSize,
                 }
             }
 
-            fwrite(fPCMBuffer, sizeof(u_int16_t), dataSize, fOutFid);
+            writeNonBlocking(fPCMBuffer, dataSize * sizeof(u_int16_t));
         }
     }
+}
+
+void PCMFileSink::writeNonBlocking(void const* buf, unsigned nbytes) {
+    if (fOutFid == NULL || nbytes == 0) return;
+    ssize_t n = write(fileno(fOutFid), buf, nbytes);
+    if (n < 0 && errno != EAGAIN && errno != EWOULDBLOCK && errno != EINTR) {
+        // Reader gone (EPIPE) or bad fd: mark the output as closed.
+        fOutputClosed = True;
+    }
+    // Partial writes / EAGAIN: intentionally drop the excess
 }
 
 void PCMFileSink::afterGettingFrame(unsigned frameSize,
@@ -174,8 +193,8 @@ void PCMFileSink::afterGettingFrame(unsigned frameSize,
     }
     addData(fBuffer, frameSize, presentationTime);
 
-    if (fOutFid == NULL || fflush(fOutFid) == EOF) {
-        // The output file has closed.  Handle this the same way as if the input source had closed:
+    if (fOutFid == NULL || fOutputClosed) {
+        // The output fifo has closed.  Handle this the same way as if the input source had closed:
         if (fSource != NULL) fSource->stopGettingFrames();
         onSourceClosure();
         return;

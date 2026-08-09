@@ -129,6 +129,7 @@ void OnDemandServerMediaSubsession_BC
                     serverRTPPort = serverPortNum;
                     rtpGroupsock = createGroupsock(nullAddress(destinationAddress.ss_family), serverRTPPort);
                     if (rtpGroupsock->socketNum() >= 0) break; // success
+                    delete rtpGroupsock; // free the failed groupsock before retrying
                 }
 
                 udpSource = BasicUDPSource::createNew(envir(), rtpGroupsock);
