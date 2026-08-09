@@ -59,7 +59,11 @@ fi
 cd json-c/build
 cmake .. \
     -DCMAKE_TOOLCHAIN_FILE="$SCRIPT_DIR/arm-linux-gnueabihf-toolchain.cmake" \
-    -DCMAKE_INSTALL_PREFIX=$SCRIPT_DIR/json-c/build/_install
+    -DCMAKE_INSTALL_PREFIX=$SCRIPT_DIR/json-c/build/_install \
+    -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+    -DBUILD_SHARED_LIBS=OFF \
+    -DBUILD_STATIC_LIBS=ON \
+    -DBUILD_APPS=OFF
 make -j$(nproc)
 make install
 cd ../..

@@ -13,7 +13,7 @@ cd ..
 
 rm -rf libtomcrypt*
 rm -f crypt*.tar.xz
-rm -rf mbedtls-3.4.0
+rm -rf mbedtls-3.6.5*
 rm -rf mbedtls
 rm -f v3.4.0.tar.gz
 rm -rf wolfssl*

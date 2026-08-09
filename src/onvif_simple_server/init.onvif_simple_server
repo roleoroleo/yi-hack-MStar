@@ -5,31 +5,31 @@ set -e
 SCRIPT_DIR=$(cd `dirname $0` && pwd)
 cd $SCRIPT_DIR
 
+ensure_symlink()
+{
+    local TARGET=$1
+    local LINK=$2
+
+    ln -sfn "$TARGET" "$LINK"
+}
+
 rm -rf ./_install
 
 if [ ! -f crypt-1.18.2.tar.xz ]; then
     wget https://github.com/libtom/libtomcrypt/releases/download/v1.18.2/crypt-1.18.2.tar.xz
 fi
 tar Jxvf ./crypt-1.18.2.tar.xz
-if [ ! -L libtomcrypt ]; then
-    ln -s libtomcrypt-1.18.2 libtomcrypt
-    cd onvif_simple_server/extras
-    ln -s ../../libtomcrypt-1.18.2 libtomcrypt
-    cd ../..
-fi
+ensure_symlink libtomcrypt-1.18.2 libtomcrypt
+ensure_symlink ../../libtomcrypt-1.18.2 onvif_simple_server/extras/libtomcrypt
 
-MBEDTLS_VERSION=v3.6.5
-MBEDTLS_DIR=mbedtls-3.6.5
+MBEDTLS_VERSION=3.6.5
+MBEDTLS_NAME=mbedtls-3.6.5
 if [ ! -f "${MBEDTLS_VERSION}.tar.gz" ]; then
-    wget https://github.com/Mbed-TLS/mbedtls/archive/refs/tags/${MBEDTLS_VERSION}.tar.gz
+    wget https://github.com/Mbed-TLS/mbedtls/releases/download/${MBEDTLS_NAME}/${MBEDTLS_NAME}.tar.bz2
 fi
-tar zxf ./${MBEDTLS_VERSION}.tar.gz
-if [ ! -L mbedtls ]; then
-    ln -s ${MBEDTLS_DIR} mbedtls
-    cd onvif_simple_server/extras
-    ln -s ../../${MBEDTLS_DIR} mbedtls
-    cd ../..
-fi
+tar xvf ./${MBEDTLS_NAME}.tar.bz2
+ensure_symlink ${MBEDTLS_NAME} mbedtls
+ensure_symlink ../../${MBEDTLS_NAME} onvif_simple_server/
 cp -f mbedtls_config.h mbedtls/include/mbedtls/
 
 WOLFSSL_VERSION=v5.9.2-stable
@@ -38,35 +38,23 @@ if [ ! -f "${WOLFSSL_VERSION}.tar.gz" ]; then
     wget https://github.com/wolfSSL/wolfssl/archive/refs/tags/${WOLFSSL_VERSION}.tar.gz
 fi
 tar zxf ./${WOLFSSL_VERSION}.tar.gz
-if [ ! -L wolfssl ]; then
-    ln -s ${WOLFSSL_DIR} wolfssl
-    cd onvif_simple_server/extras
-    ln -s ../../${WOLFSSL_DIR} wolfssl
-    cd ../..
-fi
+ensure_symlink ${WOLFSSL_DIR} wolfssl
+ensure_symlink ../../${WOLFSSL_DIR} onvif_simple_server/extras/wolfssl
 
 if [ ! -f zlib-1.3.2.tar.gz ]; then
     wget https://www.zlib.net/zlib-1.3.2.tar.gz || \
     wget https://github.com/madler/zlib/releases/download/v1.3.2/zlib-1.3.2.tar.gz
 fi
 tar zxf ./zlib-1.3.2.tar.gz
-if [ ! -L zlib ]; then
-    ln -s zlib-1.3.2 zlib
-    cd onvif_simple_server/extras
-    ln -s ../../zlib-1.3.2 zlib
-    cd ../..
-fi
+ensure_symlink zlib-1.3.2 zlib
+ensure_symlink ../../zlib-1.3.2 onvif_simple_server/extras/zlib
 
 if [ ! -f json-c-0.18.tar.gz ]; then
     wget https://s3.amazonaws.com/json-c_releases/releases/json-c-0.18.tar.gz
 fi
 tar zxf ./json-c-0.18.tar.gz
-if [ ! -L json-c ]; then
-    ln -s json-c-0.18 json-c
-    cd onvif_simple_server/extras
-    ln -s ../../json-c-0.18 json-c
-    cd ../..
-fi
+ensure_symlink json-c-0.18 json-c
+ensure_symlink ../../json-c-0.18 onvif_simple_server/extras/json-c
 mkdir -p json-c/build
 
 cd onvif_simple_server
