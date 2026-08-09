@@ -12,6 +12,7 @@ autoreconf || exit 1
 
 ./configure CC=arm-linux-gnueabihf-gcc \
     --prefix=$SCRIPT_DIR/_install \
+    CFLAGS="-std=gnu99 -Os -mcpu=cortex-a7 -mfpu=neon-vfpv4 -I/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/usr/include -L/opt/yi/arm-linux-gnueabihf-4.8.3-201404/arm-linux-gnueabihf/libc/lib/arm-linux-gnueabihf" \
     --host=arm \
     --without-openssl \
     --without-zlib \
