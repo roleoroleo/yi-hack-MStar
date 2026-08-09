@@ -32,8 +32,8 @@ if [ ! -L mbedtls ]; then
 fi
 cp -f mbedtls_config.h mbedtls/include/mbedtls/
 
-WOLFSSL_VERSION=v5.8.2-stable
-WOLFSSL_DIR=wolfssl-5.8.2-stable
+WOLFSSL_VERSION=v5.9.2-stable
+WOLFSSL_DIR=wolfssl-5.9.2-stable
 if [ ! -f "${WOLFSSL_VERSION}.tar.gz" ]; then
     wget https://github.com/wolfSSL/wolfssl/archive/refs/tags/${WOLFSSL_VERSION}.tar.gz
 fi

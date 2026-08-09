@@ -17,7 +17,7 @@ rm -rf mbedtls-3.4.0
 rm -rf mbedtls
 rm -f v3.4.0.tar.gz
 rm -rf wolfssl*
-rm -f v5.7.4-stable.tar.gz
+rm -f v5.9.2-stable.tar.gz
 rm -rf zlib*
 rm -rf json-c*
 rm -f v1.7.18.tar.gz
