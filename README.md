@@ -161,7 +161,7 @@ Currently this project supports only the following cameras:
 | **Yi 1080p Home 6FCN** | unknown | y203c | - |
 | **Yi 1080p Home 4FCN** | unknown | y23 | - |
 | **Yi 1080p Home 5FCN** | 2.1.0* | y23 | - |
-| **YI Dome Camera X** | 4.0.0* | y30 | Experimental |
+| **YI Dome Camera X** | 4.0.0* | y30 | Experimental - https://github.com/roleoroleo/yi-hack-MStar/issues/262 |
 | **YI Home Camera H7** | 4.4.0* | h307 | Experimental |
 | **ieGeek IE80** | 8.0.0* | h305r | Experimental |
 
