@@ -83,7 +83,7 @@ for ROW in $ROWS; do
     ROW=$(echo "$ROW" | removedoublequotes)
     KEY=$(echo "$ROW" | cut -d'=' -f1)
     # Change back tab with \n
-    VALUE=$(echo "$ROW" | cut -d'=' -f2 | sed 's/\t/\\n/g')
+    VALUE=$(echo "$ROW" | cut -d'=' -f2- | sed 's/\t/\\n/g')
 
     if ! $(validateKey $KEY); then
         printf "Content-type: application/json\r\n\r\n"
