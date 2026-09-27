@@ -299,6 +299,7 @@ start_onvif()
     if [[ $MODEL_SUFFIX == "h201c" ]] || [[ $MODEL_SUFFIX == "h305r" ]] || [[ $MODEL_SUFFIX == "y30" ]] || [[ $MODEL_SUFFIX == "h307" ]] ; then
         echo "#PTZ" >> $ONVIF_SRVD_CONF
         echo "ptz=1" >> $ONVIF_SRVD_CONF
+        echo "zoom=0" >> $ONVIF_SRVD_CONF
         echo "max_step_x=360" >> $ONVIF_SRVD_CONF
         echo "max_step_y=180" >> $ONVIF_SRVD_CONF
         echo "get_position=/home/yi-hack/bin/ipc_cmd -g" >> $ONVIF_SRVD_CONF

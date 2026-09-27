@@ -3,10 +3,6 @@
 SCRIPT_DIR=$(cd `dirname $0` && pwd)
 cd $SCRIPT_DIR
 
-# Compress the file
-#upx ./_install/bin/*
-#upx ./_install/lib/*
-
 mkdir -p ../../build/home/yi-hack/bin/
 mkdir -p ../../build/home/yi-hack/lib/
 mkdir -p ../../build/home/yi-hack/etc/
