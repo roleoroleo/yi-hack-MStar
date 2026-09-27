@@ -15,7 +15,7 @@
  
  all: avimake
  
-@@ -24,3 +24,4 @@
+@@ -25,3 +25,4 @@
  
  clean:
  	rm -rf src/*.o src/*.d
