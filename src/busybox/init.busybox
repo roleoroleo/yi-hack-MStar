@@ -11,9 +11,20 @@ rm -rf ./_install
 
 if [ ! -f "${ARCHIVE}" ]; then
     wget "${MAIN_URL}"
+    if [ $? !=0 ]; then
+        wget "${MAIN_URL_ALT}"
+        tar xvf "${ARCHIVE_ALT}"
+    else
+        tar xvf "${ARCHIVE}"
+    fi
 fi
 
-tar xvf "${ARCHIVE}"
+if [ ! -f "${BUILD_FOLDER}" ]; then
+    tar xvf "${ARCHIVE}"
+    if [ $? != 0 ]; then
+        tar xvf "${ARCHIVE_ALT}"
+    fi
+fi
 
 cd "${BUILD_FOLDER}"
 
@@ -22,3 +33,4 @@ patch -p1 < ../onvif.patch
 patch -p1 < ../auth.patch
 
 cp ../.config ./ || exit 1
+
