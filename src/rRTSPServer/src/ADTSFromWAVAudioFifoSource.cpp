@@ -85,6 +85,12 @@ ADTSFromWAVAudioFifoSource::createNew(UsageEnvironment& env, char const* fileNam
 
         ADTSFromWAVAudioFifoSource *newSource = new ADTSFromWAVAudioFifoSource(env, fid, profile,
                                    sampling_frequency_index, channel_configuration);
+        if (newSource->fHAacEncoder == NULL) {
+            // The AAC encoder could not be set up: the destructor also closes fid
+            fprintf(stderr, "%lld - ADTSFromWAVAudioFifoSource - AAC encoder unavailable\n", current_timestamp());
+            Medium::close(newSource);
+            return NULL;
+        }
         newSource->cleanFifo();
 
         if (debug & 2) fprintf(stderr, "%lld: ADTSFrinWAVAudioFifoSource - ADTSFromWAVAudioFifoSource created\n", current_timestamp());
@@ -114,7 +120,7 @@ void ADTSFromWAVAudioFifoSource::cleanFifo() {
     };
 
     // Clean fifo content
-    unsigned char null[4];
+    unsigned char null[1024];
     while (read(fileno(fFid), null, sizeof(null)) > 0) {}
 
     // Restore old blocking
@@ -141,6 +147,12 @@ ADTSFromWAVAudioFifoSource
     sprintf(fConfigStr, "%02X%02X", audioSpecificConfig[0], audioSpecificConfig[1]);
     if (debug & 2) fprintf(stderr, "%lld - ADTSFromWAVAudioFifoSource - Read config: audioObjectType %d, samplingFrequencyIndex %d, channelConfiguration %d\n", current_timestamp(), audioObjectType, samplingFrequencyIndex, channelConfiguration);
 
+    // fdk-aac reads these structs: numAncBytes etc. must not be garbage
+    memset(&fInargs, 0, sizeof(fInargs));
+    memset(&fOutargs, 0, sizeof(fOutargs));
+    memset(&fMetaDataSetup, 0, sizeof(fMetaDataSetup));
+    memset(fAncillaryBuffer, 0, sizeof(fAncillaryBuffer));
+
     // Open encoder
     fHAacEncoder = NULL;
     int ErrorStatus = aacEncOpen(&fHAacEncoder, 0, 0);
@@ -161,6 +173,8 @@ ADTSFromWAVAudioFifoSource
     ErrorStatus = aacEncEncode(fHAacEncoder, NULL, NULL, NULL, NULL);
     if (ErrorStatus != AACENC_OK) {
         fprintf(stderr, "%lld - ADTSFromWAVAudioFifoSource - Error initializing encoder\n", current_timestamp());
+        aacEncClose(&fHAacEncoder);
+        fHAacEncoder = NULL; // createNew() checks this
         return;
     }
 
@@ -232,7 +246,10 @@ void ADTSFromWAVAudioFifoSource::doGetNextFrame() {
     fFrameSize = 0; // until it's set later
     if (!fHaveStartedReading) {
         if (debug & 2) fprintf(stderr, "%lld: ADTSFromWAVAudioFifoSource - doGetNextFrame() 1st start\n", current_timestamp());
-//        cleanFifo();
+        // Drop the audio queued in the pipe while nobody was reading
+        // (up to ~4 s at 8 kHz/16 bit), otherwise it becomes a fixed delay
+        cleanFifo();
+        fInputBufferSize = 0;
         // Await readable data from the file:
         envir().taskScheduler().turnOnBackgroundReadHandling(fileno(fFid),
                 (TaskScheduler::BackgroundHandlerProc*)&fileReadableHandler, this);
