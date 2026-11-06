@@ -38,13 +38,33 @@ static unsigned const samplingFrequencyTable[16] = {
     7350, 0, 0, 0
 };
 
+// Open the fifo O_RDWR | O_NONBLOCK:
+// - open() never blocks, even if the writer isn't running yet
+// - we are a writer too, so read() never returns 0 (EOF) when the writer
+//   closes the fifo: the source doesn't call handleClosure() and the
+//   stream goes on when the writer is restarted
+static FILE* openFifo(UsageEnvironment& env, char const* fileName) {
+    int fd = open(fileName, O_RDWR | O_NONBLOCK);
+    if (fd < 0) {
+        env.setResultMsg("unable to open fifo \"", fileName, "\"");
+        return NULL;
+    }
+    FILE* fid = fdopen(fd, "rb");
+    if (fid == NULL) {
+        close(fd);
+        env.setResultMsg("unable to fdopen fifo \"", fileName, "\"");
+    }
+
+    return fid;
+}
+
 ADTSFromWAVAudioFifoSource*
 ADTSFromWAVAudioFifoSource::createNew(UsageEnvironment& env, char const* fileName) {
     FILE* fid = NULL;
 
     do {
         if (debug & 2) fprintf(stderr, "%lld - ADTSFromWAVAudioFifoSource - Creating new ADTSFromWAVAudioFifoSource\n", current_timestamp());
-        fid = OpenInputFile(env, fileName);
+        fid = openFifo(env, fileName);
         if (fid == NULL) break;
 
         // Set a static profile

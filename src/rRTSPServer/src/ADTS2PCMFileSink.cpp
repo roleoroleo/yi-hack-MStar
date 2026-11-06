@@ -21,9 +21,11 @@
 #include "ADTS2PCMFileSink.hh"
 #include "GroupsockHelper.hh"
 #include "OutputFile.hh"
+#include "rRTSPServer.h"
 
 #include "fdk-aac/aacdecoder_lib.h"
 
+#include <cstring>
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
@@ -31,6 +33,26 @@
 ////////// ADTS2PCMFileSink //////////
 
 extern int debug;
+
+// Open the output fifo O_WRONLY | O_NONBLOCK:
+// open() never blocks the event loop; if nobody is reading the fifo it
+// fails immediately (ENXIO) instead of hanging until a reader appears
+static FILE* openOutputFifo(UsageEnvironment& env, char const* fileName) {
+    int fd = open(fileName, O_WRONLY | O_NONBLOCK);
+    if (fd < 0) {
+        fprintf(stderr, "%lld: unable to open output fifo %s: %s\n",
+                current_timestamp(), fileName, strerror(errno));
+        env.setResultMsg("unable to open output fifo \"", fileName, "\"");
+        return NULL;
+    }
+    FILE* fid = fdopen(fd, "wb");
+    if (fid == NULL) {
+        close(fd);
+        env.setResultMsg("unable to fdopen output fifo \"", fileName, "\"");
+    }
+
+    return fid;
+}
 
 unsigned samplingFrequencyTable[16] = {
     96000, 88200, 64000, 48000,
@@ -81,21 +103,10 @@ ADTS2PCMFileSink* ADTS2PCMFileSink::createNew(UsageEnvironment& env,
                                               unsigned bufferSize) {
     do {
         FILE* fid;
-        fid = OpenOutputFile(env, fileName);
+        fid = openOutputFifo(env, fileName);
         if (fid == NULL) break;
 
-        // Make writes to the output fifo non-blocking
-        int fl = fcntl(fileno(fid), F_GETFL, 0);
-        if (fl >= 0) fcntl(fileno(fid), F_SETFL, fl | O_NONBLOCK);
-
-        ADTS2PCMFileSink* newSink = new ADTS2PCMFileSink(env, fid, sampleRate, numChannels, bufferSize);
-        if (newSink->fAACHandle == NULL) {
-            // The AAC decoder could not be opened
-            fprintf(stderr, "ADTS2PCMFileSink::createNew(): AAC decoder unavailable\n");
-            Medium::close(newSink);
-            break;
-        }
-        return newSink;
+        return new ADTS2PCMFileSink(env, fid, sampleRate, numChannels, bufferSize);
     } while (0);
 
     return NULL;

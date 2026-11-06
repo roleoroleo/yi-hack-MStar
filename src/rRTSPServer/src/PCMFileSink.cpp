@@ -23,7 +23,9 @@
 #include "OutputFile.hh"
 #include "uLawAudioFilter.hh"
 #include "aLawAudioFilter.hh"
+#include "rRTSPServer.h"
 
+#include <cstring>
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
@@ -31,6 +33,26 @@
 ////////// PCMFileSink //////////
 
 extern int debug;
+
+// Open the output fifo O_WRONLY | O_NONBLOCK:
+// open() never blocks the event loop; if nobody is reading the fifo it
+// fails immediately (ENXIO) instead of hanging until a reader appears
+static FILE* openOutputFifo(UsageEnvironment& env, char const* fileName) {
+    int fd = open(fileName, O_WRONLY | O_NONBLOCK);
+    if (fd < 0) {
+        fprintf(stderr, "%lld: unable to open output fifo %s: %s\n",
+                current_timestamp(), fileName, strerror(errno));
+        env.setResultMsg("unable to open output fifo \"", fileName, "\"");
+        return NULL;
+    }
+    FILE* fid = fdopen(fd, "wb");
+    if (fid == NULL) {
+        close(fd);
+        env.setResultMsg("unable to fdopen output fifo \"", fileName, "\"");
+    }
+
+    return fid;
+}
 
 // ulaw and alaw functions
 static int16_t linear16FromuLaw(unsigned char uLawByte) {
@@ -111,12 +133,8 @@ PCMFileSink* PCMFileSink::createNew(UsageEnvironment& env,
 
     do {
         FILE* fid;
-        fid = OpenOutputFile(env, fileName);
+        fid = openOutputFifo(env, fileName);
         if (fid == NULL) break;
-
-        // Make writes to the output fifo non-blocking
-        int fl = fcntl(fileno(fid), F_GETFL, 0);
-        if (fl >= 0) fcntl(fileno(fid), F_SETFL, fl | O_NONBLOCK);
 
         return new PCMFileSink(env, fid, destSampleRate, srcLaw, bufferSize);
     } while (0);

@@ -36,6 +36,36 @@
 #define CODEC_H264 0
 #define CODEC_H265 1
 
+#define SEND_BUFFER_TO 128                   // 128 KB buffer
+
+#include "RTSPServer.hh"
+#include "GroupsockHelper.hh"
+
+class rRTSPServer: public RTSPServer {
+public:
+    static rRTSPServer* createNew(UsageEnvironment& env, Port ourPort,
+                                  UserAuthenticationDatabase* authDatabase,
+                                  unsigned reclamationSeconds = 65) {
+        int ourSocketIPv4 = setUpOurSocket(env, ourPort, AF_INET);
+        int ourSocketIPv6 = setUpOurSocket(env, ourPort, AF_INET6);
+        if (ourSocketIPv4 < 0 && ourSocketIPv6 < 0) return NULL;
+
+        return new rRTSPServer(env, ourSocketIPv4, ourSocketIPv6, ourPort, authDatabase, reclamationSeconds);
+    }
+
+protected:
+    rRTSPServer(UsageEnvironment& env, int ourSocketIPv4, int ourSocketIPv6, Port ourPort,
+                UserAuthenticationDatabase* authDatabase, unsigned reclamationSeconds)
+        : RTSPServer(env, ourSocketIPv4, ourSocketIPv6, ourPort, authDatabase, reclamationSeconds) {
+    }
+
+    virtual ClientConnection* createNewClientConnection(int clientSocket, struct sockaddr_storage const& clientAddr) {
+        // RTP over TCP is sent on this socket: give it more room than the default 50 KB
+        increaseSendBufferTo(envir(), clientSocket, SEND_BUFFER_TO*1024);
+        return RTSPServer::createNewClientConnection(clientSocket, clientAddr);
+    }
+};
+
 long long current_timestamp();
 
 #endif

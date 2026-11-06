@@ -53,6 +53,7 @@ protected:
     virtual void afterGettingFrame(unsigned frameSize,
                                    unsigned numTruncatedBytes,
                                    struct timeval presentationTime);
+    void writeNonBlocking(void const* buf, unsigned nbytes);
 
     int fSampleRate;
     int fNumChannels;
@@ -63,9 +64,6 @@ protected:
     unsigned fSampleRateIndex;
     unsigned fChannelConfiguration;
     Boolean fOutputClosed;
-
-    // Best-effort non-blocking write to the output fifo (drops on full pipe).
-    void writeNonBlocking(void const* buf, unsigned nbytes);
 };
 
 #endif
