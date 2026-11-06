@@ -478,6 +478,11 @@ int main(int argc, char** argv)
         // Create and start the replicator that will be given to each subsession
         replicator = startReplicatorStream(inputAudioFileName);
     }
+    if ((audio != 0) && (replicator == NULL)) {
+        // No usable audio source: go on with video only
+        fprintf(stderr, "Audio source unavailable, disabling audio\n");
+        audio = 0;
+    }
 
     char const* descriptionString = "Session streamed by \"rRTSPServer\"";
 
