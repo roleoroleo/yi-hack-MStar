@@ -112,6 +112,7 @@ StreamReplicator* startReplicatorStream(const char* inputAudioFileName) {
     ADTSFromWAVAudioFifoSource* adtsSource = ADTSFromWAVAudioFifoSource::createNew(*env, inputAudioFileName);
     if (adtsSource == NULL) {
         fprintf(stderr, "Failed to create Fifo Source \n");
+        return NULL;
     }
 
     // Create and start the replicator that will be given to each subsession
