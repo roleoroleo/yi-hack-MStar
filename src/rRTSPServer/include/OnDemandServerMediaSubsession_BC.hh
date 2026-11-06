@@ -96,8 +96,8 @@ protected: // redefined virtual functions
 protected: // new virtual functions, possibly redefined by subclasses
 //  virtual char const* getAuxSDPLine(RTPSink* rtpSink,
 //				    FramedSource* inputSource);
-  virtual char const* getAuxSDPLineForBackChannel(MediaSink* mediaSink,
-                                      RTPSource* rtpSource);
+  virtual char const* getAuxSDPLine(MediaSink* mediaSink,
+                                    RTPSource* rtpSource);
   virtual void seekStreamSource(FramedSource* inputSource, double& seekNPT, double streamDuration, u_int64_t& numBytes);
     // This routine is used to seek by relative (i.e., NPT) time.
     // "streamDuration", if >0.0, specifies how much data to stream, past "seekNPT".  (If <=0.0, all remaining data is streamed.)

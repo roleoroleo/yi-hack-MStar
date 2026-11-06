@@ -75,7 +75,7 @@ RTPSource* ADTSAudioFileServerMediaSubsession_BC
     return rtpSource;
 }
 
-char const* ADTSAudioFileServerMediaSubsession_BC::getAuxSDPLineForBackChannel(MediaSink* mediaSink, RTPSource* rtpSource)
+char const* ADTSAudioFileServerMediaSubsession_BC::getAuxSDPLine(MediaSink* mediaSink, RTPSource* rtpSource)
 {
     ADTS2PCMFileSink* sink = NULL;
     char pTmpStr[1024] = {0};

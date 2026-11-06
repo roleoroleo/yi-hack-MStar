@@ -252,7 +252,7 @@ void OnDemandServerMediaSubsession_BC
 }
 
 char const* OnDemandServerMediaSubsession_BC
-::getAuxSDPLineForBackChannel(MediaSink* mediaSink, RTPSource* rtpSource)
+::getAuxSDPLine(MediaSink* mediaSink, RTPSource* rtpSource)
 {
     return NULL;
     //return mediaSink == NULL ? NULL : mediaSink->auxSDPLine();
@@ -378,7 +378,7 @@ void OnDemandServerMediaSubsession_BC
 
     // TODO: fix me
     //char const* auxSDPLine = "a=fmtp:96 streamtype=5;\r\n";
-    char const* auxSDPLine = getAuxSDPLineForBackChannel(mediaSink, rtpSource);
+    char const* auxSDPLine = getAuxSDPLine(mediaSink, rtpSource);
 
     if (auxSDPLine == NULL) auxSDPLine = "";
 
