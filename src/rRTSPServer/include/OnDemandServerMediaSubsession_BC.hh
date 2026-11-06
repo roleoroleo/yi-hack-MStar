@@ -90,8 +90,8 @@ protected: // redefined virtual functions
   virtual MediaSink* getStreamSink(void* streamToken);
 //  virtual FramedSource* getStreamSource(void* streamToken);
   virtual void getRTPSinkandRTCP(void* streamToken,
-				 RTPSink const*& rtpSink, RTCPInstance const*& rtcp);
-//  virtual void deleteStream(unsigned clientSessionId, void*& streamToken);
+				 RTPSink *& rtpSink, RTCPInstance *& rtcp);
+  virtual void deleteStream(unsigned clientSessionId, void*& streamToken);
 
 protected: // new virtual functions, possibly redefined by subclasses
 //  virtual char const* getAuxSDPLine(RTPSink* rtpSink,
@@ -185,9 +185,7 @@ private:
 class StreamState_BC {
 public:
   StreamState_BC(OnDemandServerMediaSubsession_BC& master,
-              Port const& serverRTPPort, Port const& serverRTCPPort,
-	      //RTPSink* rtpSink, BasicUDPSink* udpSink,
-	      unsigned totalBW, //FramedSource* mediaSource,
+	      unsigned totalBW,
 	      Groupsock* rtpGS, Groupsock* rtcpGS,
 	      RTPSource* rtpSource, BasicUDPSource* udpSource, MediaSink* mediaSink); 
   virtual ~StreamState_BC();
@@ -204,17 +202,13 @@ public:
 
   unsigned& referenceCount() { return fReferenceCount; }
 
-  Port const& serverRTPPort() const { return fServerRTPPort; }
   RTPSource* rtpSource() const { return fRTPSource; }
   MediaSink* mediaSink() const {return fMediaSink; }
-  Port const& serverRTCPPort() const { return fServerRTCPPort; }
 
-//  RTPSink* rtpSink() const { return fRTPSink; }
   RTCPInstance* rtcpInstance() const { return fRTCPInstance; }
 
   float streamDuration() const { return fStreamDuration; }
 
-//  FramedSource* mediaSource() const { return fMediaSource; }
   float& startNPT() { return fStartNPT; }
 
 private:
@@ -222,16 +216,10 @@ private:
   Boolean fAreCurrentlyPlaying;
   unsigned fReferenceCount;
 
-  Port fServerRTPPort, fServerRTCPPort;
-
-//  RTPSink* fRTPSink;
-//  BasicUDPSink* fUDPSink;
-
   float fStreamDuration;
   unsigned fTotalBW;
   RTCPInstance* fRTCPInstance;
 
-//  FramedSource* fMediaSource;
   float fStartNPT; // initial 'normal play time'; reset after each seek
 
   Groupsock* fRTPgs;
