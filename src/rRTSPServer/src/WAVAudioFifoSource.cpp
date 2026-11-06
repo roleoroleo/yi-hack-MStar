@@ -228,8 +228,8 @@ void WAVAudioFifoSource::doReadFromFile() {
         return;
     }
     if (numBytesRead < 0) {
-        // No data available right now (EAGAIN) or a transient error: wait for
-        // the next readable notification rather than spinning on usleep().
+        // No data right now (EAGAIN) or transient error:
+        // wait for the next readable notification
         return;
     }
 

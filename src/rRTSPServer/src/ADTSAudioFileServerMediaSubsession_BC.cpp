@@ -24,6 +24,7 @@
 #include "MPEG4GenericRTPSource.hh"
 
 extern int debug;
+
 ADTSAudioFileServerMediaSubsession_BC*
 ADTSAudioFileServerMediaSubsession_BC::createNew(UsageEnvironment& env,
                                                  char const* fileName,

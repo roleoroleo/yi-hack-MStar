@@ -192,7 +192,7 @@ void ADTS2PCMFileSink::writeNonBlocking(void const* buf, unsigned nbytes) {
         // Reader gone (EPIPE) or bad fd: mark the output as closed.
         fOutputClosed = True;
     }
-    // Partial writes / EAGAIN: intentionally drop the excess
+    // Partial writes / EAGAIN (fifo-full): intentionally drop the excess
 }
 
 void ADTS2PCMFileSink::afterGettingFrame(unsigned frameSize,
