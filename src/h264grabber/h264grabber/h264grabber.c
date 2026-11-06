@@ -31,6 +31,7 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <signal.h>
+#include <errno.h>
 
 #define GENERIC 0
 #define H305R 1
@@ -201,7 +202,7 @@ int main(int argc, char **argv)
     unsigned char check1[64], check2[64];
     char filLenFile[1024];
     char timeStampFile[1024];
-    unsigned char buffer[262144];
+    unsigned char *buffer = NULL;
     int len;
     unsigned int time, oldTime = 0;
     int stream_started = 0;
@@ -331,6 +332,20 @@ int main(int argc, char **argv)
     ipAddr = rmm_virt2phys(ivAddr);
 
     if (debug) fprintf(stderr, "vaddr: 0x%08x - paddr: 0x%08x - size: %u\n", ivAddr, ipAddr, size);
+
+    // The frame can be as large as the encoder output buffer (size). The old
+    // fixed 256 KB stack buffer overflowed on large I-frames (> 256 KB),
+    // crashing the grabber and freezing the video stream. Allocate a buffer
+    // that can always hold a full frame.
+    if (((int) size <= 0) || (size > 16 * 1024 * 1024)) {
+        fprintf(stderr, "invalid buffer size %u\n", size);
+        return -2;
+    }
+    buffer = (unsigned char *) malloc(size);
+    if (buffer == NULL) {
+        fprintf(stderr, "unable to allocate frame buffer of %u bytes\n", size);
+        return -2;
+    }
 
     // open /dev/mem and error checking
     fMem = open(memDevice, O_RDONLY); // | O_SYNC);
