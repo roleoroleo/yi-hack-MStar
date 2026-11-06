@@ -112,7 +112,7 @@ void WAVAudioFifoSource::cleanFifo() {
     };
 
     // Clean fifo content
-    unsigned char null[4];
+    unsigned char null[1024];
     while (read(fileno(fFid), null, sizeof(null)) > 0) {}
 
     // Restore old blocking
