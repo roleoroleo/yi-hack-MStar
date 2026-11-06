@@ -29,7 +29,7 @@ if [ ! -f "${MBEDTLS_NAME}.tar.bz2" ]; then
 fi
 tar xvf ./${MBEDTLS_NAME}.tar.bz2
 ensure_symlink ${MBEDTLS_NAME} mbedtls
-ensure_symlink ../../${MBEDTLS_NAME} onvif_simple_server/
+ensure_symlink ../../${MBEDTLS_NAME} onvif_simple_server/extras/mbedtls
 cp -f mbedtls_config.h mbedtls/include/mbedtls/
 
 WOLFSSL_VERSION=v5.9.2-stable
