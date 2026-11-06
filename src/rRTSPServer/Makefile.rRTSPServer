@@ -75,6 +75,7 @@ livemedia:
 rRTSPServer_OBJS	= src/rRTSPServer.$(OBJ) \
 				src/WAVAudioFifoSource.$(OBJ) src/WAVAudioFifoServerMediaSubsession.$(OBJ) \
 				src/ADTSFromWAVAudioFifoSource.$(OBJ) src/ADTSFromWAVAudioFifoServerMediaSubsession.$(OBJ) \
+				src/H26xVideoFifoServerMediaSubsession.$(OBJ) \
 				src/aLawAudioFilter.$(OBJ) \
 				src/PCMFileSink.$(OBJ) \
 				src/ADTS2PCMFileSink.$(OBJ) \
