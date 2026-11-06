@@ -1,5 +1,6 @@
 # Ignore the install dir
 _install/
+*.bz2
 *.xz
 *.gz
 libtomcrypt
