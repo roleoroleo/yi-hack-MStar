@@ -444,6 +444,8 @@ int main(int argc, char **argv)
             fscanf(fLen, "%d", &len);
             fclose(fLen);
 
+            if (len < 0) len = 0;
+            if (len > (int) size) len = size;
             memcpy(buffer, addr, len);
             oldTime = time;
             if ((memcmp(SPS4, buffer, sizeof(SPS4)) == 0) || (memcmp(VPS5, buffer, sizeof(VPS5)) == 0)) {
@@ -523,6 +525,8 @@ int main(int argc, char **argv)
             fLen = fopen(filLenFile, "r");
             fscanf(fLen, "%d", &len);
             fclose(fLen);
+            if (len < 0) len = 0;
+            if (len > (int) size) len = size;
             if (debug) fprintf(stderr, "time: %u - len: %d\n", time, len);
             if (debug) fprintf(stderr, "milliseconds: %lld\n", current_timestamp());
 
