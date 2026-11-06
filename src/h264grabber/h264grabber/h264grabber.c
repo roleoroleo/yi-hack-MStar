@@ -393,8 +393,9 @@ int main(int argc, char **argv)
         sigaction(SIGPIPE, &(struct sigaction){sigpipe_handler}, NULL);
 
         if (res == RESOLUTION_LOW) {
-            unlink(FIFO_NAME_LOW);
-            if (mkfifo(FIFO_NAME_LOW, mode) < 0) {
+            // Don't unlink an existing fifo: rRTSPServer keeps it open O_RDWR
+            // and a new fifo would leave it reading from the old one
+            if ((mkfifo(FIFO_NAME_LOW, mode) < 0) && (errno != EEXIST)) {
                 fprintf(stderr, "mkfifo failed for file %s\n", FIFO_NAME_LOW);
                 return -5;
             }
@@ -404,8 +405,9 @@ int main(int argc, char **argv)
                 return -5;
             }
         } else if (res == RESOLUTION_HIGH) {
-            unlink(FIFO_NAME_HIGH);
-            if (mkfifo(FIFO_NAME_HIGH, mode) < 0) {
+            // Don't unlink an existing fifo: rRTSPServer keeps it open O_RDWR
+            // and a new fifo would leave it reading from the old one
+            if ((mkfifo(FIFO_NAME_HIGH, mode) < 0) && (errno != EEXIST)) {
                 fprintf(stderr, "mkfifo failed for file %s\n", FIFO_NAME_HIGH);
                 return -5;
             }
@@ -593,10 +595,8 @@ int main(int argc, char **argv)
     if (fifo == 1) {
         if (res == RESOLUTION_LOW) {
             fclose(fOut);
-            unlink(FIFO_NAME_LOW);
         } else if (res == RESOLUTION_HIGH) {
             fclose(fOut);
-            unlink(FIFO_NAME_HIGH);
         }
     }
 
