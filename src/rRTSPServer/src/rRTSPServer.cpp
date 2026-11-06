@@ -160,7 +160,7 @@ void print_usage(char *progname)
     fprintf(stderr, "\t-w PASSWORD, --password PASSWORD\n");
     fprintf(stderr, "\t\tset password\n");
     fprintf(stderr, "\t-d DEBUG, --debug DEBUG\n");
-    fprintf(stderr, "\t\t0 none, 1 grabber, 2 rtsp library or 3 both\n");
+    fprintf(stderr, "\t\t0 none, +1 video in, +2 audio in, +4 video out, +8 audio out, +16 backchannel\n");
     fprintf(stderr, "\t-h,      --help\n");
     fprintf(stderr, "\t\tprint this help\n");
 }
@@ -332,7 +332,7 @@ int main(int argc, char** argv)
                 print_usage(argv[0]);
                 exit(EXIT_FAILURE);
             }
-            if ((debug < 0) || (debug > 3)) {
+            if ((debug < 0) || (debug > 31)) {
                 print_usage(argv[0]);
                 exit(EXIT_FAILURE);
             }

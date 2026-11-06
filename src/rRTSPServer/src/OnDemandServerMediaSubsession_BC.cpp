@@ -363,7 +363,7 @@ void OnDemandServerMediaSubsession_BC
 ::setSDPLinesFromMediaSink(RTPSource* rtpSource, MediaSink* mediaSink, unsigned estBitrate) {
 
     if (rtpSource == NULL) {
-        printf("%s line:%d\n", __FUNCTION__, __LINE__);
+        fprintf(stderr, "%lld: OnDemandServerMediaSubsession_BC - %s line:%d\n", current_timestamp(), __FUNCTION__, __LINE__);
         return;
     }
     char const* mediaType = "audio";
@@ -481,6 +481,7 @@ void StreamState_BC
     }
 
     if (dests->isTCP) {
+        fprintf(stderr, "%lld: OnDemandServerMediaSubsession_BC - Dest is TCP\n", current_timestamp());
         // Change RTP and RTCP to use the TCP socket instead of UDP:
         if (fRTPSource != NULL) {
             // TODO: check here
@@ -499,6 +500,7 @@ void StreamState_BC
 					    rtcpRRHandler, rtcpRRHandlerClientData);
         }
     } else {
+        fprintf(stderr, "%lld: OnDemandServerMediaSubsession_BC - Dest is UDP\n", current_timestamp());
         // Tell the RTP and RTCP 'groupsocks' about this destination
         // (in case they don't already have it):
         if (fRTPgs != NULL) fRTPgs->addDestination(dests->addr, dests->rtpPort, clientSessionId);

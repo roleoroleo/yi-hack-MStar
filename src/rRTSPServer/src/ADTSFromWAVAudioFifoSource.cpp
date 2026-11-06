@@ -270,7 +270,7 @@ void ADTSFromWAVAudioFifoSource::doReadFromFile() {
     if (debug & 2) fprintf(stderr, "%lld: ADTSFromWAVAudioFifoSource - read completed %d/%d bytes\n", current_timestamp(), numInBytes, sizeof(fInputBuffer));
     if (numInBytes <= -1) {
         // TODO
-        fprintf(stderr, "%lld: ADTSFromWAVAudioFifoSource - error reading file, try again later\n", current_timestamp());
+        if (debug & 2) fprintf(stderr, "%lld: ADTSFromWAVAudioFifoSource - error reading file, try again later\n", current_timestamp());
         fFrameSize = 0;
         fNumTruncatedBytes = 0;
 //        FramedSource::afterGetting(this);
@@ -278,7 +278,7 @@ void ADTSFromWAVAudioFifoSource::doReadFromFile() {
     }
     fInputBufferSize += (numInBytes / sizeof(INT_PCM));
     if (fInputBufferSize != sizeof(fInputBuffer) / sizeof(INT_PCM)) {
-        fprintf(stderr, "%lld: ADTSFromWAVAudioFifoSource - buffer not full, read again later\n", current_timestamp());
+        if (debug & 2) fprintf(stderr, "%lld: ADTSFromWAVAudioFifoSource - buffer not full, read again later\n", current_timestamp());
         fFrameSize = 0;
         fNumTruncatedBytes = 0;
 //        FramedSource::afterGetting(this);

@@ -67,6 +67,8 @@ ADTS2PCMFileSink::ADTS2PCMFileSink(UsageEnvironment& env, FILE* fid,
     : FileSink(env, fid, bufferSize, NULL), fSampleRate(sampleRate),
       fNumChannels(numChannels), fPacketCounter(0), fOutputClosed(False) {
 
+    if (debug & 16) fprintf(stderr, "%lld: ADTS2PCMFileSink - Starting sink\n", current_timestamp());
+
     int i;
     for (i = 0; i < 16; i++) {
         if (sampleRate == (signed) samplingFrequencyTable[i]) {
@@ -123,6 +125,8 @@ Boolean ADTS2PCMFileSink::continuePlaying() {
 
 void ADTS2PCMFileSink::addData(unsigned char* data, unsigned dataSize,
                                struct timeval presentationTime) {
+    if (debug & 16) fprintf(stderr, "%lld: ADTS2PCMFileSink - addData - size: %u\n", current_timestamp(), dataSize);
+
     // Write to our file:
     if (fOutFid != NULL && data != NULL) {
 
@@ -164,7 +168,7 @@ void ADTS2PCMFileSink::addData(unsigned char* data, unsigned dataSize,
             return;
         }
         CStreamInfo *info = aacDecoder_GetStreamInfo(fAACHandle);
-        if (debug) {
+        if (debug & 16) {
             fprintf(stderr, "Sample Rate: %d\n", info->sampleRate);
             fprintf(stderr, "Frame Size: %d\n", info->frameSize);
             fprintf(stderr, "Num Channels: %d\n", info->numChannels);
@@ -195,10 +199,12 @@ void ADTS2PCMFileSink::afterGettingFrame(unsigned frameSize,
                                          unsigned numTruncatedBytes,
                                          struct timeval presentationTime) {
 
+    if (debug & 16) fprintf(stderr, "%lld: ADTS2PCMFileSink - afterGettingFrame\n", current_timestamp());
+
     if (numTruncatedBytes > 0) {
-        fprintf(stderr, "ADTS2PCMFileSink::afterGettingFrame(): The input frame data was too large for our buffer size (%d).\n", fBufferSize);
-        fprintf(stderr, "%d bytes of trailing data was dropped! Correct this by increasing the \"bufferSize\" parameter in the \"createNew()\" call to at least %d\n",
-                numTruncatedBytes, fBufferSize + numTruncatedBytes);
+        fprintf(stderr, "%lld: ADTS2PCMFileSink::afterGettingFrame(): The input frame data was too large for our buffer size (%d).\n", current_timestamp(), fBufferSize);
+        fprintf(stderr, "%lld: %d bytes of trailing data was dropped! Correct this by increasing the \"bufferSize\" parameter in the \"createNew()\" call to at least %d\n",
+                current_timestamp(), numTruncatedBytes, fBufferSize + numTruncatedBytes);
     }
     addData(fBuffer, frameSize, presentationTime);
 

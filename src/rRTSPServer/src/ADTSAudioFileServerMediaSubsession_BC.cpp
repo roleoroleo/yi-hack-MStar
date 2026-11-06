@@ -88,7 +88,7 @@ char const* ADTSAudioFileServerMediaSubsession_BC::getAuxSDPLine(MediaSink* medi
     }
     fAuxSDPLine = strDup(pTmpStr);
 
-    if (debug) fprintf(stderr, "ADTSAudioFileServerMediaSubsession_BC::getAuxSDPLine() line:%d, pTmpStr=%s\n", __LINE__, pTmpStr);
+    if (debug & 16) fprintf(stderr, "ADTSAudioFileServerMediaSubsession_BC::getAuxSDPLine() line:%d, pTmpStr=%s\n", __LINE__, pTmpStr);
 
     return fAuxSDPLine;
 }
