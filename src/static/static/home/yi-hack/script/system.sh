@@ -1,6 +1,7 @@
 #!/bin/sh
 
 CONF_FILE="etc/system.conf"
+CAMERA_CONF_FILE="etc/camera.conf"
 
 YI_PREFIX="/home/app"
 YI_HACK_PREFIX="/home/yi-hack"
@@ -8,6 +9,12 @@ START_STOP_SCRIPT=$YI_HACK_PREFIX/script/service.sh
 
 YI_HACK_VER=$(cat /home/yi-hack/version)
 MODEL_SUFFIX=$(cat /home/yi-hack/model_suffix)
+
+get_camera_config()
+{
+    key=$1
+    grep -w $1 $YI_HACK_PREFIX/$CAMERA_CONF_FILE | cut -d "=" -f2-
+}
 
 get_config()
 {
@@ -221,6 +228,14 @@ else
             fi
         fi
         ./cloud &
+
+        if [[ $(get_camera_config SOUND_DETECTION) == "yes" ]] ; then
+            ipc_cmd -b on
+            sleep 0.1
+            SENS=$(get_camera_config SOUND_SENSITIVITY)
+            [ -n "$SENS" ] && ipc_cmd -n "$SENS"
+            sleep 0.1
+        fi
     )
 fi
 
