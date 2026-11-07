@@ -184,7 +184,7 @@ start_rtsp()
             echo "  password: \"$PASSWORD\"" >> /tmp/go2rtc.yaml
         fi
 
-        /tmp/sd/yi-hack/bin/go2rtc -c /tmp/go2rtc.yaml -d
+        GOMEMLIMIT=4MiB /tmp/sd/yi-hack/bin/go2rtc -c /tmp/go2rtc.yaml -d
     elif [ "$RTSP_ALT" == "alternative" ]; then
 
         CODEC_LOW=$(cat /tmp/lowres)
