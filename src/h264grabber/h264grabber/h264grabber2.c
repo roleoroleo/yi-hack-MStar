@@ -258,11 +258,14 @@ void print_usage(char *progname)
     fprintf(stderr, "\t\tdon't overwrite SPS timing info (default overwrite)\n");
     fprintf(stderr, "\t-f, --fifo\n");
     fprintf(stderr, "\t\tenable fifo output\n");
+    fprintf(stderr, "\t-p, --priority\n");
+    fprintf(stderr, "\t\tset high priority\n");
     fprintf(stderr, "\t-d, --debug\n");
     fprintf(stderr, "\t\tenable debug\n");
 }
 
 int main(int argc, char **argv) {
+    int priority;
     unsigned char *buf_idx, *buf_idx_cur, *buf_idx_end, *buf_idx_end_prev;
     unsigned char *buf_idx_start = NULL;
     FILE *fFS, *fOut;
@@ -288,6 +291,7 @@ int main(int argc, char **argv) {
     audio = 0;
     sps_timing_info = 1;
     fifo = 0;
+    priority = 0;
     debug = 0;
 
     buf_offset = BUF_OFFSET;
@@ -300,6 +304,7 @@ int main(int argc, char **argv) {
             {"audio",  no_argument, 0, 'a'},
             {"sti",  no_argument, 0, 's'},
             {"fifo",  no_argument, 0, 'f'},
+            {"priority",  no_argument, 0, 'p'},
             {"debug",  no_argument, 0, 'd'},
             {"help",  no_argument, 0, 'h'},
             {0, 0, 0, 0}
@@ -307,7 +312,7 @@ int main(int argc, char **argv) {
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        c = getopt_long (argc, argv, "r:afsdh",
+        c = getopt_long (argc, argv, "r:afspdh",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -338,6 +343,11 @@ int main(int argc, char **argv) {
         case 'f':
             fprintf (stderr, "using fifo as output\n");
             fifo = 1;
+            break;
+
+        case 'p':
+            fprintf (stderr, "high priority on\n");
+            priority = 1;
             break;
 
         case 'd':
@@ -385,6 +395,9 @@ int main(int argc, char **argv) {
     buf_size = ftell(fFS) - 2;
     fclose(fFS);
     if (debug) fprintf(stderr, "The size of the buffer is %d\n", buf_size);
+
+    if (priority)
+        setpriority(PRIO_PROCESS, 0, -10);
 
     // Opening an existing file
     fshm = shm_open(BUFFER_SHM, O_RDWR, 0);
