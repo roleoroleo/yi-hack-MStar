@@ -2,20 +2,25 @@
 
 validateRecDir()
 {
+    # Expected format: YYYYYMMMDDDHHH, e.g. 2026Y11M26D09H.
+    # Only digits and the Y/M/D/H markers are allowed, so '/' and '..' can never reach rm.
+    case $1 in
+        *[!0-9YMDH]* ) DIR="none"; return ;;
+    esac
     if [ "${#1}" != "14" ]; then
-        DIR = "none"
+        DIR="none"
     fi
     if [ "Y${1:4:1}" != "YY" ] ; then
-        DIR = "none"
+        DIR="none"
     fi
     if [ "M${1:7:1}" != "MM" ] ; then
-        DIR = "none"
+        DIR="none"
     fi
     if [ "D${1:10:1}" != "DD" ] ; then
-        DIR = "none"
+        DIR="none"
     fi
     if [ "H${1:13:1}" != "HH" ] ; then
-        DIR = "none"
+        DIR="none"
     fi
 }
 
