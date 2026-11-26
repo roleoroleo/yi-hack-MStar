@@ -87,3 +87,14 @@ validateKey()
             return 0;;
     esac
 }
+
+# Only the configuration files the web UI actually manages.
+validateConfType()
+{
+    case $1 in
+        system|camera|mqtt|mqtt_advertise|ptz_presets|proxychains )
+            return 0;;
+        *)
+            return 1;;
+    esac
+}
