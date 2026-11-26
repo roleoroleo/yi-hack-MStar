@@ -59,6 +59,13 @@ fi
 CONF_TYPE="$(get_conf_type)"
 CONF_FILE=""
 
+if ! $(validateConfType "$CONF_TYPE"); then
+    printf "{\n"
+    printf "\"%s\":\"%s\"\\n" "error" "true"
+    printf "}"
+    exit
+fi
+
 if [ "$CONF_TYPE" == "mqtt" ] ; then
     CONF_FILE="$YI_HACK_PREFIX/etc/mqttv4.conf"
 else
