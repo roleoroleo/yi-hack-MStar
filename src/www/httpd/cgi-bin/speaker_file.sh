@@ -43,6 +43,15 @@ read -r POST_DATA
 
 printf "Content-type: application/json\r\n\r\n"
 
+# POST_DATA is a file name inside $FILE_PATH: no '/', no leading '.'.
+if [ -z "$POST_DATA" ] || ! $(validateBaseName "$POST_DATA"); then
+    printf "{\n"
+    printf "\"%s\":\"%s\",\\n" "error" "true"
+    printf "\"%s\":\"%s\"\\n" "description" "Invalid file name"
+    printf "}"
+    exit
+fi
+
 if [ -f /tmp/sd/audio/$POST_DATA ] && [ -e /tmp/audio_in_fifo ]; then
     TMP_FILE="/tmp/sd/speak.pcm"
     if [ ! -f $TMP_FILE ]; then
