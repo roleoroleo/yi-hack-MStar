@@ -40,15 +40,15 @@ check_rtsp()
         #  echo "$(date +'%Y-%m-%d %H:%M:%S') - Checking RTSP process..." >> $LOG_FILE
         LISTEN=`netstat -an 2>&1 | grep ":$RTSP_PORT_NUMBER " | grep LISTEN | grep -c ^`
         SOCKET=`netstat -an 2>&1 | grep ":$RTSP_PORT_NUMBER " | grep ESTABLISHED | grep -c ^`
-        CPU_1_L=`top -b -n 2 -d 1 | grep h264grabber_l | grep -v grep | tail -n 1 | awk '{print $8}'`
-        CPU_1_H=`top -b -n 2 -d 1 | grep h264grabber_h | grep -v grep | tail -n 1 | awk '{print $8}'`
+        CPU_1_L=`top -b -n 2 -d 1 | grep $H264GRABBER_L | grep -v grep | tail -n 1 | awk '{print $8}'`
+        CPU_1_H=`top -b -n 2 -d 1 | grep $H264GRABBER_H | grep -v grep | tail -n 1 | awk '{print $8}'`
 #        CPU_1=`top -b -n 2 -d 1 | grep h264grabber2 | grep -v grep | tail -n 1 | awk '{print $8}'`
         CPU_2=`top -b -n 2 -d 1 | grep rRTSPServer | grep -v grep | tail -n 1 | awk '{print $8}'`
 
         if [ $LISTEN -eq 0 ]; then
             echo "$(date +'%Y-%m-%d %H:%M:%S') - Restarting rtsp process" >> $LOG_FILE
             killall -q rRTSPServer
-            killall -q h264grabber h264grabber_l h264grabber_h
+            killall -q h264grabber h264grabber2 $H264GRABBER_L $H264GRABBER_H
 #            killall -q h264grabber2
             sleep 1
             restart_rtsp
@@ -57,7 +57,7 @@ check_rtsp()
             if [ "$CPU_1_L" == "" ] || [ "$CPU_2" == "" ]; then
                 echo "$(date +'%Y-%m-%d %H:%M:%S') - No running processes for low res, restarting..." >> $LOG_FILE
                 killall -q rRTSPServer
-                killall -q h264grabber h264grabber_l h264grabber_h
+                killall -q h264grabber h264grabber2 $H264GRABBER_L $H264GRABBER_H
 #                killall -q h264grabber2
                 sleep 1
                 restart_rtsp
@@ -68,7 +68,7 @@ check_rtsp()
             if [ "$CPU_1_H" == "" ] || [ "$CPU_2" == "" ]; then
                 echo "$(date +'%Y-%m-%d %H:%M:%S') - No running processes for high res, restarting..." >> $LOG_FILE
                 killall -q rRTSPServer
-                killall -q h264grabber h264grabber_l h264grabber_h
+                killall -q h264grabber h264grabber2 $H264GRABBER_L $H264GRABBER_H
 #                killall -q h264grabber2
                 sleep 1
                 restart_rtsp
@@ -82,7 +82,7 @@ check_rtsp()
                 if [ $COUNTER_L -ge $COUNTER_LIMIT ]; then
                     echo "$(date +'%Y-%m-%d %H:%M:%S') - Restarting processes" >> $LOG_FILE
                     killall -q rRTSPServer
-                    killall -q h264grabber h264grabber_l h264grabber_h
+                    killall -q h264grabber h264grabber2 $H264GRABBER_L $H264GRABBER_H
 #                    killall -q h264grabber2
                     sleep 1
                     restart_rtsp
@@ -98,7 +98,7 @@ check_rtsp()
                 if [ $COUNTER_H -ge $COUNTER_LIMIT ]; then
                     echo "$(date +'%Y-%m-%d %H:%M:%S') - Restarting processes" >> $LOG_FILE
                     killall -q rRTSPServer
-                    killall -q h264grabber h264grabber_l h264grabber_h
+                    killall -q h264grabber h264grabber2 $H264GRABBER_L $H264GRABBER_H
 #                    killall -q h264grabber2
                     sleep 1
                     restart_rtsp
@@ -118,15 +118,15 @@ check_rtsp_alt()
     if [[ $(get_camera_config SWITCH_ON) == "yes" ]] ; then
         #  echo "$(date +'%Y-%m-%d %H:%M:%S') - Checking RTSP process..." >> $LOG_FILE
         LISTEN=`netstat -an 2>&1 | grep ":$RTSP_PORT_NUMBER " | grep LISTEN | grep -c ^`
-        CPU_1_L=`top -b -n 2 -d 1 | grep h264grabber_l | grep -v grep | tail -n 1 | awk '{print $8}'`
-        CPU_1_H=`top -b -n 2 -d 1 | grep h264grabber_h | grep -v grep | tail -n 1 | awk '{print $8}'`
+        CPU_1_L=`top -b -n 2 -d 1 | grep $H264GRABBER_L | grep -v grep | tail -n 1 | awk '{print $8}'`
+        CPU_1_H=`top -b -n 2 -d 1 | grep $H264GRABBER_H | grep -v grep | tail -n 1 | awk '{print $8}'`
         CPU_2=`top -b -n 2 -d 1 | grep rtsp_server_yi | grep -v grep | tail -n 1 | awk '{print $8}'`
 
         if [ $LISTEN -eq 0 ]; then
             echo "$(date +'%Y-%m-%d %H:%M:%S') - Restarting rtsp process" >> $LOG_FILE
             killall -q rtsp_server_yi
-            killall -q h264grabber_l
-            killall -q h264grabber_h
+            killall -q $H264GRABBER_L
+            killall -q $H264GRABBER_H
             sleep 1
             restart_rtsp
         fi
@@ -134,8 +134,8 @@ check_rtsp_alt()
             if [ "$CPU_1_L" == "" ] || [ "$CPU_2" == "" ]; then
                 echo "$(date +'%Y-%m-%d %H:%M:%S') - No running processes for low res, restarting..." >> $LOG_FILE
                 killall -q rtsp_server_yi
-                killall -q h264grabber_l
-                killall -q h264grabber_h
+                killall -q $H264GRABBER_L
+                killall -q $H264GRABBER_H
                 sleep 1
                 restart_rtsp
             fi
@@ -145,8 +145,8 @@ check_rtsp_alt()
             if [ "$CPU_1_H" == "" ] || [ "$CPU_2" == "" ]; then
                 echo "$(date +'%Y-%m-%d %H:%M:%S') - No running processes for high res, restarting..." >> $LOG_FILE
                 killall -q rtsp_server_yi
-                killall -q h264grabber_l
-                killall -q h264grabber_h
+                killall -q $H264GRABBER_L
+                killall -q $H264GRABBER_H
                 sleep 1
                 restart_rtsp
             fi
@@ -162,15 +162,15 @@ check_rtsp_go2rtc()
     if [[ $(get_camera_config SWITCH_ON) == "yes" ]] ; then
         #  echo "$(date +'%Y-%m-%d %H:%M:%S') - Checking RTSP process..." >> $LOG_FILE
         LISTEN=`netstat -an 2>&1 | grep ":$RTSP_PORT_NUMBER " | grep LISTEN | grep -c ^`
-        CPU_1_L=`top -b -n 2 -d 1 | grep h264grabber_l | grep -v grep | tail -n 1 | awk '{print $8}'`
-        CPU_1_H=`top -b -n 2 -d 1 | grep h264grabber_h | grep -v grep | tail -n 1 | awk '{print $8}'`
+        CPU_1_L=`top -b -n 2 -d 1 | grep $H264GRABBER_L | grep -v grep | tail -n 1 | awk '{print $8}'`
+        CPU_1_H=`top -b -n 2 -d 1 | grep $H264GRABBER_H | grep -v grep | tail -n 1 | awk '{print $8}'`
         CPU_2=`top -b -n 2 -d 1 | grep go2rtc | grep -v grep | tail -n 1 | awk '{print $8}'`
 
         if [ $LISTEN -eq 0 ]; then
             echo "$(date +'%Y-%m-%d %H:%M:%S') - Restarting rtsp process" >> $LOG_FILE
             killall -q go2rtc
-            killall -q h264grabber_l
-            killall -q h264grabber_h
+            killall -q $H264GRABBER_L
+            killall -q $H264GRABBER_H
             sleep 1
             restart_rtsp
         fi
@@ -178,8 +178,8 @@ check_rtsp_go2rtc()
             if [ "$CPU_1_L" == "" ] || [ "$CPU_2" == "" ]; then
                 echo "$(date +'%Y-%m-%d %H:%M:%S') - No running processes for low res, restarting..." >> $LOG_FILE
                 killall -q go2rtc
-                killall -q h264grabber_l
-                killall -q h264grabber_h
+                killall -q $H264GRABBER_L
+                killall -q $H264GRABBER_H
                 sleep 1
                 restart_rtsp
             fi
@@ -189,8 +189,8 @@ check_rtsp_go2rtc()
             if [ "$CPU_1_H" == "" ] || [ "$CPU_2" == "" ]; then
                 echo "$(date +'%Y-%m-%d %H:%M:%S') - No running processes for high res, restarting..." >> $LOG_FILE
                 killall -q go2rtc
-                killall -q h264grabber_l
-                killall -q h264grabber_h
+                killall -q $H264GRABBER_L
+                killall -q $H264GRABBER_H
                 sleep 1
                 restart_rtsp
             fi
@@ -262,6 +262,14 @@ if [ ! -z $RTSP_PORT ]; then
 fi
 
 RTSP_ALT=$(get_config RTSP_ALT)
+RTSP_USE_SLOT=$(get_config RTSP_USE_SLOT)
+if [ "$RTSP_USE_SLOT" == "yes" ]; then
+    H264GRABBER_L="h264grabber2_l"
+    H264GRABBER_H="h264grabber2_h"
+else
+    H264GRABBER_L="h264grabber_l"
+    H264GRABBER_H="h264grabber_h"
+fi
 
 echo "$(date +'%Y-%m-%d %H:%M:%S') - Starting RTSP watchdog..." >> $LOG_FILE
 

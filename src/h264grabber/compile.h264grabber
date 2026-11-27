@@ -34,3 +34,5 @@ ${STRIP} ../_install/bin/* || exit 1
 cd ../_install/bin/
 ln -s h264grabber h264grabber_h
 ln -s h264grabber h264grabber_l
+ln -s h264grabber2 h264grabber2_h
+ln -s h264grabber2 h264grabber2_l
